@@ -45,7 +45,7 @@ const { connectDatabase } = require('./config/database');
 // Routes folder se different route modules import kar rahe hain
 // Har route file apne related endpoints define karti hai (e.g., /api/auth, /api/session)
 // Routes → Controllers → Services → Database - ye hamara request flow hai
-const authRoutes = require('./routes/auth.routes');
+const authRoutes = require('./routes/auth/auth.routes');
 const sessionRoutes = require('./routes/session.routes');
 const attendanceRoutes = require('./routes/attendance.routes');
 
