@@ -1,9 +1,6 @@
-# attendance-tracker
- A full-stack attendance tracking system built with React, Node.js, Express, and SQL, featuring role-based access and real-time attendance management.
-  # Attendance Tracker 
+ # Attendance Tracker 
 A full-stack **Attendance Tracking System** built using **React**, **Node.js**, **Express**, and **SQL**.  
-This project provides **role-based access** for **Admin / Faculty / Student** and supports **QR + Location based attendance** to prevent proxy attendance.
-
+This project provides **role-based access** for **Admin / Faculty / Student** and supports **QR + Location based attendance** to prevent proxy attendance and real-time attendence management.
 ---
 
 ## Project Objective
@@ -20,7 +17,6 @@ This project ensures that a student can mark attendance only when:
 - Student is within allowed time window
 - Student is physically near the faculty/class location (GPS radius)
 - Duplicate attendance is not allowed
-
 ---
 
 ## 👤 User Roles
