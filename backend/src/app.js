@@ -46,8 +46,8 @@ const { connectDatabase } = require('./config/database');
 // Har route file apne related endpoints define karti hai (e.g., /api/auth, /api/session)
 // Routes → Controllers → Services → Database - ye hamara request flow hai
 const authRoutes = require('./routes/auth/auth.routes');
-const sessionRoutes = require('./routes/session.routes');
-const attendanceRoutes = require('./routes/attendance.routes');
+const sessionRoutes = require('./routes/session/session');
+const attendanceRoutes = require('./routes/attendance/attendance');
 
 // ============================================================================
 // STEP 4: Error Handling Middleware Import
@@ -55,8 +55,8 @@ const attendanceRoutes = require('./routes/attendance.routes');
 
 // Global error handler middleware import kar rahe hain
 // Ye middleware sab routes ke baad use hota hai - koi bhi error catch karne ke liye
-// middleware/errorHandler.js file mein error handling logic hoga
-const { errorHandler } = require('./middleware/errorHandler');
+// middleware/error.middleware.js file mein error handling logic hoga
+const { errorHandler } = require('./middleware/error.middleware');
 
 // ============================================================================
 // STEP 5: Express App Instance Create Kar Rahe Hain

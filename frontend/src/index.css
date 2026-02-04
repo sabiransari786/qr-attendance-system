@@ -1,0 +1,117 @@
+/* Global Theme Variables */
+
+/* Custom Fearless Font */
+@font-face {
+  font-family: 'Fearless';
+  src: url('/fonts/fearless.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Fearless';
+  src: url('/fonts/fearless-italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+:root {
+  /* Dark Theme (Default) */
+  --primary-dark: #03181F;
+  --primary-accent: #319CB5;
+  --light-accent: #CCF5FE;
+  --deep-neutral: #040D10;
+  --text-light: #FFFFFF;
+  --text-muted: #9CA3AF;
+  --card-bg: rgba(3, 24, 31, 0.8);
+  --border-soft: rgba(49, 156, 181, 0.2);
+  
+  /* Common Colors */
+  --color-bg: #03181F;
+  --color-surface: rgba(3, 24, 31, 0.8);
+  --color-text: #FFFFFF;
+  --color-text-secondary: #9CA3AF;
+  --color-primary: #319CB5;
+  --color-border: rgba(49, 156, 181, 0.2);
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray: #6B7280;
+  --color-lighter-gray: #F3F4F6;
+  --color-dark-gray: #1F2937;
+  --color-border-gray: #E5E7EB;
+  
+  /* Spacing */
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  
+  /* Max width */
+  --max-width-content: 1200px;
+}
+
+/* Light Theme - Coastal Blue-Green Palette */
+[data-theme="light"] {
+  --primary-dark: #EEF3F6;
+  --primary-accent: #789EA4;
+  --light-accent: #9BB7C1;
+  --deep-neutral: #FFFFFF;
+  --text-light: #3D4A51;
+  --text-muted: #6B8B96;
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --border-soft: rgba(120, 158, 164, 0.18);
+  
+  --color-bg: #F5F8FA;
+  --color-surface: rgba(255, 255, 255, 0.92);
+  --color-text: #3D4A51;
+  --color-text-secondary: #6B8B96;
+  --color-primary: #789EA4;
+  --color-border: rgba(120, 158, 164, 0.18);
+  --color-white: #FFFFFF;
+  --color-black: #2A3A42;
+  --color-gray: #9BB7C1;
+  --color-lighter-gray: #EEF3F6;
+  --color-dark-gray: #3D4A51;
+  --color-border-gray: #D2DDE6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Smooth theme transition */
+body,
+body * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Disable transition on page load */
+body.disable-transitions,
+body.disable-transitions * {
+  transition: none !important;
+}
