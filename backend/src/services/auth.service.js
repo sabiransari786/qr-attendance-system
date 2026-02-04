@@ -400,16 +400,21 @@ const register = async (userData) => {
         // STEP 1: Input Validation
         // ---------------------------------------------------------------------
         // Destructure userData
-        const { name, email, password, role, ...extraFields } = userData;
+        const { name, email, contactNumber, password, role, studentId, teacherId, ...extraFields } = userData;
         
         // Required fields check
-        if (!name || !email || !password) {
-            throw new ValidationError('Name, email, and password are required.');
+        if (!name || !email || !contactNumber || !password) {
+            throw new ValidationError('Name, email, contact number, and password are required.');
         }
         
         // Name validation
         if (name.trim().length === 0) {
             throw new ValidationError('Name cannot be empty.');
+        }
+        
+        // Contact number validation - basic check
+        if (!/^\d{10}$|^\+\d{1,3}\d{9,}$/.test(contactNumber.trim())) {
+            throw new ValidationError('Invalid contact number. Please enter a valid 10-digit number.');
         }
         
         // Email format validation
@@ -426,6 +431,7 @@ const register = async (userData) => {
         // Email normalize karo - lowercase for consistency
         const normalizedEmail = email.trim().toLowerCase();
         const normalizedName = name.trim();
+        const normalizedContact = contactNumber.trim();
         
         // Role validation - valid roles check karo
         const validRoles = [ROLE.STUDENT, ROLE.FACULTY, ROLE.ADMIN];
@@ -433,6 +439,37 @@ const register = async (userData) => {
         
         if (role && !validRoles.includes(role)) {
             throw new ValidationError(`Invalid role. Valid roles are: ${validRoles.join(', ')}`);
+        }
+
+        // Student ID validation - student role ke liye zaroori
+        if (userRole === ROLE.STUDENT && !studentId) {
+            throw new ValidationError('Student ID is required for student registration.');
+        }
+
+        // Faculty ID validation - faculty role ke liye zaroori
+        if (userRole === ROLE.FACULTY && !teacherId) {
+            throw new ValidationError('Faculty ID is required for faculty registration.');
+        }
+        
+        // Check duplicate IDs
+        if (userRole === ROLE.STUDENT && studentId) {
+            const [existingStudents] = await pool.query(
+                `SELECT id FROM users WHERE student_id = ? AND role = ?`,
+                [studentId.trim(), ROLE.STUDENT]
+            );
+            if (existingStudents && existingStudents.length > 0) {
+                throw new UserAlreadyExistsError('This Student ID is already registered.');
+            }
+        }
+
+        if (userRole === ROLE.FACULTY && teacherId) {
+            const [existingFaculty] = await pool.query(
+                `SELECT id FROM users WHERE teacher_id = ? AND role = ?`,
+                [teacherId.trim(), ROLE.FACULTY]
+            );
+            if (existingFaculty && existingFaculty.length > 0) {
+                throw new UserAlreadyExistsError('This Faculty ID is already registered.');
+            }
         }
         
         // ---------------------------------------------------------------------
@@ -466,9 +503,17 @@ const register = async (userData) => {
         // User record database mein insert karo
         // Password hashed form mein store hoga
         const [result] = await pool.query(
-            `INSERT INTO users (name, email, password, role, created_at)
-             VALUES (?, ?, ?, ?, NOW())`,
-            [normalizedName, normalizedEmail, hashedPassword, userRole]
+            `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [
+                normalizedName,
+                normalizedEmail,
+                normalizedContact,
+                hashedPassword,
+                userRole,
+                userRole === ROLE.STUDENT ? studentId?.trim() : null,
+                userRole === ROLE.FACULTY ? teacherId?.trim() : null
+            ]
         );
         
         // Inserted user ka ID mil gaya
@@ -480,7 +525,7 @@ const register = async (userData) => {
         // Created user data fetch karo (password exclude karke)
         // INSERT ke baad SELECT karna better hai - database se exact data milega
         const [users] = await pool.query(
-            `SELECT id, name, email, role, created_at
+            `SELECT id, name, email, contact_number, role, student_id, teacher_id, created_at
              FROM users 
              WHERE id = ?`,
             [userId]

@@ -1,0 +1,64 @@
+/* Footer - Responsive Theme */
+
+.footer {
+  border-top: 1px solid var(--border-soft);
+  background: var(--color-surface);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.3);
+}
+
+.footer__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-black);
+  font-weight: 700;
+}
+
+.footer__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-black);
+}
+
+.footer__tagline {
+  margin: 0;
+  max-width: 420px;
+  line-height: 1.6;
+  color: var(--color-black);
+  font-weight: 700;
+}
+
+.footer__meta {
+  text-align: right;
+}
+
+.footer__institution {
+  margin: 0 0 0.25rem;
+  color: var(--color-black);
+  font-weight: 700;
+}
+
+.footer__year {
+  margin: 0;
+  color: var(--color-black);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .footer__inner {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .footer__meta {
+    text-align: left;
+  }
+}
+
