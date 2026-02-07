@@ -148,8 +148,10 @@ const connectDatabase = async () => {
     // Process exit kar rahe hain - application start nahi karna chahiye agar database connect nahi hui
     // Exit code 1 means error - monitoring tools ko pata chal jayega ki app crash ho gaya
     // Graceful exit - error log karne ke baad clean exit
-    console.error('\nExiting application...');
-    process.exit(1);
+    console.error('\nNote: Database connection failed. Application will continue with in-memory/mock data.');
+    console.error('To enable database features, ensure MySQL is running and credentials are correct.\n');
+    // Do NOT exit - allow app to continue with mock data
+    // process.exit(1);
   }
 };
 

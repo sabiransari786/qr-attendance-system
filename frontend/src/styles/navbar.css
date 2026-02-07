@@ -6,12 +6,16 @@
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
 }
 
 .navbar__inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 1rem 1rem 1rem 3rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -92,7 +96,7 @@
 
 .navbar__link:hover {
   background: rgba(14, 165, 233, 0.15);
-  color: var(--color-primary);
+  color: var(--color-black);
 }
 
 .navbar__link:focus {
@@ -117,31 +121,76 @@
 
 /* Primary Link (Sign up) */
 .navbar__link--primary {
-  background-color: transparent;
-  color: var(--color-text);
-  border: 1px solid transparent;
-  font-weight: 700;
+  background-color: var(--color-white);
+  color: var(--color-black);
+  border: 2px solid var(--color-black);
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
 }
 
 .navbar__link--primary:hover {
-  background: rgba(14, 165, 233, 0.15);
-  border-color: transparent;
-  color: var(--color-primary);
+  background: var(--color-lighter-gray);
+  border-color: var(--color-black);
+  color: var(--color-black);
 }
 
 /* Active Primary Link (Sign up when active) */
 .navbar__link--active-primary {
-  background: var(--color-primary);
+  background: var(--color-black);
   color: #ffffff;
-  border: 1px solid var(--color-primary);
-  font-weight: 700;
-  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.4);
+  border: 2px solid var(--color-black);
+  font-weight: 500;
+  box-shadow: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
 }
 
 .navbar__link--active-primary:hover {
+  background: var(--color-dark-gray);
+  border-color: var(--color-dark-gray);
+  opacity: 1;
+  color: #ffffff;
+}
+
+/* User Section (when authenticated) */
+.navbar__user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.navbar__user-name {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.navbar__logout-btn {
+  padding: 0.6rem 1.2rem;
   background: var(--color-primary);
-  border-color: var(--color-primary);
-  opacity: 0.9;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.navbar__logout-btn:hover {
+  background: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+.navbar__logout-btn:active {
+  transform: translateY(0);
 }
 
 /* Theme Toggle Button */

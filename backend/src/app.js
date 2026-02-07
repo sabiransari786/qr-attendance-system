@@ -56,7 +56,7 @@ const attendanceRoutes = require('./routes/attendance/attendance');
 // Global error handler middleware import kar rahe hain
 // Ye middleware sab routes ke baad use hota hai - koi bhi error catch karne ke liye
 // middleware/error.middleware.js file mein error handling logic hoga
-const { errorHandler } = require('./middleware/error.middleware');
+const errorHandler = require('./middleware/error.middleware');
 
 // ============================================================================
 // STEP 5: Express App Instance Create Kar Rahe Hain

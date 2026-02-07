@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/api";
 import { ROLE_ROUTES } from "../utils/constants";
+import { AuthContext } from "../context/AuthContext";
+import LoginSuccessModal from "../components/LoginSuccessModal";
 import "../styles/auth.css";
 
 /**
@@ -16,14 +18,15 @@ import "../styles/auth.css";
  * - Receive user role from backend
  * - Redirect to role-specific dashboard
  *
- * Does NOT:
- * - Decide user role itself
- * - Access database directly
- * - Handle attendance logic
+ * Supports:
+ * - Students (student role)
+ * - Faculty (faculty role)
+ * - Admins (admin role)
  */
 
 function Login() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
 
   // Form state
   const [formValues, setFormValues] = useState({
@@ -34,6 +37,8 @@ function Login() {
   // UI state
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successUserName, setSuccessUserName] = useState("");
 
   // Check if form is complete
   const isFormIncomplete = useMemo(() => {
@@ -53,6 +58,7 @@ function Login() {
    * - Validates form
    * - Sends credentials to backend
    * - Receives role and token
+   * - Stores auth context
    * - Redirects based on role
    */
   const handleSubmit = async (event) => {
@@ -69,31 +75,49 @@ function Login() {
 
     try {
       // Send login request to backend
+      console.log("Attempting login with:", { email: formValues.email.trim(), password: "***" });
       const response = await login({
         email: formValues.email.trim(),
         password: formValues.password,
       });
 
-      // Extract token and role from response
-      const token = response?.data?.token;
-      const role = response?.data?.user?.role;
-      const redirectPath = ROLE_ROUTES[role];
+      console.log("Login response:", response);
 
-      // Store authentication token
-      if (token) {
-        localStorage.setItem("authToken", token);
-      }
+      // Extract token and user data from response
+      // Handle both backend format (response.data) and mock API format (response)
+      const token = response?.data?.token || response?.token;
+      const userData = response?.data?.user || response?.user;
 
-      // Check if role-based redirect path exists
-      if (!redirectPath) {
-        setErrorMessage("Unable to determine user role from server response.");
+      console.log("Extracted token:", token);
+      console.log("Extracted userData:", userData);
+
+      if (!token || !userData) {
+        setErrorMessage("Invalid response from server. Please try again.");
         return;
       }
 
-      // Redirect to role-specific dashboard
-      navigate(redirectPath);
+      // Update authentication context
+      authContext.login(userData, token);
+
+      // Show success modal
+      setSuccessUserName(userData.name);
+      setShowSuccessModal(true);
+      console.log("Modal shown, will redirect in 3000ms");
+
+      // Determine dashboard route based on role
+      const dashboardPath = ROLE_ROUTES[userData.role] || "/";
+
+      // Redirect after modal closes (give extra time for animation)
+      setTimeout(() => {
+        console.log("Redirecting to:", dashboardPath);
+        navigate(dashboardPath);
+      }, 3000);
     } catch (error) {
-      setErrorMessage(error.message || "Login failed. Please try again.");
+      console.error("Login error:", error);
+      const errorMsg = error.data?.message || error.message || "Login failed. Please try again.";
+      console.error("Error message:", errorMsg);
+      setErrorMessage(errorMsg);
+      authContext.setAuthError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +125,14 @@ function Login() {
 
   return (
     <div className="login__container">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <LoginSuccessModal
+          userName={successUserName}
+          onComplete={() => setShowSuccessModal(false)}
+        />
+      )}
+
       <section className="login__card" aria-labelledby="login-title">
         {/* Card Header */}
         <header className="login__header">
@@ -126,6 +158,7 @@ function Login() {
               value={formValues.email}
               onChange={handleChange}
               autoComplete="email"
+              disabled={isLoading}
               required
             />
           </div>
@@ -144,6 +177,7 @@ function Login() {
               value={formValues.password}
               onChange={handleChange}
               autoComplete="current-password"
+              disabled={isLoading}
               required
             />
           </div>

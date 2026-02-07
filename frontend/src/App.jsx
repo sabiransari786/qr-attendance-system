@@ -1,17 +1,8 @@
-import { Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
-
+import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import StudentDashboard from "./pages/StudentDashboard";
-import FacultyDashboard from "./pages/FacultyDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Unauthorized from "./pages/Unauthorized";
-import NotFound from "./pages/NotFound";
-
+import AppRoutes from "./routes/AppRoutes";
 import "./App.css";
 
 function App() {
@@ -29,22 +20,15 @@ function App() {
   }, []);
 
   return (
-    <div className="app-root">
-      <Navbar />
-      <main className="app-main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/student-dashboard" element={<StudentDashboard />} />
-          <Route path="/faculty-dashboard" element={<FacultyDashboard />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
+    <AuthProvider>
+      <div className="app-root">
+        <Navbar />
+        <main className="app-main">
+          <AppRoutes />
+        </main>
+        <Footer />
+      </div>
+    </AuthProvider>
   );
 }
 

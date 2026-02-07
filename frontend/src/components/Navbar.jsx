@@ -1,9 +1,14 @@
-import { NavLink, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { logout } from "../services/api";
 import "../styles/navbar.css";
 
 function Navbar() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const authContext = useContext(AuthContext);
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout: logoutFromContext, token } = authContext || {};
 
   useEffect(() => {
     // Check localStorage or default to light theme
@@ -31,6 +36,19 @@ function Navbar() {
     applyTheme(newTheme);
   };
 
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await logout(token);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      logoutFromContext?.();
+      navigate("/login");
+    }
+  };
+
   return (
     <header className="navbar">
       <div className="navbar__inner">
@@ -56,24 +74,42 @@ function Navbar() {
           >
             Home
           </NavLink>
-          <NavLink
-            to="/login"
-            className={({ isActive }) =>
-              `navbar__link${isActive ? " navbar__link--active" : ""}`
-            }
-          >
-            Login
-          </NavLink>
-          <NavLink
-            to="/signup"
-            className={({ isActive }) =>
-              `navbar__link navbar__link--primary${
-                isActive ? " navbar__link--active-primary" : ""
-              }`
-            }
-          >
-            Sign up
-          </NavLink>
+          
+          {!isAuthenticated ? (
+            <>
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  `navbar__link${isActive ? " navbar__link--active" : ""}`
+                }
+              >
+                Login
+              </NavLink>
+              <NavLink
+                to="/signup"
+                className={({ isActive }) =>
+                  `navbar__link navbar__link--primary${
+                    isActive ? " navbar__link--active-primary" : ""
+                  }`
+                }
+              >
+                Sign up
+              </NavLink>
+            </>
+          ) : (
+            <div className="navbar__user-section">
+              <span className="navbar__user-name">
+                {user?.name} ({user?.role})
+              </span>
+              <button
+                className="navbar__logout-btn"
+                onClick={handleLogout}
+                aria-label="Logout"
+              >
+                Logout
+              </button>
+            </div>
+          )}
 
           <button 
             className="navbar__theme-toggle" 

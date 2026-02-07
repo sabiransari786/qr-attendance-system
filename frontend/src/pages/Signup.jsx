@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerStudent } from "../services/api";
+import { AuthContext } from "../context/AuthContext";
+import Toast from "../components/Toast";
 import "../styles/auth.css";
 
 /**
@@ -22,6 +24,7 @@ import "../styles/auth.css";
 
 function Signup() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
 
   // Form state
   const [formValues, setFormValues] = useState({
@@ -35,6 +38,7 @@ function Signup() {
   // UI state
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   /**
    * Check if all form fields are filled
@@ -103,12 +107,27 @@ function Signup() {
       // Backend will check for duplicate email/rollNumber
       await registerStudent(payload);
 
-      // Redirect to login page after successful registration
-      navigate("/login");
+      // Show success toast
+      setShowSuccessToast(true);
+
+      // Reset form
+      setFormValues({
+        fullName: "",
+        email: "",
+        rollNumber: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      // Redirect to login page after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
       // Handle backend errors (e.g., duplicate entry)
-      const errorMsg = error.response?.data?.message || error.message;
+      const errorMsg = error.data?.message || error.message;
       setErrorMessage(errorMsg || "Registration failed. Please try again.");
+      authContext?.setAuthError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,6 +135,16 @@ function Signup() {
 
   return (
     <div className="signup__container">
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <Toast
+          message="Account created successfully! Redirecting to login..."
+          type="success"
+          duration={2000}
+          onClose={() => setShowSuccessToast(false)}
+        />
+      )}
+
       <section className="signup__card" aria-labelledby="signup-title">
         {/* Card Header */}
         <header className="signup__header">
@@ -141,6 +170,7 @@ function Signup() {
               value={formValues.fullName}
               onChange={handleChange}
               autoComplete="name"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -159,6 +189,7 @@ function Signup() {
               value={formValues.email}
               onChange={handleChange}
               autoComplete="email"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -177,6 +208,7 @@ function Signup() {
               value={formValues.rollNumber}
               onChange={handleChange}
               autoComplete="off"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -195,6 +227,7 @@ function Signup() {
               value={formValues.password}
               onChange={handleChange}
               autoComplete="new-password"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -213,6 +246,7 @@ function Signup() {
               value={formValues.confirmPassword}
               onChange={handleChange}
               autoComplete="new-password"
+              disabled={isSubmitting}
               required
             />
           </div>
@@ -233,15 +267,6 @@ function Signup() {
               aria-busy={isSubmitting}
             >
               {isSubmitting ? "Registering..." : "Register"}
-            </button>
-
-            <button
-              className="signup__button signup__button--secondary"
-              type="button"
-              onClick={() => navigate("/login")}
-              disabled={isSubmitting}
-            >
-              Back to Login
             </button>
           </div>
         </form>
