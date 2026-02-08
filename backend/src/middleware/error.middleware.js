@@ -282,4 +282,4 @@ const errorMiddleware = (err, req, res, next) => {
     return res.status(statusCode).json(errorResponse);
   };
   
-  module.exports = errorMiddleware;
+  module.exports = { errorHandler: errorMiddleware };

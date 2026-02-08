@@ -76,12 +76,27 @@ function Login() {
 
       // Extract token and role from response
       const token = response?.data?.token;
-      const role = response?.data?.user?.role;
+      const user = response?.data?.user;
+      const role = user?.role;
       const redirectPath = ROLE_ROUTES[role];
 
-      // Store authentication token
+      // Store authentication data in localStorage
       if (token) {
         localStorage.setItem("authToken", token);
+        localStorage.setItem("token", token);
+      }
+      
+      if (user) {
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("userName", user.name);
+        localStorage.setItem("userEmail", user.email);
+        localStorage.setItem("userRole", user.role);
+        if (user.student_id) {
+          localStorage.setItem("studentId", user.student_id);
+        }
+        if (user.teacher_id) {
+          localStorage.setItem("teacherId", user.teacher_id);
+        }
       }
 
       // Check if role-based redirect path exists
