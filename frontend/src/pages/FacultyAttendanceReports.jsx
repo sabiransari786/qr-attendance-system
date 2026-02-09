@@ -93,101 +93,193 @@ function FacultyAttendanceReports() {
       <header className="dashboard__header">
         <div>
           <h1 className="dashboard__title">📊 Attendance Reports</h1>
-          <p className="dashboard__subtitle">View attendance statistics for your sessions</p>
+          <p className="dashboard__subtitle">Comprehensive attendance analysis and student tracking</p>
         </div>
         <button
           className="dashboard__button dashboard__button--secondary"
           onClick={handleBack}
         >
-          ← Back to Dashboard
+          ← Back
         </button>
       </header>
 
-      <main style={{ padding: '20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px' }}>
-          {/* Sessions List */}
-          <div>
-            <h3 style={{ marginBottom: '15px' }}>Select Session</h3>
-            {loading && <p>Loading sessions...</p>}
-            {!loading && sessions.length === 0 && <p>No sessions found</p>}
-            {!loading && sessions.map((session) => (
-              <div
-                key={session.id}
-                onClick={() => handleSessionSelect(session)}
-                style={{
-                  padding: '15px',
-                  margin: '10px 0',
-                  border: selectedSession?.id === session.id ? '2px solid #6366f1' : '1px solid #ddd',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  backgroundColor: selectedSession?.id === session.id ? '#f0f0ff' : 'white',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <div style={{ fontWeight: '600', marginBottom: '5px' }}>
-                  {session.subject}
-                </div>
-                <div style={{ fontSize: '0.85em', color: '#666' }}>
-                  {session.location}
-                </div>
-                <div style={{ fontSize: '0.8em', color: '#999', marginTop: '5px' }}>
-                  {new Date(session.startTime).toLocaleDateString()}
-                </div>
+      <main>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '3rem', minHeight: 'calc(100vh - 300px)' }}>
+          {/* Sessions Sidebar */}
+          <aside style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '12px',
+            padding: '2rem',
+            height: 'fit-content',
+            position: 'sticky',
+            top: '20px'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 1.5rem 0',
+              fontSize: '1.2rem',
+              fontWeight: '700',
+              color: 'var(--color-text)'
+            }}>
+              📚 Sessions
+            </h3>
+
+            {loading && <p style={{ color: 'var(--color-text-secondary)' }}>⏳ Loading sessions...</p>}
+            {!loading && sessions.length === 0 && (
+              <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No sessions found</p>
+            )}
+
+            {!loading && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {sessions.map((session) => (
+                  <button
+                    key={session.id}
+                    onClick={() => handleSessionSelect(session)}
+                    style={{
+                      padding: '1.2rem',
+                      border: selectedSession?.id === session.id ? '2px solid var(--primary-accent)' : '1px solid var(--color-border)',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      backgroundColor: selectedSession?.id === session.id ? 'rgba(49, 156, 181, 0.1)' : 'transparent',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'left',
+                      color: 'inherit',
+                      fontFamily: 'inherit'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = selectedSession?.id !== session.id ? 'var(--card-bg)' : 'rgba(49, 156, 181, 0.1)';
+                      e.currentTarget.style.borderColor = 'var(--primary-accent)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = selectedSession?.id === session.id ? 'rgba(49, 156, 181, 0.1)' : 'transparent';
+                      e.currentTarget.style.borderColor = selectedSession?.id === session.id ? 'var(--primary-accent)' : 'var(--color-border)';
+                    }}
+                  >
+                    <div style={{ fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-text)' }}>
+                      {session.subject}
+                    </div>
+                    <div style={{ fontSize: '0.85em', color: 'var(--color-text-secondary)' }}>
+                      {session.location}
+                    </div>
+                    <div style={{ fontSize: '0.8em', color: 'var(--color-text-secondary)', marginTop: '0.4rem' }}>
+                      {new Date(session.startTime).toLocaleDateString()}
+                    </div>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </aside>
 
           {/* Attendance Details */}
-          <div>
+          <section>
             {!selectedSession && (
-              <div style={{ textAlign: 'center', padding: '60px', color: '#999' }}>
-                <h3>Select a session to view attendance</h3>
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '5rem 2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '400px'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+                <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem', color: 'var(--color-text)' }}>
+                  Select a session
+                </h3>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  Choose a session from the list to view detailed attendance reports
+                </p>
               </div>
             )}
 
             {selectedSession && (
               <>
-                <h3 style={{ marginBottom: '20px' }}>{selectedSession.subject}</h3>
-                
+                <div style={{ marginBottom: '2.5rem' }}>
+                  <h2 style={{ 
+                    margin: '0 0 0.5rem 0',
+                    fontSize: '1.8rem',
+                    fontWeight: '700',
+                    color: 'var(--color-text)'
+                  }}>
+                    {selectedSession.subject}
+                  </h2>
+                  <p style={{ 
+                    margin: 0,
+                    color: 'var(--color-text-secondary)',
+                    fontSize: '0.95rem'
+                  }}>
+                    📍 {selectedSession.location} • 🕐 {new Date(selectedSession.startTime).toLocaleDateString()}
+                  </p>
+                </div>
+
                 {/* Stats Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '30px' }}>
-                  <div className="dashboard__card" style={{ padding: '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#6366f1' }}>{stats.total}</div>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>Total Students</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                  <div className="dashboard__card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.4rem', fontWeight: '800', color: 'var(--primary-accent)', marginBottom: '0.5rem' }}>
+                      {stats.total}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Total Students
+                    </div>
                   </div>
-                  <div className="dashboard__card" style={{ padding: '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#10b981' }}>{stats.present}</div>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>Present</div>
+
+                  <div className="dashboard__card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#10b981', marginBottom: '0.5rem' }}>
+                      {stats.present}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Present
+                    </div>
                   </div>
-                  <div className="dashboard__card" style={{ padding: '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#f59e0b' }}>{stats.late}</div>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>Late</div>
+
+                  <div className="dashboard__card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#f59e0b', marginBottom: '0.5rem' }}>
+                      {stats.late}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Late
+                    </div>
                   </div>
-                  <div className="dashboard__card" style={{ padding: '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#ef4444' }}>{stats.absent}</div>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>Absent</div>
+
+                  <div className="dashboard__card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.4rem', fontWeight: '800', color: '#ef4444', marginBottom: '0.5rem' }}>
+                      {stats.absent}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Absent
+                    </div>
                   </div>
                 </div>
 
-                <div className="dashboard__card" style={{ padding: '20px', marginBottom: '20px' }}>
-                  <h4 style={{ margin: '0 0 10px 0' }}>Attendance Rate</h4>
+                {/* Attendance Rate Progress */}
+                <div className="dashboard__card" style={{ padding: '2rem', marginBottom: '2.5rem' }}>
+                  <h4 style={{ 
+                    margin: '0 0 1.5rem 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: 'var(--color-text)'
+                  }}>
+                    Attendance Rate
+                  </h4>
                   <div style={{ 
-                    backgroundColor: '#f3f4f6', 
-                    borderRadius: '8px', 
-                    height: '30px',
+                    backgroundColor: 'rgba(49, 156, 181, 0.1)',
+                    borderRadius: '10px', 
+                    height: '40px',
                     overflow: 'hidden',
-                    position: 'relative'
+                    position: 'relative',
+                    border: '1px solid var(--color-border)'
                   }}>
                     <div style={{
                       backgroundColor: attendancePercentage >= 75 ? '#10b981' : attendancePercentage >= 50 ? '#f59e0b' : '#ef4444',
                       height: '100%',
                       width: `${attendancePercentage}%`,
-                      transition: 'width 0.3s',
+                      transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: 'white',
-                      fontWeight: 'bold'
+                      fontWeight: '700',
+                      fontSize: '0.95rem'
                     }}>
                       {attendancePercentage}%
                     </div>
@@ -195,57 +287,92 @@ function FacultyAttendanceReports() {
                 </div>
 
                 {/* Attendance Table */}
-                <div className="dashboard__card" style={{ padding: '20px' }}>
-                  <h4 style={{ marginTop: 0 }}>Student List</h4>
-                  {loadingAttendance && <p>Loading attendance data...</p>}
+                <div className="dashboard__card" style={{ padding: '2rem' }}>
+                  <h4 style={{ 
+                    margin: '0 0 1.5rem 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: 'var(--color-text)'
+                  }}>
+                    Student Attendance
+                  </h4>
+
+                  {loadingAttendance && (
+                    <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '2rem' }}>
+                      ⏳ Loading attendance data...
+                    </p>
+                  )}
+
                   {!loadingAttendance && attendanceData.length === 0 && (
-                    <p style={{ color: '#999', textAlign: 'center', padding: '20px' }}>
+                    <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '2rem' }}>
                       No attendance records found for this session
                     </p>
                   )}
+
                   {!loadingAttendance && attendanceData.length > 0 && (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Student Name</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Roll No</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Status</th>
-                          <th style={{ padding: '10px', textAlign: 'left' }}>Marked At</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {attendanceData.map((record, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                            <td style={{ padding: '12px' }}>{record.student_name || record.studentName || 'N/A'}</td>
-                            <td style={{ padding: '12px' }}>{record.student_roll_no || record.studentRollNo || 'N/A'}</td>
-                            <td style={{ padding: '12px' }}>
-                              <span style={{
-                                padding: '4px 12px',
-                                borderRadius: '12px',
-                                fontSize: '0.85em',
-                                fontWeight: '500',
-                                backgroundColor: 
-                                  record.status === 'present' ? '#d1fae5' : 
-                                  record.status === 'late' ? '#fed7aa' : '#fee2e2',
-                                color: 
-                                  record.status === 'present' ? '#065f46' : 
-                                  record.status === 'late' ? '#92400e' : '#991b1b'
-                              }}>
-                                {record.status || 'N/A'}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px', fontSize: '0.9em', color: '#666' }}>
-                              {record.marked_at ? new Date(record.marked_at).toLocaleString() : 'N/A'}
-                            </td>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
+                            <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '700', color: 'var(--color-text)' }}>
+                              Student Name
+                            </th>
+                            <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '700', color: 'var(--color-text)' }}>
+                              Roll No
+                            </th>
+                            <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '700', color: 'var(--color-text)' }}>
+                              Status
+                            </th>
+                            <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '700', color: 'var(--color-text)' }}>
+                              Marked At
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {attendanceData.map((record, index) => (
+                            <tr key={index} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                              <td style={{ padding: '1rem', color: 'var(--color-text)' }}>
+                                {record.student_name || record.studentName || 'N/A'}
+                              </td>
+                              <td style={{ padding: '1rem', color: 'var(--color-text-secondary)' }}>
+                                {record.student_roll_no || record.studentRollNo || 'N/A'}
+                              </td>
+                              <td style={{ padding: '1rem' }}>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem',
+                                  padding: '0.4rem 0.9rem',
+                                  borderRadius: '20px',
+                                  fontSize: '0.85em',
+                                  fontWeight: '600',
+                                  backgroundColor: 
+                                    record.status === 'present' ? 'rgba(16, 185, 129, 0.15)' : 
+                                    record.status === 'late' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                  color: 
+                                    record.status === 'present' ? '#10b981' : 
+                                    record.status === 'late' ? '#f59e0b' : '#ef4444',
+                                  border: '1px solid currentColor'
+                                }}>
+                                  <span style={{ fontSize: '1.1em' }}>
+                                    {record.status === 'present' ? '✓' : record.status === 'late' ? '⏱' : '✕'}
+                                  </span>
+                                  {record.status || 'N/A'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '1rem', fontSize: '0.9em', color: 'var(--color-text-secondary)' }}>
+                                {record.marked_at ? new Date(record.marked_at).toLocaleString() : 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </>
             )}
-          </div>
+          </section>
         </div>
       </main>
     </div>

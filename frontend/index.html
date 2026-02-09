@@ -11,6 +11,11 @@
     <title>QR-Based Attendance Tracking System</title>
   </head>
   <body>
+    <script>
+      // Apply dark theme immediately to prevent flash
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

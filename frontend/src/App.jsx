@@ -7,9 +7,9 @@ import "./App.css";
 
 function App() {
   useEffect(() => {
-    // Initialize theme on app load - Default to light
+    // Initialize theme on app load - Default to dark
     const savedTheme = localStorage.getItem("theme");
-    const isDark = savedTheme ? savedTheme === "dark" : false;
+    const isDark = savedTheme ? savedTheme === "dark" : true;
     
     const root = document.documentElement;
     if (isDark) {

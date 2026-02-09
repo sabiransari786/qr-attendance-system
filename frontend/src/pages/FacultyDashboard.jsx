@@ -89,9 +89,9 @@ function FacultyDashboard() {
     <div className="dashboard">
       <header className="dashboard__header">
         <div>
-          <h1 className="dashboard__title">Faculty Dashboard</h1>
+          <h1 className="dashboard__title">👨‍🏫 Faculty Dashboard</h1>
           <p className="dashboard__subtitle">
-            Welcome, {user?.name}! Manage classes, generate sessions, and monitor attendance reports.
+            Welcome back, <strong>{user?.name}</strong>! Manage classes, generate QR codes, and track attendance.
           </p>
         </div>
         <div className="dashboard__buttons">
@@ -100,7 +100,7 @@ function FacultyDashboard() {
             type="button"
             onClick={handleViewProfile}
           >
-            My Profile
+            👤 My Profile
           </button>
           <button
             className="dashboard__button dashboard__button--secondary"
@@ -113,59 +113,111 @@ function FacultyDashboard() {
       </header>
 
       <main className="dashboard__grid" aria-label="Faculty overview">
+        {/* Generate QR Code Card */}
         <section 
           className="dashboard__card dashboard__card--clickable" 
           onClick={handleGenerateQR}
           role="button"
           tabIndex={0}
           onKeyPress={(e) => e.key === 'Enter' && handleGenerateQR()}
+          style={{ cursor: 'pointer' }}
         >
-          <h2 className="dashboard__card-title">🎯 Generate QR Code</h2>
-          <p className="dashboard__card-text">Create QR codes for attendance marking with location and time settings.</p>
-          <button className="dashboard__card-action">Open QR Generator →</button>
+          <div style={{ 
+            fontSize: '2.5rem', 
+            marginBottom: '1rem',
+            opacity: 0.9
+          }}>
+            🎯
+          </div>
+          <h2 className="dashboard__card-title">Generate QR Code</h2>
+          <p className="dashboard__card-text">
+            Create unique QR codes for your class sessions to track attendance efficiently.
+          </p>
+          <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
+            Generate QR Code →
+          </button>
         </section>
 
+        {/* Class Sessions Card */}
         <section 
           className="dashboard__card dashboard__card--clickable"
           onClick={handleViewSessions}
           role="button"
           tabIndex={0}
           onKeyPress={(e) => e.key === 'Enter' && handleViewSessions()}
+          style={{ cursor: 'pointer' }}
         >
-          <h2 className="dashboard__card-title">📚 Class Sessions</h2>
+          <div style={{ 
+            fontSize: '2.5rem', 
+            marginBottom: '1rem',
+            opacity: 0.9
+          }}>
+            📚
+          </div>
+          <h2 className="dashboard__card-title">Class Sessions</h2>
           {loading ? (
-            <p className="dashboard__card-text">Loading sessions...</p>
+            <p className="dashboard__card-text" style={{ color: 'var(--color-text-secondary)' }}>
+              ⏳ Loading sessions...
+            </p>
           ) : (
             <>
               <p className="dashboard__card-text">
-                <strong>{stats.activeSessions}</strong> active sessions • <strong>{stats.totalSessions}</strong> total
+                <strong style={{ color: 'var(--primary-accent)', fontSize: '1.1em' }}>
+                  {stats.activeSessions}
+                </strong>
+                <span style={{ color: 'var(--color-text-secondary)' }}>
+                  {' '}active sessions • {' '}
+                </span>
+                <strong style={{ color: 'var(--primary-accent)', fontSize: '1.1em' }}>
+                  {stats.totalSessions}
+                </strong>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{' '}total</span>
               </p>
               {sessions.length > 0 && (
-                <div style={{ marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
-                  Latest: {sessions[0]?.subject}
+                <div style={{ marginTop: '0.8rem', fontSize: '0.9em', color: 'var(--color-text-secondary)' }}>
+                  Latest: <strong>{sessions[0]?.subject}</strong>
                 </div>
               )}
             </>
           )}
-          <button className="dashboard__card-action">View Sessions →</button>
+          <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
+            View Sessions →
+          </button>
         </section>
 
+        {/* Attendance Reports Card */}
         <section 
           className="dashboard__card dashboard__card--clickable"
           onClick={handleViewReports}
           role="button"
           tabIndex={0}
           onKeyPress={(e) => e.key === 'Enter' && handleViewReports()}
+          style={{ cursor: 'pointer' }}
         >
-          <h2 className="dashboard__card-title">📊 Attendance Reports</h2>
+          <div style={{ 
+            fontSize: '2.5rem', 
+            marginBottom: '1rem',
+            opacity: 0.9
+          }}>
+            📊
+          </div>
+          <h2 className="dashboard__card-title">Attendance Reports</h2>
           {loading ? (
-            <p className="dashboard__card-text">Loading reports...</p>
+            <p className="dashboard__card-text" style={{ color: 'var(--color-text-secondary)' }}>
+              ⏳ Loading reports...
+            </p>
           ) : (
             <p className="dashboard__card-text">
-              Track attendance across <strong>{stats.totalSessions}</strong> sessions
+              Analyze attendance data across{' '}
+              <strong style={{ color: 'var(--primary-accent)' }}>
+                {stats.totalSessions}
+              </strong>
+              {' '}sessions
             </p>
           )}
-          <button className="dashboard__card-action">View Reports →</button>
+          <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
+            View Reports →
+          </button>
         </section>
       </main>
     </div>

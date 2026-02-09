@@ -1,9 +1,10 @@
 .dashboard {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
+  padding: 3rem 2rem;
   color: var(--color-text);
   background-color: var(--color-bg);
+  min-height: 100vh;
 }
 
 .dashboard__header {
@@ -11,97 +12,157 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 2rem;
+  margin-bottom: 3.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .dashboard__buttons {
   display: flex;
-  gap: 1rem;
+  gap: 1.2rem;
   flex-wrap: wrap;
 }
 
 .dashboard__title {
-  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
-  margin: 0 0 0.5rem;
-  font-weight: 700;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  margin: 0 0 0.75rem;
+  font-weight: 800;
   color: var(--color-text);
+  letter-spacing: -0.5px;
 }
 
 .dashboard__subtitle {
   margin: 0;
   color: var(--color-text-secondary);
   max-width: 620px;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .dashboard__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
 }
 
 .dashboard__card {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
-  border-radius: 16px;
-  padding: 1.5rem;
-  min-height: 150px;
-  box-shadow: 0 10px 30px rgba(26, 34, 57, 0.08);
+  border-radius: 12px;
+  padding: 2rem;
+  min-height: 180px;
+  box-shadow: 0 4px 20px rgba(49, 156, 181, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard__card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dashboard__card:hover {
+  border-color: var(--primary-accent);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.15);
+  transform: translateY(-4px);
+}
+
+.dashboard__card:hover::before {
+  opacity: 1;
+}
+
+.dashboard__card--clickable {
+  cursor: pointer;
 }
 
 .dashboard__card--disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   border-style: dashed;
 }
 
 .dashboard__card-title {
-  margin: 0 0 0.75rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  margin: 0 0 1rem;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--color-text);
+  letter-spacing: -0.3px;
 }
 
 .dashboard__card-text {
-  margin: 0;
+  margin: 0 0 1rem;
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.dashboard__card-action {
+  margin-top: auto;
+  align-self: flex-start;
+  font-size: 0.9rem;
+  color: var(--primary-accent);
+  font-weight: 600;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.dashboard__card:hover .dashboard__card-action {
+  opacity: 1;
+  transform: translateX(4px);
 }
 
 .dashboard__button {
   border: none;
   border-radius: 8px;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 1.75rem;
   background: var(--color-primary);
   color: #ffffff;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
 }
 
 .dashboard__button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(49, 156, 181, 0.3);
+  box-shadow: 0 8px 24px rgba(49, 156, 181, 0.3);
+}
+
+.dashboard__button:active {
+  transform: translateY(0);
 }
 
 .dashboard__button--primary {
-  background: var(--primary-accent);
+  background: linear-gradient(135deg, var(--primary-accent) 0%, #2aa5a8 100%);
   color: var(--color-white);
 }
 
 .dashboard__button--primary:hover {
-  background: var(--light-accent);
-  color: var(--color-black);
+  box-shadow: 0 8px 24px rgba(49, 156, 181, 0.4);
 }
 
 .dashboard__button--secondary {
   background: var(--color-surface);
   color: var(--color-text);
-  border: 1px solid var(--border-soft);
+  border: 1.5px solid var(--color-border);
 }
 
 .dashboard__button--secondary:hover {
   background: var(--card-bg);
   border-color: var(--primary-accent);
+  color: var(--primary-accent);
 }
 
 @media (max-width: 640px) {

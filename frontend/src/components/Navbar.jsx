@@ -11,9 +11,9 @@ function Navbar() {
   const { isAuthenticated, user, logout: logoutFromContext, token } = authContext || {};
 
   useEffect(() => {
-    // Check localStorage or default to light theme
+    // Check localStorage or default to dark theme
     const savedTheme = localStorage.getItem("theme");
-    const isDark = savedTheme ? savedTheme === "dark" : false;
+    const isDark = savedTheme ? savedTheme === "dark" : true; // Default to dark mode
     
     setIsDarkMode(isDark);
     applyTheme(isDark);

@@ -65,76 +65,105 @@ function FacultySessions() {
     <div className="dashboard">
       <header className="dashboard__header">
         <div>
-          <h1 className="dashboard__title">My Class Sessions</h1>
-          <p className="dashboard__subtitle">View and manage all your class sessions</p>
+          <h1 className="dashboard__title">📚 My Class Sessions</h1>
+          <p className="dashboard__subtitle">Manage and monitor all your active class sessions</p>
         </div>
         <button
           className="dashboard__button dashboard__button--secondary"
           onClick={handleBack}
         >
-          ← Back to Dashboard
+          ← Back
         </button>
       </header>
 
-      <main style={{ padding: '20px' }}>
-        {loading && <p>Loading sessions...</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        
+      <main>
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ fontSize: '1.1rem', color: 'var(--color-text-secondary)' }}>⏳ Loading sessions...</p>
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            padding: '1.5rem',
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            border: '1px solid #ff6b6b',
+            borderRadius: '10px',
+            color: '#ff6b6b',
+            marginBottom: '2rem'
+          }}>
+            ❌ {error}
+          </div>
+        )}
+
         {!loading && !error && sessions.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <h3>No sessions found</h3>
-            <p>You haven't created any sessions yet.</p>
+          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>No sessions found</h3>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>You haven't created any sessions yet.</p>
+            <button
+              className="dashboard__button dashboard__button--primary"
+              onClick={handleBack}
+            >
+              Return to Dashboard
+            </button>
           </div>
         )}
 
         {!loading && !error && sessions.length > 0 && (
-          <div style={{ display: 'grid', gap: '20px' }}>
+          <div className="dashboard__grid">
             {sessions.map((session) => (
-              <div 
-                key={session.id} 
-                className="dashboard__card"
-                style={{ padding: '20px' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2em' }}>
-                      {session.subject}
-                    </h3>
-                    <p style={{ margin: '5px 0', color: '#666' }}>
-                      📍 {session.location}
+              <div key={session.id} className="dashboard__card">
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ 
+                    margin: '0 0 0.75rem 0', 
+                    fontSize: '1.3rem',
+                    fontWeight: '700',
+                    color: 'var(--color-text)'
+                  }}>
+                    {session.subject}
+                  </h3>
+
+                  <div style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
+                    <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
+                      📍 <strong>{session.location}</strong>
                     </p>
-                    <p style={{ margin: '5px 0', color: '#666' }}>
+                    <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
                       🕐 {formatDate(session.startTime)}
                     </p>
-                    <div style={{ marginTop: '10px' }}>
-                      <span 
-                        style={{
-                          padding: '4px 12px',
-                          borderRadius: '12px',
-                          fontSize: '0.85em',
-                          fontWeight: '500',
-                          backgroundColor: session.status === 'active' ? '#d4edda' : '#f8d7da',
-                          color: session.status === 'active' ? '#155724' : '#721c24'
-                        }}
-                      >
-                        {session.status === 'active' ? '🟢 Active' : '🔴 Closed'}
-                      </span>
-                    </div>
                   </div>
-                  <div>
-                    <button
-                      className="dashboard__button dashboard__button--primary"
-                      onClick={() => handleGenerateQR(session.id)}
-                      disabled={session.status !== 'active'}
-                      style={{
-                        opacity: session.status !== 'active' ? 0.5 : 1,
-                        cursor: session.status !== 'active' ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      Generate QR
-                    </button>
+
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '1rem' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.4rem 1rem',
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      backgroundColor: session.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: session.status === 'active' ? '#10b981' : '#ef4444',
+                      border: `1px solid ${session.status === 'active' ? '#10b981' : '#ef4444'}`
+                    }}>
+                      <span style={{ fontSize: '1.1em' }}>{session.status === 'active' ? '🟢' : '🔴'}</span>
+                      {session.status === 'active' ? 'Active' : 'Closed'}
+                    </span>
                   </div>
                 </div>
+
+                <button
+                  className="dashboard__button dashboard__button--primary"
+                  onClick={() => handleGenerateQR(session.id)}
+                  disabled={session.status !== 'active'}
+                  style={{
+                    opacity: session.status !== 'active' ? 0.5 : 1,
+                    cursor: session.status !== 'active' ? 'not-allowed' : 'pointer',
+                    marginTop: '1.5rem',
+                    width: '100%'
+                  }}
+                >
+                  Generate QR →
+                </button>
               </div>
             ))}
           </div>
