@@ -1,16 +1,22 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../utils/constants';
 import '../styles/dashboard.css';
 
 function FacultyAttendanceReports() {
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const token = authContext?.token;
+  const user = authContext?.user;
 
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [attendanceData, setAttendanceData] = useState([]);
+  const [exportMonth, setExportMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [loading, setLoading] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [error, setError] = useState(null);
@@ -19,7 +25,7 @@ function FacultyAttendanceReports() {
     const fetchSessions = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5001/api/session', {
+        const response = await fetch(`${API_BASE_URL}/session`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -27,7 +33,9 @@ function FacultyAttendanceReports() {
 
         if (response.ok) {
           const data = await response.json();
-          setSessions(data.data || []);
+          const allSessions = data.data || [];
+          const facultySessions = allSessions.filter(s => s.facultyId === user?.id);
+          setSessions(facultySessions);
         }
       } catch (err) {
         console.error('Error fetching sessions:', err);
@@ -40,12 +48,12 @@ function FacultyAttendanceReports() {
     if (token) {
       fetchSessions();
     }
-  }, [token]);
+  }, [token, user?.id]);
 
   const fetchAttendance = async (sessionId) => {
     try {
       setLoadingAttendance(true);
-      const response = await fetch(`http://localhost:5001/api/attendance/session/${sessionId}`, {
+      const response = await fetch(`${API_BASE_URL}/attendance/session/${sessionId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -87,6 +95,115 @@ function FacultyAttendanceReports() {
 
   const stats = calculateStats();
   const attendancePercentage = stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(1) : 0;
+
+  const getMonthKey = (dateValue) => {
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const filteredAttendance = exportMonth
+    ? attendanceData.filter(a => getMonthKey(a.marked_at) === exportMonth)
+    : attendanceData;
+
+  const downloadFile = (content, filename, mimeType) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToCsv = () => {
+    if (!selectedSession) {
+      return;
+    }
+
+    const rows = filteredAttendance.map((record) => [
+      record.student_name || '',
+      record.student_roll_no || '',
+      record.student_email || '',
+      record.status || '',
+      record.marked_at ? new Date(record.marked_at).toLocaleString() : ''
+    ]);
+
+    const headers = ['Student Name', 'Roll No', 'Email', 'Status', 'Marked At'];
+    const escapeValue = (value) => {
+      const text = String(value ?? '');
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const csv = [headers.map(escapeValue).join(','), ...rows.map(r => r.map(escapeValue).join(','))].join('\n');
+    const monthSuffix = exportMonth ? exportMonth : 'all';
+    const filename = `attendance_${selectedSession.subject}_${monthSuffix}.csv`;
+    downloadFile(csv, filename, 'text/csv;charset=utf-8;');
+  };
+
+  const exportToPdf = () => {
+    if (!selectedSession) {
+      return;
+    }
+
+    const monthLabel = exportMonth ? exportMonth : 'All Months';
+    const rowsHtml = filteredAttendance.map((record) => (
+      `<tr>
+        <td>${record.student_name || ''}</td>
+        <td>${record.student_roll_no || ''}</td>
+        <td>${record.student_email || ''}</td>
+        <td>${record.status || ''}</td>
+        <td>${record.marked_at ? new Date(record.marked_at).toLocaleString() : ''}</td>
+      </tr>`
+    )).join('');
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Attendance Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; }
+            h1 { margin: 0 0 8px 0; }
+            h2 { margin: 0 0 16px 0; font-weight: normal; color: #444; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+            th { background: #f3f4f6; }
+          </style>
+        </head>
+        <body>
+          <h1>Attendance Report</h1>
+          <h2>${selectedSession.subject} • ${monthLabel}</h2>
+          <div>Location: ${selectedSession.location || 'N/A'}</div>
+          <div>Date: ${selectedSession.startTime ? new Date(selectedSession.startTime).toLocaleDateString() : 'N/A'}</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Roll No</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Marked At</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml || '<tr><td colspan="5">No records found</td></tr>'}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 400);
+  };
 
   return (
     <div className="dashboard">
@@ -210,6 +327,35 @@ function FacultyAttendanceReports() {
                   }}>
                     📍 {selectedSession.location} • 🕐 {new Date(selectedSession.startTime).toLocaleDateString()}
                   </p>
+                </div>
+
+                {/* Export Controls */}
+                <div className="dashboard__card" style={{ padding: '1.5rem', marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-text)' }}>
+                        Export Monthly Report
+                      </h4>
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+                        Select a month and export attendance to PDF or Excel (CSV).
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', alignItems: 'center' }}>
+                      <input
+                        type="month"
+                        value={exportMonth}
+                        onChange={(e) => setExportMonth(e.target.value)}
+                        className="form-input"
+                        style={{ minWidth: '160px' }}
+                      />
+                      <button className="dashboard__button dashboard__button--secondary" onClick={exportToPdf}>
+                        Export PDF
+                      </button>
+                      <button className="dashboard__button dashboard__button--primary" onClick={exportToCsv}>
+                        Export Excel
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Stats Cards */}

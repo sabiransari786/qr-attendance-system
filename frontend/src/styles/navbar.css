@@ -6,12 +6,6 @@
   backdrop-filter: blur(20px);
   box-shadow: 0 4px 20px rgba(49, 156, 181, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  z-index: 1000;
 }
 
 .navbar__inner {

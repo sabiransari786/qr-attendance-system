@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../utils/constants';
 import '../styles/dashboard.css';
 
 function FacultySessions() {
@@ -12,12 +13,21 @@ function FacultySessions() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState(null);
+  const [newSession, setNewSession] = useState({
+    subject: '',
+    location: '',
+    startTime: '',
+    duration: 60
+  });
 
   useEffect(() => {
     const fetchSessions = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5001/api/session', {
+        const response = await fetch(`${API_BASE_URL}/session`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -25,7 +35,9 @@ function FacultySessions() {
 
         if (response.ok) {
           const data = await response.json();
-          setSessions(data.data || []);
+          const allSessions = data.data || [];
+          const facultySessions = allSessions.filter(s => s.facultyId === user?.id);
+          setSessions(facultySessions);
         } else {
           setError('Failed to fetch sessions');
         }
@@ -40,7 +52,7 @@ function FacultySessions() {
     if (token) {
       fetchSessions();
     }
-  }, [token]);
+  }, [token, user?.id]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -55,6 +67,54 @@ function FacultySessions() {
 
   const handleGenerateQR = (sessionId) => {
     navigate(`/faculty/qr-generation?sessionId=${sessionId}`);
+  };
+
+  const handleOpenCreate = () => {
+    const now = new Date();
+    const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setNewSession({
+      subject: '',
+      location: '',
+      startTime: localIso,
+      duration: 60
+    });
+    setCreateError(null);
+    setShowCreateModal(true);
+  };
+
+  const handleCreateSession = async (e) => {
+    e.preventDefault();
+    setCreateLoading(true);
+    setCreateError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          subject: newSession.subject.trim(),
+          location: newSession.location.trim(),
+          startTime: newSession.startTime,
+          duration: parseInt(newSession.duration)
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create session');
+      }
+
+      const createdSession = data.data;
+      setSessions((prev) => [createdSession, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      setCreateError(err.message || 'Failed to create session');
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -111,6 +171,14 @@ function FacultySessions() {
 
         {!loading && !error && sessions.length > 0 && (
           <div className="dashboard__grid">
+            <div className="dashboard__card dashboard__card--clickable" onClick={handleOpenCreate} role="button" tabIndex={0} onKeyPress={(e) => e.key === 'Enter' && handleOpenCreate()} style={{ cursor: 'pointer', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}>➕</div>
+              <h3 className="dashboard__card-title">Add New Session</h3>
+              <p className="dashboard__card-text">Create a new class session with subject, location, and time.</p>
+              <button className="dashboard__card-action" style={{ marginTop: '1.2rem' }}>
+                Create Session →
+              </button>
+            </div>
             {sessions.map((session) => (
               <div key={session.id} className="dashboard__card">
                 <div style={{ flex: 1 }}>
@@ -169,6 +237,78 @@ function FacultySessions() {
           </div>
         )}
       </main>
+
+      {showCreateModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '12px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '520px',
+            border: '1px solid var(--color-border)'
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0' }}>Create New Session</h2>
+            <form onSubmit={handleCreateSession}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Subject"
+                  value={newSession.subject}
+                  onChange={(e) => setNewSession((prev) => ({ ...prev, subject: e.target.value }))}
+                  required
+                />
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Location"
+                  value={newSession.location}
+                  onChange={(e) => setNewSession((prev) => ({ ...prev, location: e.target.value }))}
+                  required
+                />
+                <input
+                  type="datetime-local"
+                  className="form-input"
+                  value={newSession.startTime}
+                  onChange={(e) => setNewSession((prev) => ({ ...prev, startTime: e.target.value }))}
+                  required
+                />
+                <input
+                  type="number"
+                  className="form-input"
+                  min="1"
+                  max="240"
+                  placeholder="Duration (minutes)"
+                  value={newSession.duration}
+                  onChange={(e) => setNewSession((prev) => ({ ...prev, duration: e.target.value }))}
+                  required
+                />
+                {createError && (
+                  <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{createError}</div>
+                )}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                <button type="button" className="dashboard__button dashboard__button--secondary" onClick={() => setShowCreateModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="dashboard__button dashboard__button--primary" disabled={createLoading}>
+                  {createLoading ? 'Creating...' : 'Create Session'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

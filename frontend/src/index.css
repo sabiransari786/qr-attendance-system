@@ -30,6 +30,7 @@
   /* Common Colors */
   --color-bg: #03181F;
   --color-surface: rgba(3, 24, 31, 0.8);
+    --color-bg-secondary: rgba(49, 156, 181, 0.08);
   --color-text: #FFFFFF;
   --color-text-secondary: #9CA3AF;
   --color-primary: #319CB5;
@@ -65,6 +66,7 @@
   
   --color-bg: #F5F8FA;
   --color-surface: rgba(255, 255, 255, 0.92);
+    --color-bg-secondary: rgba(120, 158, 164, 0.08);
   --color-text: #3D4A51;
   --color-text-secondary: #6B8B96;
   --color-primary: #789EA4;

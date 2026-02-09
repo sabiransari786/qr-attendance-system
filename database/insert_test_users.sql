@@ -7,7 +7,7 @@ VALUES (
   'Test Student', 
   'student@demo.com', 
   '1234567890', 
-  '$2b$10$rZ5kJzYvH5c9qKj6Z8KZ8OeHZqHZqHZqHZqHZqHZqHZqHZqHZqHZq', 
+  '$2b$10$3E9SaEawY1oo/dZs66Sy/eQEDG384OU4Q2PXKcpS9aht3c3p6fx0S', 
   'student', 
   'STU001', 
   TRUE
@@ -19,7 +19,7 @@ VALUES (
   'Test Faculty', 
   'faculty@demo.com', 
   '1234567891', 
-  '$2b$10$rZ5kJzYvH5c9qKj6Z8KZ8OeHZqHZqHZqHZqHZqHZqHZqHZqHZqHZq', 
+  '$2b$10$3E9SaEawY1oo/dZs66Sy/eQEDG384OU4Q2PXKcpS9aht3c3p6fx0S', 
   'faculty', 
   'FAC001', 
   TRUE
@@ -31,7 +31,7 @@ VALUES (
   'Test Admin', 
   'admin@demo.com', 
   '1234567892', 
-  '$2b$10$rZ5kJzYvH5c9qKj6Z8KZ8OeHZqHZqHZqHZqHZqHZqHZqHZqHZqHZq', 
+  '$2b$10$3E9SaEawY1oo/dZs66Sy/eQEDG384OU4Q2PXKcpS9aht3c3p6fx0S', 
   'admin', 
   TRUE
 ) ON DUPLICATE KEY UPDATE name=name;

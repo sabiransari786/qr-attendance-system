@@ -13,6 +13,7 @@ import { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { QRCodeCanvas } from 'qrcode.react';
+import { API_BASE_URL } from '../utils/constants';
 import '../styles/qr-generation.css';
 
 function FacultyQRGeneration() {
@@ -31,11 +32,13 @@ function FacultyQRGeneration() {
   const [loadingSessions, setLoadingSessions] = useState(true);
 
   // QR Generation Options
-  const [attendanceValue, setAttendanceValue] = useState(1); // 1, 2, or 3
+  const [attendanceValue, setAttendanceValue] = useState(1); // manual input 1-10
   const [duration, setDuration] = useState(1); // minutes
   const [customDuration, setCustomDuration] = useState('');
   const [radius, setRadius] = useState(20); // meters
+  const [customRadius, setCustomRadius] = useState('');
   const [useCustomDuration, setUseCustomDuration] = useState(false);
+  const [useCustomRadius, setUseCustomRadius] = useState(false);
 
   // Location
   const [locationLoading, setLocationLoading] = useState(false);
@@ -77,7 +80,7 @@ function FacultyQRGeneration() {
     const fetchSessions = async () => {
       try {
         setLoadingSessions(true);
-        const response = await fetch('http://localhost:5001/api/session', {
+        const response = await fetch(`${API_BASE_URL}/session`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -90,12 +93,14 @@ function FacultyQRGeneration() {
           console.error('Error parsing response');
         }
 
-        // Filter active sessions
-        const activeSessions = (data.data || data || []).filter(s => s.status === 'active');
-        setSessions(activeSessions);
+        // Filter active sessions for this faculty
+        const facultySessions = (data.data || data || []).filter(
+          s => s.status === 'active' && s.facultyId === user?.id
+        );
+        setSessions(facultySessions);
 
-        if (activeSessions.length > 0) {
-          setSelectedSessionId(activeSessions[0].id);
+        if (facultySessions.length > 0) {
+          setSelectedSessionId(facultySessions[0].id);
         }
       } catch (error) {
         console.error('Error fetching sessions:', error);
@@ -105,10 +110,10 @@ function FacultyQRGeneration() {
       }
     };
 
-    if (token) {
+    if (token && user?.id) {
       fetchSessions();
     }
-  }, [token]);
+  }, [token, user?.id]);
 
   // =========================================================================
   // COUNTDOWN TIMER LOGIC
@@ -152,7 +157,7 @@ function FacultyQRGeneration() {
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser');
       setLocationLoading(false);
-      return false;
+      return null;
     }
 
     return new Promise((resolve) => {
@@ -161,7 +166,7 @@ function FacultyQRGeneration() {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ latitude, longitude });
           setLocationLoading(false);
-          resolve(true);
+          resolve({ latitude, longitude });
         },
         (error) => {
           let errorMsg = 'Failed to get location';
@@ -172,7 +177,7 @@ function FacultyQRGeneration() {
           }
           setLocationError(errorMsg);
           setLocationLoading(false);
-          resolve(false);
+          resolve(null);
         },
         {
           enableHighAccuracy: true,
@@ -197,14 +202,15 @@ function FacultyQRGeneration() {
     }
 
     // Request location
-    const hasLocation = await requestGeolocation();
-    if (!hasLocation) {
+    const coords = await requestGeolocation();
+    if (!coords) {
       return;
     }
 
     // Prepare data
     setGeneratingQR(true);
     const durationValue = useCustomDuration ? parseInt(customDuration) : duration;
+    const radiusValue = useCustomRadius ? parseInt(customRadius) : radius;
 
     if (!Number.isInteger(durationValue) || durationValue < 1) {
       setGenerateError('Please enter a valid duration');
@@ -212,8 +218,14 @@ function FacultyQRGeneration() {
       return;
     }
 
+    if (!Number.isInteger(radiusValue) || radiusValue < 1) {
+      setGenerateError('Please enter a valid radius');
+      setGeneratingQR(false);
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:5001/api/qr-request/generate', {
+      const response = await fetch(`${API_BASE_URL}/qr-request/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -222,9 +234,9 @@ function FacultyQRGeneration() {
         body: JSON.stringify({
           session_id: selectedSessionId,
           attendance_value: parseInt(attendanceValue),
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          radius_meters: parseInt(radius),
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          radius_meters: radiusValue,
           duration_minutes: durationValue
         })
       });
@@ -267,7 +279,7 @@ function FacultyQRGeneration() {
     // Poll every 2 seconds
     pollingInterval.current = setInterval(async () => {
       try {
-        const response = await fetch(`http://localhost:5001/api/qr-request/${requestId}/attendance-count`);
+        const response = await fetch(`${API_BASE_URL}/qr-request/${requestId}/attendance-count`);
         const data = await response.json();
         setAttendanceCount(data.count || 0);
       } catch (error) {
@@ -338,38 +350,21 @@ function FacultyQRGeneration() {
               )}
             </div>
 
-            {/* Attendance Value */}
+            {/* Attendance Points Section */}
             <div className="config-section">
-              <h2>Attendance Value</h2>
-              <div className="radio-group">
-                <label className="radio-option">
-                  <input 
-                    type="radio" 
-                    value="1" 
-                    checked={attendanceValue === 1}
-                    onChange={(e) => setAttendanceValue(parseInt(e.target.value))}
-                  />
-                  <span className="label-text">Present (P = 1)</span>
-                </label>
-                <label className="radio-option">
-                  <input 
-                    type="radio" 
-                    value="2" 
-                    checked={attendanceValue === 2}
-                    onChange={(e) => setAttendanceValue(parseInt(e.target.value))}
-                  />
-                  <span className="label-text">Double (2P = 2)</span>
-                </label>
-                <label className="radio-option">
-                  <input 
-                    type="radio" 
-                    value="3" 
-                    checked={attendanceValue === 3}
-                    onChange={(e) => setAttendanceValue(parseInt(e.target.value))}
-                  />
-                  <span className="label-text">Triple (3P = 3)</span>
-                </label>
-              </div>
+              <h2>Attendance Points (Present)</h2>
+              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
+                Enter points between 1-10. All marked as Present (P).
+              </p>
+              <input 
+                type="number" 
+                min="1" 
+                max="10"
+                value={attendanceValue}
+                onChange={(e) => setAttendanceValue(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                className="form-input"
+                placeholder="Enter value 1-10"
+              />
             </div>
 
             {/* QR Validity Duration */}
@@ -420,13 +415,34 @@ function FacultyQRGeneration() {
                     <input 
                       type="radio" 
                       value={r}
-                      checked={radius === r}
-                      onChange={() => setRadius(r)}
+                      checked={!useCustomRadius && radius === r}
+                      onChange={() => {
+                        setRadius(r);
+                        setUseCustomRadius(false);
+                      }}
                     />
                     <span className="label-text">{r} Meters</span>
                   </label>
                 ))}
+                <label className="radio-option">
+                  <input 
+                    type="radio" 
+                    checked={useCustomRadius}
+                    onChange={() => setUseCustomRadius(true)}
+                  />
+                  <span className="label-text">Custom</span>
+                </label>
               </div>
+              {useCustomRadius && (
+                <input 
+                  type="number" 
+                  min="1" 
+                  value={customRadius}
+                  onChange={(e) => setCustomRadius(e.target.value)}
+                  placeholder="Enter meters"
+                  className="form-input"
+                />
+              )}
             </div>
 
             {/* Error Message */}
