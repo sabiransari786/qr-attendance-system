@@ -75,14 +75,17 @@ function TeacherProfile() {
             <h2 className="profile__section-title">Statistics</h2>
             <div className="profile__stats">
               <div className="profile__stat">
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.9 }}>📚</div>
                 <p className="profile__stat-value">0</p>
                 <p className="profile__stat-label">Sessions Created</p>
               </div>
               <div className="profile__stat">
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.9 }}>👥</div>
                 <p className="profile__stat-value">0</p>
                 <p className="profile__stat-label">Students Managed</p>
               </div>
               <div className="profile__stat">
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.9 }}>✓</div>
                 <p className="profile__stat-value">0</p>
                 <p className="profile__stat-label">Attendance Records</p>
               </div>

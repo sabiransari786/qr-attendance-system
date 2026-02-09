@@ -25,6 +25,13 @@ function Home() {
 
         <div className="home__features-grid">
           <div className="home__feature-card">
+            <div style={{ 
+              fontSize: '3rem', 
+              marginBottom: '1.5rem',
+              opacity: 0.85
+            }}>
+              📱
+            </div>
             <h3 className="home__feature-title">QR-Based Attendance Marking</h3>
             <p className="home__feature-description">
               Instructors generate unique QR codes for each class session. Students scan the code
@@ -33,6 +40,13 @@ function Home() {
           </div>
 
           <div className="home__feature-card">
+            <div style={{ 
+              fontSize: '3rem', 
+              marginBottom: '1.5rem',
+              opacity: 0.85
+            }}>
+              🔐
+            </div>
             <h3 className="home__feature-title">Role-Based Access</h3>
             <p className="home__feature-description">
               Different access levels for administrators, faculty, and students. Each role has
@@ -41,6 +55,13 @@ function Home() {
           </div>
 
           <div className="home__feature-card">
+            <div style={{ 
+              fontSize: '3rem', 
+              marginBottom: '1.5rem',
+              opacity: 0.85
+            }}>
+              ☁️
+            </div>
             <h3 className="home__feature-title">Secure and Centralized System</h3>
             <p className="home__feature-description">
               All attendance records are stored securely in a centralized database, enabling easy
@@ -58,6 +79,13 @@ function Home() {
         
         <div className="home__about-grid">
           <div className="home__about-card">
+            <div style={{ 
+              fontSize: '2.5rem', 
+              marginBottom: '1.2rem',
+              opacity: 0.9
+            }}>
+              🎯
+            </div>
             <h3 className="home__about-card-title">System Overview</h3>
             <p className="home__about-card-text">
               Our QR-Based Attendance System is a comprehensive solution designed to modernize 
@@ -67,6 +95,13 @@ function Home() {
           </div>
 
           <div className="home__about-card">
+            <div style={{ 
+              fontSize: '2.5rem', 
+              marginBottom: '1.2rem',
+              opacity: 0.9
+            }}>
+              ✨
+            </div>
             <h3 className="home__about-card-title">Key Benefits</h3>
             <p className="home__about-card-text">
               • Reduces attendance marking time from minutes to seconds<br/>
@@ -78,6 +113,13 @@ function Home() {
           </div>
 
           <div className="home__about-card">
+            <div style={{ 
+              fontSize: '2.5rem', 
+              marginBottom: '1.2rem',
+              opacity: 0.9
+            }}>
+              🛡️
+            </div>
             <h3 className="home__about-card-title">Security & Privacy</h3>
             <p className="home__about-card-text">
               All data is encrypted and stored securely on centralized servers. Role-based access 
