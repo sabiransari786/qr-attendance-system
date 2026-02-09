@@ -1,0 +1,251 @@
+/* Teacher/Faculty Profile Styles */
+
+.profile-container {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 2rem 1.5rem;
+  padding-top: 5rem;
+}
+
+.profile__back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 2rem;
+  background: var(--card-bg);
+  color: var(--color-text);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile__back-btn:hover {
+  background: var(--color-surface);
+  border-color: var(--primary-accent);
+  transform: translateX(-4px);
+}
+
+.profile__card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.profile__header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem 2.5rem;
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-accent) 100%);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.profile__avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-accent) 0%, var(--light-accent) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-white);
+  flex-shrink: 0;
+}
+
+.profile__header-info {
+  flex: 1;
+}
+
+.profile__name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-white);
+  letter-spacing: -0.5px;
+}
+
+.profile__role {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.profile__content {
+  padding: 2.5rem;
+}
+
+.profile__section {
+  margin-bottom: 2.5rem;
+}
+
+.profile__section:last-child {
+  margin-bottom: 0;
+}
+
+.profile__section-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--border-soft);
+  padding-bottom: 0.75rem;
+}
+
+.profile__field {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile__field:last-child {
+  margin-bottom: 0;
+}
+
+.profile__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile__value {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.profile__badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--primary-accent);
+  color: var(--color-white);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.profile__status-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.profile__status-badge--active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.profile__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.profile__stat {
+  background: var(--color-bg);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.profile__stat:hover {
+  border-color: var(--primary-accent);
+  transform: translateY(-4px);
+}
+
+.profile__stat-value {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary-accent);
+}
+
+.profile__stat-label {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem 1rem;
+    padding-top: 5rem;
+  }
+
+  .profile__header {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    gap: 1rem;
+  }
+
+  .profile__avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+
+  .profile__name {
+    font-size: 1.5rem;
+  }
+
+  .profile__content {
+    padding: 1.5rem;
+  }
+
+  .profile__stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .profile__card {
+    border-radius: 12px;
+  }
+
+  .profile__header {
+    padding: 1.5rem 1rem;
+  }
+
+  .profile__avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .profile__content {
+    padding: 1.25rem;
+  }
+
+  .profile__section-title {
+    font-size: 1rem;
+  }
+
+  .profile__value {
+    font-size: 0.95rem;
+  }
+}

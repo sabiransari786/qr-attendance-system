@@ -1,8 +1,31 @@
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { logout } from "../services/api";
 import "../styles/dashboard.css";
 
 function FacultyDashboard() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
+
+  const handleLogout = async () => {
+    try {
+      const token = authContext?.token;
+      if (token) {
+        await logout(token);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      authContext?.logout();
+      navigate("/login");
+    }
+  };
+
+  const handleViewProfile = () => {
+    navigate("/faculty-profile");
+  };
 
   return (
     <div className="dashboard">
@@ -10,16 +33,25 @@ function FacultyDashboard() {
         <div>
           <h1 className="dashboard__title">Faculty Dashboard</h1>
           <p className="dashboard__subtitle">
-            Manage classes, generate sessions, and monitor attendance reports.
+            Welcome, {user?.name}! Manage classes, generate sessions, and monitor attendance reports.
           </p>
         </div>
-        <button
-          className="dashboard__button dashboard__button--secondary"
-          type="button"
-          onClick={() => navigate("/login")}
-        >
-          Logout
-        </button>
+        <div className="dashboard__buttons">
+          <button
+            className="dashboard__button dashboard__button--primary"
+            type="button"
+            onClick={handleViewProfile}
+          >
+            My Profile
+          </button>
+          <button
+            className="dashboard__button dashboard__button--secondary"
+            type="button"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <main className="dashboard__grid" aria-label="Faculty overview">

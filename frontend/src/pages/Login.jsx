@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/api";
 import { ROLE_ROUTES } from "../utils/constants";
+import { AuthContext } from "../context/AuthContext";
+import LoginSuccessModal from "../components/LoginSuccessModal";
 import "../styles/auth.css";
 
 /**
@@ -16,14 +18,15 @@ import "../styles/auth.css";
  * - Receive user role from backend
  * - Redirect to role-specific dashboard
  *
- * Does NOT:
- * - Decide user role itself
- * - Access database directly
- * - Handle attendance logic
+ * Supports:
+ * - Students (student role)
+ * - Faculty (faculty role)
+ * - Admins (admin role)
  */
 
 function Login() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
 
   // Form state
   const [formValues, setFormValues] = useState({
@@ -34,6 +37,9 @@ function Login() {
   // UI state
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successUserName, setSuccessUserName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check if form is complete
   const isFormIncomplete = useMemo(() => {
@@ -49,10 +55,18 @@ function Login() {
   };
 
   /**
+   * Toggle password visibility
+   */
+  const handleTogglePassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  /**
    * Handle form submission
    * - Validates form
    * - Sends credentials to backend
    * - Receives role and token
+   * - Stores auth context
    * - Redirects based on role
    */
   const handleSubmit = async (event) => {
@@ -69,46 +83,49 @@ function Login() {
 
     try {
       // Send login request to backend
+      console.log("Attempting login with:", { email: formValues.email.trim(), password: "***" });
       const response = await login({
         email: formValues.email.trim(),
         password: formValues.password,
       });
 
-      // Extract token and role from response
-      const token = response?.data?.token;
-      const user = response?.data?.user;
-      const role = user?.role;
-      const redirectPath = ROLE_ROUTES[role];
+      console.log("Login response:", response);
 
-      // Store authentication data in localStorage
-      if (token) {
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("token", token);
-      }
-      
-      if (user) {
-        localStorage.setItem("userId", user.id);
-        localStorage.setItem("userName", user.name);
-        localStorage.setItem("userEmail", user.email);
-        localStorage.setItem("userRole", user.role);
-        if (user.student_id) {
-          localStorage.setItem("studentId", user.student_id);
-        }
-        if (user.teacher_id) {
-          localStorage.setItem("teacherId", user.teacher_id);
-        }
-      }
+      // Extract token and user data from response
+      // Handle both backend format (response.data) and mock API format (response)
+      const token = response?.data?.token || response?.token;
+      const userData = response?.data?.user || response?.user;
 
-      // Check if role-based redirect path exists
-      if (!redirectPath) {
-        setErrorMessage("Unable to determine user role from server response.");
+      console.log("Extracted token:", token);
+      console.log("Extracted userData:", userData);
+
+      if (!token || !userData) {
+        setErrorMessage("Invalid response from server. Please try again.");
         return;
       }
 
-      // Redirect to role-specific dashboard
-      navigate(redirectPath);
+      // Update authentication context
+      authContext.login(userData, token);
+
+      // Show success modal
+      setSuccessUserName(userData.name);
+      setShowSuccessModal(true);
+      console.log("Modal shown, will redirect in 3000ms");
+
+      // Determine dashboard route based on role
+      const dashboardPath = ROLE_ROUTES[userData.role] || "/";
+
+      // Redirect after modal closes (give extra time for animation)
+      setTimeout(() => {
+        console.log("Redirecting to:", dashboardPath);
+        navigate(dashboardPath);
+      }, 3000);
     } catch (error) {
-      setErrorMessage(error.message || "Login failed. Please try again.");
+      console.error("Login error:", error);
+      const errorMsg = error.data?.message || error.message || "Login failed. Please try again.";
+      console.error("Error message:", errorMsg);
+      setErrorMessage(errorMsg);
+      authContext.setAuthError(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +133,14 @@ function Login() {
 
   return (
     <div className="login__container">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <LoginSuccessModal
+          userName={successUserName}
+          onComplete={() => setShowSuccessModal(false)}
+        />
+      )}
+
       <section className="login__card" aria-labelledby="login-title">
         {/* Card Header */}
         <header className="login__header">
@@ -141,6 +166,7 @@ function Login() {
               value={formValues.email}
               onChange={handleChange}
               autoComplete="email"
+              disabled={isLoading}
               required
             />
           </div>
@@ -150,17 +176,39 @@ function Login() {
             <label className="login__label" htmlFor="password">
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className="login__input"
-              placeholder="Enter your password"
-              value={formValues.password}
-              onChange={handleChange}
-              autoComplete="current-password"
-              required
-            />
+            <div className="login__password-wrapper">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                className="login__input"
+                placeholder="Enter your password"
+                value={formValues.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                disabled={isLoading}
+                required
+              />
+              <button
+                type="button"
+                className="login__password-toggle"
+                onClick={handleTogglePassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex="-1"
+              >
+                {showPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Error Message */}

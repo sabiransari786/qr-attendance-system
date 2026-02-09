@@ -71,7 +71,7 @@
   padding: 0.85rem 1.1rem;
   font-size: 0.95rem;
   font-family: inherit;
-  color: var(--text-light);
+  color: var(--color-text);
   background: var(--input-bg);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
@@ -86,11 +86,65 @@
   outline: none;
   border-color: var(--primary-accent);
   box-shadow: 0 0 0 3px rgba(49, 156, 181, 0.15);
-  background: rgba(4, 13, 16, 0.8);
+  background: var(--input-bg);
+  color: var(--color-text);
 }
 
 .login__input::placeholder {
   color: rgba(156, 163, 175, 0.5);
+}
+
+.login__input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: rgba(4, 13, 16, 0.5);
+  border-color: var(--border-soft);
+}
+
+/* Password Field Wrapper */
+.login__password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login__password-wrapper .login__input {
+  padding-right: 2.8rem;
+  width: 100%;
+}
+
+/* Password Visibility Toggle Button */
+.login__password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  width: 36px;
+  height: 36px;
+}
+
+.login__password-toggle:hover {
+  color: var(--primary-accent);
+}
+
+.login__password-toggle:focus {
+  outline: none;
+}
+
+.login__password-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Messages */
@@ -116,24 +170,26 @@
 
 /* Submit Button */
 .login__button {
-  padding: 0.95rem 1.5rem;
+  padding: 0.6rem 1.5rem;
   font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-light);
-  background: var(--primary-accent);
-  border: none;
+  font-weight: 500;
+  color: var(--color-black);
+  background: var(--color-white);
+  border: 2px solid var(--color-black);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   letter-spacing: 0.3px;
   margin-top: 0.5rem;
-  box-shadow: 0 4px 15px rgba(49, 156, 181, 0.3);
+  box-shadow: none;
+  text-decoration: none;
 }
 
 .login__button:hover:not(:disabled) {
-  background: #2B8CA1;
-  box-shadow: 0 6px 25px rgba(49, 156, 181, 0.5);
-  transform: translateY(-2px);
+  background-color: var(--color-lighter-gray);
+  border-color: var(--color-black);
+  box-shadow: none;
+  transform: none;
 }
 
 .login__button:active:not(:disabled) {
@@ -254,7 +310,7 @@
   padding: 0.85rem 1.1rem;
   font-size: 0.95rem;
   font-family: inherit;
-  color: var(--text-light);
+  color: var(--color-text);
   background: var(--input-bg);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
@@ -269,11 +325,65 @@
   outline: none;
   border-color: var(--primary-accent);
   box-shadow: 0 0 0 3px rgba(49, 156, 181, 0.15);
-  background: rgba(4, 13, 16, 0.8);
+  background: var(--input-bg);
+  color: var(--color-text);
 }
 
 .signup__input::placeholder {
   color: rgba(156, 163, 175, 0.5);
+}
+
+.signup__input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: rgba(4, 13, 16, 0.5);
+  border-color: var(--border-soft);
+}
+
+/* Signup Password Field Wrapper */
+.signup__password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.signup__password-wrapper .signup__input {
+  padding-right: 2.8rem;
+  width: 100%;
+}
+
+/* Signup Password Visibility Toggle Button */
+.signup__password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  width: 36px;
+  height: 36px;
+}
+
+.signup__password-toggle:hover {
+  color: var(--primary-accent);
+}
+
+.signup__password-toggle:focus {
+  outline: none;
+}
+
+.signup__password-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Signup Messages */
@@ -313,30 +423,32 @@
 }
 
 .signup__button--primary {
-  color: var(--text-light);
-  background: var(--primary-accent);
-  box-shadow: 0 4px 15px rgba(49, 156, 181, 0.3);
+  color: var(--color-white);
+  background: var(--color-black);
+  box-shadow: none;
+  border: 2px solid var(--color-black);
 }
 
 .signup__button--primary:hover:not(:disabled) {
-  background: #2B8CA1;
-  box-shadow: 0 6px 25px rgba(49, 156, 181, 0.5);
-  transform: translateY(-2px);
+  background-color: var(--color-dark-gray);
+  border-color: var(--color-dark-gray);
+  box-shadow: none;
+  transform: none;
 }
 
 .signup__button--primary:active:not(:disabled) {
-  transform: translateY(0);
+  transform: none;
 }
 
 .signup__button--secondary {
-  color: var(--text-light);
-  background: rgba(49, 156, 181, 0.15);
-  border: 1px solid var(--border-soft);
+  color: var(--color-black);
+  background: var(--color-white);
+  border: 2px solid var(--color-black);
 }
 
 .signup__button--secondary:hover:not(:disabled) {
-  background: rgba(49, 156, 181, 0.25);
-  border-color: var(--primary-accent);
+  background-color: var(--color-lighter-gray);
+  border-color: var(--color-black);
 }
 
 .signup__button--secondary:active:not(:disabled) {
@@ -471,5 +583,23 @@
   .signup__buttons {
     gap: 0.5rem;
   }
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .login__input,
+[data-theme="light"] .signup__input {
+  color: #3D4A51 !important;
+  background: rgba(240, 245, 250, 0.9) !important;
+}
+
+[data-theme="light"] .login__input:focus,
+[data-theme="light"] .signup__input:focus {
+  color: #3D4A51 !important;
+  background: rgba(240, 245, 250, 0.9) !important;
+}
+
+[data-theme="light"] .login__input::placeholder,
+[data-theme="light"] .signup__input::placeholder {
+  color: rgba(107, 139, 150, 0.5) !important;
 }
 

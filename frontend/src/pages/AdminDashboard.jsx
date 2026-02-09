@@ -1,8 +1,27 @@
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { logout } from "../services/api";
 import "../styles/dashboard.css";
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
+
+  const handleLogout = async () => {
+    try {
+      const token = authContext?.token;
+      if (token) {
+        await logout(token);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      authContext?.logout();
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="dashboard">
@@ -10,13 +29,13 @@ function AdminDashboard() {
         <div>
           <h1 className="dashboard__title">Admin Dashboard</h1>
           <p className="dashboard__subtitle">
-            Oversee platform access, departments, and system-level reporting.
+            Welcome, {user?.name}! Oversee platform access, departments, and system-level reporting.
           </p>
         </div>
         <button
           className="dashboard__button dashboard__button--secondary"
           type="button"
-          onClick={() => navigate("/login")}
+          onClick={handleLogout}
         >
           Logout
         </button>
