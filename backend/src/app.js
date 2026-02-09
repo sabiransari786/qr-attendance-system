@@ -48,6 +48,9 @@ const { connectDatabase } = require('./config/database');
 const authRoutes = require('./routes/auth/auth.routes');
 const sessionRoutes = require('./routes/session/session');
 const attendanceRoutes = require('./routes/attendance/attendance');
+// QR request routes - QR code generation aur validation ke liye
+const qrRequestRoutes = require('./routes/qr-request/qr-request.routes');
+
 
 // ============================================================================
 // STEP 4: Error Handling Middleware Import
@@ -56,7 +59,7 @@ const attendanceRoutes = require('./routes/attendance/attendance');
 // Global error handler middleware import kar rahe hain
 // Ye middleware sab routes ke baad use hota hai - koi bhi error catch karne ke liye
 // middleware/error.middleware.js file mein error handling logic hoga
-const errorHandler = require('./middleware/error.middleware');
+const { errorHandler } = require('./middleware/error.middleware');
 
 // ============================================================================
 // STEP 5: Express App Instance Create Kar Rahe Hain
@@ -153,6 +156,10 @@ app.use('/api/session', sessionRoutes);
 // Attendance routes - attendance mark karne, view karne ke liye
 // Example endpoints: POST /api/attendance, GET /api/attendance, GET /api/attendance/:id
 app.use('/api/attendance', attendanceRoutes);
+// QR request routes - QR code generation aur validation ke liye
+// Example endpoints: POST /api/qr-request/generate, POST /api/qr-request/validate
+app.use('/api/qr-request', qrRequestRoutes);
+
 
 // ============================================================================
 // STEP 10: 404 Handler - Unknown Routes Ke Liye

@@ -325,7 +325,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // Student exist karta hai ya nahi check karo
         // Database query se student verify karo
         const [students] = await pool.query(
-            `SELECT id, name, roll_no, email
+            `SELECT id, name, student_id, email
              FROM users 
              WHERE id = ? AND role = 'student'`,
             [studentId]
@@ -394,7 +394,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
                 a.marked_at,
                 a.created_at,
                 u.name as student_name,
-                u.roll_no as student_roll_no,
+                u.student_id as student_roll_no,
                 u.email as student_email,
                 s.subject,
                 s.location,
@@ -434,7 +434,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
  * ===============
  * 1. Session exist karti hai ya nahi validate karo
  * 2. Session ki saari attendance records fetch karo
- * 3. Student details join karo (name, roll_no, email)
+ * 3. Student details join karo (name, student_id, email)
  * 4. Data ko formatted object mein return karo
  * 
  * @param {number|string} sessionId - Session ka unique ID
@@ -462,7 +462,7 @@ const getAttendanceBySession = async (sessionId) => {
         // STEP 2: Fetch Attendance Records
         // ---------------------------------------------------------------------
         // Session ki saari attendance records fetch karo
-        // Student details bhi join karo - name, roll_no, email
+        // Student details bhi join karo - name, student_id, email
         // ORDER BY marked_at DESC - latest attendance pehle
         const [attendanceRecords] = await pool.query(
             `SELECT 
@@ -473,7 +473,7 @@ const getAttendanceBySession = async (sessionId) => {
                 a.marked_at,
                 a.created_at,
                 u.name as student_name,
-                u.roll_no as student_roll_no,
+                u.student_id as student_roll_no,
                 u.email as student_email
              FROM attendance a
              INNER JOIN users u ON a.student_id = u.id
@@ -716,7 +716,7 @@ const getAttendanceReport = async (sessionId, format = 'json') => {
             `SELECT 
                 u.id as student_id,
                 u.name as student_name,
-                u.roll_no as student_roll_no,
+                u.student_id as student_roll_no,
                 u.email as student_email,
                 COALESCE(a.status, ?) as attendance_status,
                 a.marked_at as attendance_marked_at

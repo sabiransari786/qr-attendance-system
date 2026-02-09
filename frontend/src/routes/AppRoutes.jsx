@@ -9,9 +9,12 @@ import Signup from "../pages/Signup";
 import StudentDashboard from "../pages/StudentDashboard";
 import FacultyDashboard from "../pages/FacultyDashboard";
 import FacultyProfile from "../pages/FacultyProfile";
+import FacultySessions from "../pages/FacultySessions";
+import FacultyAttendanceReports from "../pages/FacultyAttendanceReports";
 import AdminDashboard from "../pages/AdminDashboard";
 import NotFound from "../pages/NotFound";
 import Unauthorized from "../pages/Unauthorized";
+import FacultyQRGeneration from "../pages/FacultyQRGeneration";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -66,6 +69,30 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/faculty/sessions"
+        element={
+          <ProtectedRoute requiredRoles={["faculty"]}>
+            <FacultySessions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/faculty/attendance-reports"
+        element={
+          <ProtectedRoute requiredRoles={["faculty"]}>
+            <FacultyAttendanceReports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/faculty/qr-generation"
+        element={
+          <ProtectedRoute requiredRoles={["faculty"]}>
+            <FacultyQRGeneration />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin-dashboard"
         element={
           <ProtectedRoute requiredRoles={["admin"]}>
@@ -80,5 +107,8 @@ function AppRoutes() {
     </Routes>
   );
 }
+
+export default AppRoutes;
+
 
 export default AppRoutes;

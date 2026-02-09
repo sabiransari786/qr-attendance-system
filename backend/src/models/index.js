@@ -25,6 +25,9 @@ const Attendance = require('./attendance.model');
  * Clean, structured exports:
  *  - Consistent naming
  *  - Easy destructuring in controllers/services
+// Attendance Request model - QR code generation requests ke liye
+const AttendanceRequest = require('./attendance-request.model');
+
  *
  * Usage Example:
  *  const { User, Session, Attendance } = require('../models');
@@ -33,4 +36,9 @@ module.exports = {
   User,
   Session,
   Attendance
+module.exports = {
+  User,
+  Session,
+  Attendance,
+  AttendanceRequest
 };

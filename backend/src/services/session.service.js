@@ -642,7 +642,7 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
                 s.status,
                 s.start_time,
                 s.end_time,
-                s.qr_expiry,
+                s.qr_expiry_time,
                 s.created_at,
                 u.name as faculty_name,
                 u.email as faculty_email
@@ -710,7 +710,7 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
             status: session.status,
             startTime: session.start_time,
             endTime: session.end_time,
-            qrExpiry: session.qr_expiry,
+            qrExpiry: session.qr_expiry_time,
             createdAt: session.created_at,
             faculty: {
                 name: session.faculty_name,

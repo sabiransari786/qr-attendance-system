@@ -177,6 +177,25 @@ const {
 router.post('/', createSession);
 
 /**
+ * GET / - Get All Active Sessions Route
+ * 
+ * Request: GET /api/session
+ * Headers: { Authorization: "Bearer <faculty/admin_token>" }
+ * Query (optional): { facultyId: "456" } - specific faculty ki sessions
+ * 
+ * Flow:
+ * - Faculty/Admin active sessions list dekhna chahte hain
+ * - Route getActiveSessions controller function ko call karta hai
+ * - Controller query params extract karke sessionService.getActiveSessions() call karta hai
+ * - Service database se ACTIVE status wali sessions fetch karta hai
+ * - Service session data format karke return karta hai
+ * - Controller response return karta hai
+ * 
+ * Response: { success: true, data: { sessions: [{ id, subject, location, status, startTime, ... }] } }
+ */
+router.get('/', getActiveSessions);
+
+/**
  * PUT /:sessionId/close - Close Session Route
  * 
  * Request: PUT /api/session/123/close

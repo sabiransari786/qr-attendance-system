@@ -18,6 +18,14 @@ const MOCK_USERS = [
 		password: "faculty123",
 		role: "faculty",
 	},
+	{
+		id: 3,
+		name: "Student User",
+		email: "student@attendance.com",
+		rollNumber: "STU001",
+		password: "student123",
+		role: "student",
+	},
 ];
 
 // Also try to load from localStorage as backup

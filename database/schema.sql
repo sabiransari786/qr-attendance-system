@@ -263,5 +263,33 @@ CREATE TABLE IF NOT EXISTS `course_enrollment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- END OF SCHEMA
+-- ATTENDANCE_REQUEST TABLE - QR code generation requests from faculty
 -- ============================================================================
+CREATE TABLE IF NOT EXISTS `attendance_request` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `request_id` VARCHAR(36) NOT NULL UNIQUE COMMENT 'UUID for QR encoding',
+  `faculty_id` INT NOT NULL COMMENT 'Faculty who generated the QR',
+  `session_id` INT NOT NULL COMMENT 'Session for which QR was generated',
+  `attendance_value` TINYINT NOT NULL COMMENT '1=P, 2=2P, 3=3P',
+  `latitude` DECIMAL(10, 8) NOT NULL COMMENT 'Faculty location latitude',
+  `longitude` DECIMAL(11, 8) NOT NULL COMMENT 'Faculty location longitude',
+  `radius_meters` INT NOT NULL COMMENT 'Allowed location radius (10/20/50 meters)',
+  `expires_at` TIMESTAMP NOT NULL COMMENT 'QR validity expiration time',
+  `status` ENUM('active', 'expired', 'invalidated') DEFAULT 'active' COMMENT 'Status of the QR request',
+  `accepted_count` INT DEFAULT 0 COMMENT 'Number of students who accepted this request',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Request creation time',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
+  
+  -- Foreign keys
+  FOREIGN KEY (`faculty_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`session_id`) REFERENCES `sessions` (`id`) ON DELETE CASCADE,
+  
+  -- Indexes for faster queries
+  INDEX `idx_request_id` (`request_id`),
+  INDEX `idx_faculty_id` (`faculty_id`),
+  INDEX `idx_session_id` (`session_id`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_expires_at` (`expires_at`),
+  INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
