@@ -101,6 +101,52 @@
   border-color: var(--border-soft);
 }
 
+/* Password Field Wrapper */
+.login__password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login__password-wrapper .login__input {
+  padding-right: 2.8rem;
+  width: 100%;
+}
+
+/* Password Visibility Toggle Button */
+.login__password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  width: 36px;
+  height: 36px;
+}
+
+.login__password-toggle:hover {
+  color: var(--primary-accent);
+}
+
+.login__password-toggle:focus {
+  outline: none;
+}
+
+.login__password-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* Messages */
 .login__message {
   margin: 0;
@@ -292,6 +338,52 @@
   cursor: not-allowed;
   background: rgba(4, 13, 16, 0.5);
   border-color: var(--border-soft);
+}
+
+/* Signup Password Field Wrapper */
+.signup__password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.signup__password-wrapper .signup__input {
+  padding-right: 2.8rem;
+  width: 100%;
+}
+
+/* Signup Password Visibility Toggle Button */
+.signup__password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  width: 36px;
+  height: 36px;
+}
+
+.signup__password-toggle:hover {
+  color: var(--primary-accent);
+}
+
+.signup__password-toggle:focus {
+  outline: none;
+}
+
+.signup__password-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Signup Messages */
