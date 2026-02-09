@@ -26,47 +26,101 @@ function Home() {
         <div className="home__features-grid">
           <div className="home__feature-card">
             <div style={{ 
-              fontSize: '3rem', 
+              fontSize: '4rem', 
               marginBottom: '1.5rem',
-              opacity: 0.85
+              opacity: 0.9,
+              animation: 'bounce 2s ease-in-out infinite'
             }}>
               📱
             </div>
             <h3 className="home__feature-title">QR-Based Attendance Marking</h3>
             <p className="home__feature-description">
               Instructors generate unique QR codes for each class session. Students scan the code
-              to instantly mark their attendance with precise timestamps.
+              to instantly mark their attendance with precise timestamps. Fast, accurate, and completely automated.
             </p>
+            <div style={{
+              marginTop: 'auto',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(49, 156, 181, 0.2)'
+            }}>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.5rem 1.25rem',
+                background: 'rgba(49, 156, 181, 0.2)',
+                color: 'var(--primary-accent)',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: '600'
+              }}>
+                ⚡ Real-time
+              </span>
+            </div>
           </div>
 
           <div className="home__feature-card">
             <div style={{ 
-              fontSize: '3rem', 
+              fontSize: '4rem', 
               marginBottom: '1.5rem',
-              opacity: 0.85
+              opacity: 0.9,
+              animation: 'bounce 2s ease-in-out infinite 0.2s'
             }}>
               🔐
             </div>
             <h3 className="home__feature-title">Role-Based Access</h3>
             <p className="home__feature-description">
               Different access levels for administrators, faculty, and students. Each role has
-              dedicated functionality and views tailored to their needs.
+              dedicated functionality and views tailored to their specific needs and permissions.
             </p>
+            <div style={{
+              marginTop: 'auto',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(49, 156, 181, 0.2)'
+            }}>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.5rem 1.25rem',
+                background: 'rgba(49, 156, 181, 0.2)',
+                color: 'var(--primary-accent)',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: '600'
+              }}>
+                🔒 Secure
+              </span>
+            </div>
           </div>
 
           <div className="home__feature-card">
             <div style={{ 
-              fontSize: '3rem', 
+              fontSize: '4rem', 
               marginBottom: '1.5rem',
-              opacity: 0.85
+              opacity: 0.9,
+              animation: 'bounce 2s ease-in-out infinite 0.4s'
             }}>
               ☁️
             </div>
             <h3 className="home__feature-title">Secure and Centralized System</h3>
             <p className="home__feature-description">
               All attendance records are stored securely in a centralized database, enabling easy
-              reporting, auditing, and long-term academic history maintenance.
+              reporting, auditing, and long-term academic history maintenance with complete transparency.
             </p>
+            <div style={{
+              marginTop: 'auto',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(49, 156, 181, 0.2)'
+            }}>
+              <span style={{
+                display: 'inline-block',
+                padding: '0.5rem 1.25rem',
+                background: 'rgba(49, 156, 181, 0.2)',
+                color: 'var(--primary-accent)',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: '600'
+              }}>
+                💾 Reliable
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -80,9 +134,9 @@ function Home() {
         <div className="home__about-grid">
           <div className="home__about-card">
             <div style={{ 
-              fontSize: '2.5rem', 
-              marginBottom: '1.2rem',
-              opacity: 0.9
+              fontSize: '3.5rem', 
+              marginBottom: '1.5rem',
+              opacity: 0.95
             }}>
               🎯
             </div>
@@ -92,13 +146,37 @@ function Home() {
               attendance tracking in educational institutions. It replaces traditional manual 
               roll calls with an automated, accurate, and efficient process using QR code technology.
             </p>
+            <div style={{
+              marginTop: 'auto',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(20, 184, 166, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: '0.5rem'
+              }}>
+                2026+
+              </div>
+              <div style={{
+                fontSize: '0.85rem',
+                color: 'var(--color-text-secondary)',
+                fontWeight: '600'
+              }}>
+                Active since 2026
+              </div>
+            </div>
           </div>
 
           <div className="home__about-card">
             <div style={{ 
-              fontSize: '2.5rem', 
-              marginBottom: '1.2rem',
-              opacity: 0.9
+              fontSize: '3.5rem', 
+              marginBottom: '1.5rem',
+              opacity: 0.95
             }}>
               ✨
             </div>
@@ -110,13 +188,37 @@ function Home() {
               • Generates comprehensive reports and analytics<br/>
               • Improves institutional transparency
             </p>
+            <div style={{
+              marginTop: 'auto',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(20, 184, 166, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: '0.5rem'
+              }}>
+                5+
+              </div>
+              <div style={{
+                fontSize: '0.85rem',
+                color: 'var(--color-text-secondary)',
+                fontWeight: '600'
+              }}>
+                Major benefits
+              </div>
+            </div>
           </div>
 
           <div className="home__about-card">
             <div style={{ 
-              fontSize: '2.5rem', 
-              marginBottom: '1.2rem',
-              opacity: 0.9
+              fontSize: '3.5rem', 
+              marginBottom: '1.5rem',
+              opacity: 0.95
             }}>
               🛡️
             </div>
@@ -126,6 +228,30 @@ function Home() {
               control ensures that only authorized personnel can view sensitive information. The system 
               complies with data protection standards and institutional policies.
             </p>
+            <div style={{
+              marginTop: 'auto',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid rgba(20, 184, 166, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: '0.5rem'
+              }}>
+                100%
+              </div>
+              <div style={{
+                fontSize: '0.85rem',
+                color: 'var(--color-text-secondary)',
+                fontWeight: '600'
+              }}>
+                Encrypted
+              </div>
+            </div>
           </div>
         </div>
       </section>
