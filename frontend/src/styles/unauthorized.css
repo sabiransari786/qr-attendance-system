@@ -6,8 +6,35 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 2rem 1.5rem;
-  background: linear-gradient(135deg, var(--deep-neutral) 0%, var(--primary-dark) 50%, #041820 100%);
+  padding: 7.5rem 1.5rem 2rem;
+  position: relative;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(84, 255, 216, 0.18), transparent 38%),
+    radial-gradient(circle at 88% 22%, rgba(111, 120, 255, 0.2), transparent 42%),
+    radial-gradient(circle at 22% 85%, rgba(255, 122, 122, 0.18), transparent 40%),
+    linear-gradient(135deg, #03181f 0%, #0b1f2e 40%, #1b1f3a 70%, #1f3c47 100%);
+  background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
+  animation: unauthorized-bg-float 18s ease-in-out infinite;
+}
+
+[data-theme="light"] .unauthorized__container {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(156, 214, 255, 0.35), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(196, 228, 255, 0.35), transparent 42%),
+    radial-gradient(circle at 22% 85%, rgba(214, 237, 255, 0.35), transparent 40%),
+    linear-gradient(135deg, #f7fbff 0%, #eef6ff 45%, #e6f1ff 75%, #f3f9ff 100%);
+  background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
+  animation: unauthorized-bg-float 18s ease-in-out infinite;
+}
+
+@keyframes unauthorized-bg-float {
+  0%,
+  100% {
+    background-position: 0% 0%, 100% 0%, 20% 100%, 0 0;
+  }
+  50% {
+    background-position: 20% 10%, 80% 20%, 30% 80%, 0 0;
+  }
 }
 
 /* Card */

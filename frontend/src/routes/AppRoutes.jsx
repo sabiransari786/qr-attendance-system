@@ -6,6 +6,7 @@ import { AuthContext } from "../context/AuthContext";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import ForgotPassword from "../pages/ForgotPassword";
 import StudentDashboard from "../pages/StudentDashboard";
 import FacultyDashboard from "../pages/FacultyDashboard";
 import FacultyProfile from "../pages/FacultyProfile";
@@ -15,6 +16,7 @@ import AdminDashboard from "../pages/AdminDashboard";
 import NotFound from "../pages/NotFound";
 import Unauthorized from "../pages/Unauthorized";
 import FacultyQRGeneration from "../pages/FacultyQRGeneration";
+import StudentProfile from "../pages/StudentProfile";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -42,6 +44,10 @@ function AppRoutes() {
         path="/signup" 
         element={isAuthenticated ? <Navigate to="/" replace /> : <Signup />} 
       />
+      <Route 
+        path="/forgot-password" 
+        element={isAuthenticated ? <Navigate to="/" replace /> : <ForgotPassword />} 
+      />
 
       {/* Protected Routes - Role-based dashboards */}
       <Route
@@ -49,6 +55,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["student"]}>
             <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student-profile"
+        element={
+          <ProtectedRoute requiredRoles={["student"]}>
+            <StudentProfile />
           </ProtectedRoute>
         }
       />

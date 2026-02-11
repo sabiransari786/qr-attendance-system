@@ -53,28 +53,28 @@
 
 /* Light Theme - Coastal Blue-Green Palette */
 [data-theme="light"] {
-  --primary-dark: #EEF3F6;
-  --primary-accent: #789EA4;
-  --light-accent: #9BB7C1;
+  --primary-dark: #F7FAFC;
+  --primary-accent: #5E8EA0;
+  --light-accent: #B8D0D9;
   --deep-neutral: #FFFFFF;
-  --text-light: #3D4A51;
-  --text-muted: #6B8B96;
-  --card-bg: rgba(255, 255, 255, 0.92);
-  --border-soft: rgba(120, 158, 164, 0.18);
-  --input-bg: rgba(240, 245, 250, 0.9);
+  --text-light: #2F3B40;
+  --text-muted: #6C8794;
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --border-soft: rgba(94, 142, 160, 0.16);
+  --input-bg: rgba(248, 251, 253, 0.95);
   
-  --color-bg: #F5F8FA;
-  --color-surface: rgba(255, 255, 255, 0.92);
-  --color-text: #3D4A51;
-  --color-text-secondary: #6B8B96;
-  --color-primary: #789EA4;
-  --color-border: rgba(120, 158, 164, 0.18);
+  --color-bg: #F9FBFD;
+  --color-surface: rgba(255, 255, 255, 0.98);
+  --color-text: #2F3B40;
+  --color-text-secondary: #6C8794;
+  --color-primary: #5E8EA0;
+  --color-border: rgba(94, 142, 160, 0.16);
   --color-white: #FFFFFF;
-  --color-black: #2A3A42;
-  --color-gray: #9BB7C1;
-  --color-lighter-gray: #EEF3F6;
-  --color-dark-gray: #3D4A51;
-  --color-border-gray: #D2DDE6;
+  --color-black: #1F2A30;
+  --color-gray: #9BB1BB;
+  --color-lighter-gray: #F1F6F9;
+  --color-dark-gray: #2F3B40;
+  --color-border-gray: #DEE7EC;
 }
 
 * {

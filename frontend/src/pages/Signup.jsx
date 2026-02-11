@@ -151,6 +151,11 @@ function Signup() {
 
   return (
     <div className="signup__container">
+      <div className="auth__objects" aria-hidden="true">
+        <span className="auth__object auth__object--sphere" />
+        <span className="auth__object auth__object--ring" />
+        <span className="auth__object auth__object--cube" />
+      </div>
       {/* Success Toast */}
       {showSuccessToast && (
         <Toast

@@ -3,6 +3,11 @@ import "../styles/auth.css";
 function NotFound() {
   return (
     <div className="auth">
+      <div className="auth__objects" aria-hidden="true">
+        <span className="auth__orb auth__orb--one" />
+        <span className="auth__orb auth__orb--two" />
+        <span className="auth__orb auth__orb--three" />
+      </div>
       <div className="auth__card">
         <h1 className="auth__title">Page not found</h1>
         <p className="auth__subtitle">

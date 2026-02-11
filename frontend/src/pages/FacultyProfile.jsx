@@ -18,6 +18,11 @@ function TeacherProfile() {
 
   return (
     <div className="profile-container">
+      <div className="profile__objects" aria-hidden="true">
+        <span className="profile__object profile__object--sphere" />
+        <span className="profile__object profile__object--ring" />
+        <span className="profile__object profile__object--cube" />
+      </div>
       <button className="profile__back-btn" onClick={handleBack}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="19" y1="12" x2="5" y2="12"></line>

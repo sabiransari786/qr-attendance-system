@@ -1,7 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { logout } from "../services/api";
 import "../styles/dashboard.css";
 
 function FacultyDashboard() {
@@ -55,24 +54,6 @@ function FacultyDashboard() {
     }
   }, [token]);
 
-  const handleLogout = async () => {
-    try {
-      const token = authContext?.token;
-      if (token) {
-        await logout(token);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      authContext?.logout();
-      navigate("/login");
-    }
-  };
-
-  const handleViewProfile = () => {
-    navigate("/faculty-profile");
-  };
-
   const handleGenerateQR = () => {
     navigate("/faculty/qr-generation");
   };
@@ -87,28 +68,17 @@ function FacultyDashboard() {
 
   return (
     <div className="dashboard">
+      <div className="dashboard__objects" aria-hidden="true">
+        <span className="dashboard__object dashboard__object--sphere" />
+        <span className="dashboard__object dashboard__object--torus" />
+        <span className="dashboard__object dashboard__object--diamond" />
+      </div>
       <header className="dashboard__header">
         <div>
           <h1 className="dashboard__title">👨‍🏫 Faculty Dashboard</h1>
           <p className="dashboard__subtitle">
             Welcome back, <strong>{user?.name}</strong>! Manage classes, generate QR codes, and track attendance.
           </p>
-        </div>
-        <div className="dashboard__buttons">
-          <button
-            className="dashboard__button dashboard__button--primary"
-            type="button"
-            onClick={handleViewProfile}
-          >
-            👤 My Profile
-          </button>
-          <button
-            className="dashboard__button dashboard__button--secondary"
-            type="button"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
         </div>
       </header>
 

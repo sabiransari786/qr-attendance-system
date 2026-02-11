@@ -93,6 +93,16 @@ const sessionRoutes = require('./session/session');
 const attendanceRoutes = require('./attendance/attendance');
 
 // ============================================================================
+// OTP ROUTES IMPORT
+// ============================================================================
+
+// OTP routes import kar rahe hain
+// otp.routes.js file password reset OTP-related endpoints define karti hai
+// Send OTP, verify OTP, reset password jaisi routes is file mein hain
+// Path: './otp/otp.routes' - routes folder se otp subfolder
+const otpRoutes = require('./otp/otp.routes');
+
+// ============================================================================
 // CENTRALIZED EXPORT
 // ============================================================================
 
@@ -122,7 +132,8 @@ const attendanceRoutes = require('./attendance/attendance');
 module.exports = {
   authRoutes,           // Authentication routes - login, logout, getCurrentUser, register
   sessionRoutes,        // Session routes - create, close, get active, get by ID
-  attendanceRoutes      // Attendance routes - mark attendance, get by session/student, reports
+  attendanceRoutes,     // Attendance routes - mark attendance, get by session/student, reports
+  otpRoutes             // OTP routes - send OTP, verify OTP, reset password
 };
 
 // ============================================================================

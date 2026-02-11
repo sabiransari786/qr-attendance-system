@@ -3,15 +3,63 @@ import "../styles/home.css";
 function Home() {
   return (
     <div className="home">
+      <div className="home__objects" aria-hidden="true">
+        <span className="home__object home__object--sphere" />
+        <span className="home__object home__object--torus" />
+        <span className="home__object home__object--diamond" />
+        <span className="home__object home__object--chip" />
+      </div>
       {/* Introduction / Hero Section */}
       <section className="home__hero">
-        <div className="home__hero-content">
-          <h2 className="home__hero-title">Welcome to QR-Based Attendance System</h2>
-          <p className="home__hero-description">
-            A secure and efficient solution for managing student attendance in academic institutions.
-            This system streamlines attendance tracking through QR code scanning, reducing manual errors
-            and providing centralized record management for colleges and schools.
-          </p>
+        <div className="home__hero-inner">
+          <div className="home__hero-content">
+            <span className="home__hero-badge">QR Attendance Platform</span>
+            <h2 className="home__hero-title">Attendance, But Make It Effortless</h2>
+            <p className="home__hero-description">
+              A secure and efficient solution for managing student attendance in academic institutions.
+              This system streamlines attendance tracking through QR code scanning, reducing manual errors
+              and providing centralized record management for colleges and schools.
+            </p>
+            <div className="home__hero-actions">
+              <button className="home__hero-action home__hero-action--primary">Start a Demo</button>
+              <button className="home__hero-action home__hero-action--ghost">View Features</button>
+            </div>
+            <div className="home__hero-metrics">
+              <div>
+                <span className="home__hero-metric">99.9%</span>
+                <span className="home__hero-metric-label">Accuracy</span>
+              </div>
+              <div>
+                <span className="home__hero-metric">45s</span>
+                <span className="home__hero-metric-label">Avg. Check-in</span>
+              </div>
+              <div>
+                <span className="home__hero-metric">15+</span>
+                <span className="home__hero-metric-label">Institutions</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="home__hero-visual" aria-hidden="true">
+            <div className="home__orb home__orb--one" />
+            <div className="home__orb home__orb--two" />
+            <div className="home__orb home__orb--three" />
+            <div className="home__float-card">
+              <div className="home__float-card-header">
+                <span className="home__float-chip">Live Session</span>
+                <span className="home__float-time">08:30 AM</span>
+              </div>
+              <div className="home__float-title">BCA - Data Structures</div>
+              <div className="home__float-subtitle">Room C-204 · QR Active</div>
+              <div className="home__float-bar">
+                <span className="home__float-bar-fill" />
+              </div>
+              <div className="home__float-row">
+                <span>Present</span>
+                <strong>54/60</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -24,232 +72,89 @@ function Home() {
         </div>
 
         <div className="home__features-grid">
-          <div className="home__feature-card">
-            <div style={{ 
-              fontSize: '4rem', 
-              marginBottom: '1.5rem',
-              opacity: 0.9,
-              animation: 'bounce 2s ease-in-out infinite'
-            }}>
-              📱
-            </div>
-            <h3 className="home__feature-title">QR-Based Attendance Marking</h3>
-            <p className="home__feature-description">
-              Instructors generate unique QR codes for each class session. Students scan the code
-              to instantly mark their attendance with precise timestamps. Fast, accurate, and completely automated.
-            </p>
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid rgba(49, 156, 181, 0.2)'
-            }}>
-              <span style={{
-                display: 'inline-block',
-                padding: '0.5rem 1.25rem',
-                background: 'rgba(49, 156, 181, 0.2)',
-                color: 'var(--primary-accent)',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: '600'
-              }}>
-                ⚡ Real-time
-              </span>
-            </div>
-          </div>
-
-          <div className="home__feature-card">
-            <div style={{ 
-              fontSize: '4rem', 
-              marginBottom: '1.5rem',
-              opacity: 0.9,
-              animation: 'bounce 2s ease-in-out infinite 0.2s'
-            }}>
-              🔐
-            </div>
-            <h3 className="home__feature-title">Role-Based Access</h3>
-            <p className="home__feature-description">
-              Different access levels for administrators, faculty, and students. Each role has
-              dedicated functionality and views tailored to their specific needs and permissions.
-            </p>
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid rgba(49, 156, 181, 0.2)'
-            }}>
-              <span style={{
-                display: 'inline-block',
-                padding: '0.5rem 1.25rem',
-                background: 'rgba(49, 156, 181, 0.2)',
-                color: 'var(--primary-accent)',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: '600'
-              }}>
-                🔒 Secure
-              </span>
-            </div>
-          </div>
-
-          <div className="home__feature-card">
-            <div style={{ 
-              fontSize: '4rem', 
-              marginBottom: '1.5rem',
-              opacity: 0.9,
-              animation: 'bounce 2s ease-in-out infinite 0.4s'
-            }}>
-              ☁️
-            </div>
-            <h3 className="home__feature-title">Secure and Centralized System</h3>
-            <p className="home__feature-description">
-              All attendance records are stored securely in a centralized database, enabling easy
-              reporting, auditing, and long-term academic history maintenance with complete transparency.
-            </p>
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid rgba(49, 156, 181, 0.2)'
-            }}>
-              <span style={{
-                display: 'inline-block',
-                padding: '0.5rem 1.25rem',
-                background: 'rgba(49, 156, 181, 0.2)',
-                color: 'var(--primary-accent)',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: '600'
-              }}>
-                💾 Reliable
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* About System Section */}
-      <section className="home__about" aria-labelledby="about-heading">
-        <div className="home__about-header">
-          <h2 id="about-heading" className="home__about-title">About Our System</h2>
-        </div>
-        
-        <div className="home__about-grid">
-          <div className="home__about-card">
-            <div style={{ 
-              fontSize: '3.5rem', 
-              marginBottom: '1.5rem',
-              opacity: 0.95
-            }}>
-              🎯
-            </div>
-            <h3 className="home__about-card-title">System Overview</h3>
-            <p className="home__about-card-text">
-              Our QR-Based Attendance System is a comprehensive solution designed to modernize 
-              attendance tracking in educational institutions. It replaces traditional manual 
-              roll calls with an automated, accurate, and efficient process using QR code technology.
-            </p>
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid rgba(20, 184, 166, 0.2)'
-            }}>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '0.5rem'
-              }}>
-                2026+
+          <div className="attendee-card">
+            <div className="attendee-card-inner">
+              <div className="attendee-card-front">
+                <div style={{ 
+                  fontSize: '4rem', 
+                  marginBottom: '1rem',
+                  opacity: 0.9
+                }}>
+                  📱
+                </div>
+                <span className="home__feature-badge">Core Feature</span>
+                <h3 className="home__feature-title" style={{marginTop: '1rem'}}>QR-Based Attendance</h3>
               </div>
-              <div style={{
-                fontSize: '0.85rem',
-                color: 'var(--color-text-secondary)',
-                fontWeight: '600'
-              }}>
-                Active since 2026
+              <div className="attendee-card-back">
+                <p className="home__feature-description">
+                  Instructors generate unique QR codes for each class session. Students scan to instantly mark attendance.
+                </p>
+                <div className="home__feature-highlights" style={{marginTop: '20px'}}>
+                  <span className="home__feature-tag">⚡ Real-time</span>
+                  <span className="home__feature-tag">✓ Automated</span>
+                  <span className="home__feature-tag">📊 Accurate</span>
+                </div>
+                <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
+                  Learn more →
+                </a>
               </div>
             </div>
           </div>
 
-          <div className="home__about-card">
-            <div style={{ 
-              fontSize: '3.5rem', 
-              marginBottom: '1.5rem',
-              opacity: 0.95
-            }}>
-              ✨
-            </div>
-            <h3 className="home__about-card-title">Key Benefits</h3>
-            <p className="home__about-card-text">
-              • Reduces attendance marking time from minutes to seconds<br/>
-              • Minimizes fraudulent attendance entries<br/>
-              • Provides real-time attendance insights<br/>
-              • Generates comprehensive reports and analytics<br/>
-              • Improves institutional transparency
-            </p>
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid rgba(20, 184, 166, 0.2)'
-            }}>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '0.5rem'
-              }}>
-                5+
+          <div className="attendee-card">
+            <div className="attendee-card-inner">
+              <div className="attendee-card-front">
+                <div style={{ 
+                  fontSize: '4rem', 
+                  marginBottom: '1rem',
+                  opacity: 0.9
+                }}>
+                  🔐
+                </div>
+                <span className="home__feature-badge home__feature-badge--security">Security</span>
+                <h3 className="home__feature-title" style={{marginTop: '1rem'}}>Role-Based Access</h3>
               </div>
-              <div style={{
-                fontSize: '0.85rem',
-                color: 'var(--color-text-secondary)',
-                fontWeight: '600'
-              }}>
-                Major benefits
+              <div className="attendee-card-back">
+                <p className="home__feature-description">
+                  Different access levels for administrators, faculty, and students with dedicated functionality.
+                </p>
+                <div className="home__feature-highlights" style={{marginTop: '20px'}}>
+                  <span className="home__feature-tag">🔒 Secure</span>
+                  <span className="home__feature-tag">👥 Multi-role</span>
+                  <span className="home__feature-tag">🎯 Customized</span>
+                </div>
+                <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
+                  Learn more →
+                </a>
               </div>
             </div>
           </div>
 
-          <div className="home__about-card">
-            <div style={{ 
-              fontSize: '3.5rem', 
-              marginBottom: '1.5rem',
-              opacity: 0.95
-            }}>
-              🛡️
-            </div>
-            <h3 className="home__about-card-title">Security & Privacy</h3>
-            <p className="home__about-card-text">
-              All data is encrypted and stored securely on centralized servers. Role-based access 
-              control ensures that only authorized personnel can view sensitive information. The system 
-              complies with data protection standards and institutional policies.
-            </p>
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid rgba(20, 184, 166, 0.2)'
-            }}>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #14B8A6, #06B6D4)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '0.5rem'
-              }}>
-                100%
+          <div className="attendee-card">
+            <div className="attendee-card-inner">
+              <div className="attendee-card-front">
+                <div style={{ 
+                  fontSize: '4rem', 
+                  marginBottom: '1rem',
+                  opacity: 0.9
+                }}>
+                  ☁️
+                </div>
+                <span className="home__feature-badge home__feature-badge--cloud">Cloud</span>
+                <h3 className="home__feature-title" style={{marginTop: '1rem'}}>Centralized Data</h3>
               </div>
-              <div style={{
-                fontSize: '0.85rem',
-                color: 'var(--color-text-secondary)',
-                fontWeight: '600'
-              }}>
-                Encrypted
+              <div className="attendee-card-back">
+                <p className="home__feature-description">
+                  All attendance records stored securely in a centralized database for easy reporting and auditing.
+                </p>
+                <div className="home__feature-highlights" style={{marginTop: '20px'}}>
+                  <span className="home__feature-tag">💾 Reliable</span>
+                  <span className="home__feature-tag">📈 Scalable</span>
+                  <span className="home__feature-tag">🔄 Sync</span>
+                </div>
+                <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
+                  Learn more →
+                </a>
               </div>
             </div>
           </div>
@@ -394,19 +299,6 @@ function Home() {
           </div>
         </div>
       </section>
-      <footer className="home__footer">
-        <div className="home__footer-content">
-          <div className="home__footer-item">
-            <b><p className="home__footer-text">College Name: Academic Institution</p></b>
-          </div>
-          <div className="home__footer-item">
-            <p className="home__footer-text">QR-Based Attendance Tracking System</p>
-          </div>
-          <div className="home__footer-item">
-            <p className="home__footer-text">Year: 2026</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

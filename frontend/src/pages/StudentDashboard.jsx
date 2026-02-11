@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { logout } from "../services/api";
 import "../styles/dashboard.css";
 
 function StudentDashboard() {
@@ -9,22 +8,13 @@ function StudentDashboard() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
 
-  const handleLogout = async () => {
-    try {
-      const token = authContext?.token;
-      if (token) {
-        await logout(token);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      authContext?.logout();
-      navigate("/login");
-    }
-  };
-
   return (
     <div className="dashboard">
+      <div className="dashboard__objects" aria-hidden="true">
+        <span className="dashboard__object dashboard__object--sphere" />
+        <span className="dashboard__object dashboard__object--torus" />
+        <span className="dashboard__object dashboard__object--diamond" />
+      </div>
       <header className="dashboard__header">
         <div>
           <h1 className="dashboard__title">👨‍🎓 Student Dashboard</h1>
@@ -32,13 +22,6 @@ function StudentDashboard() {
             Welcome back, <strong>{user?.name}</strong>! Track your attendance and view your academic records.
           </p>
         </div>
-        <button
-          className="dashboard__button dashboard__button--secondary"
-          type="button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
       </header>
 
       <main className="dashboard__grid" aria-label="Student overview">

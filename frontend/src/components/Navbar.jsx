@@ -5,15 +5,16 @@ import { logout } from "../services/api";
 import "../styles/navbar.css";
 
 function Navbar() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const authContext = useContext(AuthContext);
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout: logoutFromContext, token } = authContext || {};
+  const authContext = useContext(AuthContext);
+  const isAuthenticated = authContext?.isAuthenticated;
+  const user = authContext?.user;
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check localStorage or default to dark theme
+    // Check localStorage or default to light theme
     const savedTheme = localStorage.getItem("theme");
-    const isDark = savedTheme ? savedTheme === "dark" : true; // Default to dark mode
+    const isDark = savedTheme ? savedTheme === "dark" : false;
     
     setIsDarkMode(isDark);
     applyTheme(isDark);
@@ -36,15 +37,27 @@ function Navbar() {
     applyTheme(newTheme);
   };
 
+  const handleProfileClick = () => {
+    if (user?.role === "student") {
+      navigate("/student-profile");
+    } else if (user?.role === "faculty") {
+      navigate("/faculty-profile");
+    } else if (user?.role === "admin") {
+      // Admin profile - can redirect to admin settings or dashboard
+      navigate("/admin-dashboard");
+    }
+  };
+
   const handleLogout = async () => {
     try {
+      const token = authContext?.token;
       if (token) {
         await logout(token);
       }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      logoutFromContext?.();
+      authContext?.logout();
       navigate("/login");
     }
   };
@@ -65,18 +78,17 @@ function Navbar() {
         </Link>
 
         <nav className="navbar__nav" aria-label="Main navigation">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `navbar__link${isActive ? " navbar__link--active" : ""}`
-            }
-          >
-            Home
-          </NavLink>
-          
           {!isAuthenticated ? (
             <>
+              <NavLink
+                to="/"
+                end
+                className={({ isActive }) =>
+                  `navbar__link${isActive ? " navbar__link--active" : ""}`
+                }
+              >
+                Home
+              </NavLink>
               <NavLink
                 to="/login"
                 className={({ isActive }) =>
@@ -97,18 +109,22 @@ function Navbar() {
               </NavLink>
             </>
           ) : (
-            <div className="navbar__user-section">
-              <span className="navbar__user-name">
-                {user?.name} ({user?.role})
-              </span>
-              <button
-                className="navbar__logout-btn"
+            <>
+              <button 
+                className="navbar__link"
+                onClick={handleProfileClick}
+                style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
+              >
+                👤 Profile
+              </button>
+              <button 
+                className="navbar__link navbar__link--primary"
                 onClick={handleLogout}
-                aria-label="Logout"
+                style={{ cursor: 'pointer', border: 'none' }}
               >
                 Logout
               </button>
-            </div>
+            </>
           )}
 
           <button 
