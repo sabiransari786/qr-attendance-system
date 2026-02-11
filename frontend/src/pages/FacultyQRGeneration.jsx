@@ -321,6 +321,11 @@ function FacultyQRGeneration() {
 
   return (
     <div className="qr-generation-container">
+      <div className="qr__objects" aria-hidden="true">
+        <span className="qr__object qr__object--sphere" />
+        <span className="qr__object qr__object--ring" />
+        <span className="qr__object qr__object--cube" />
+      </div>
       <div className="qr-generation-wrapper">
         <h1 className="qr-generation-title">QR Code Generation for Attendance</h1>
         

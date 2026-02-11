@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/dashboard.css";
+import "../styles/profile.css";
 
 function StudentProfile() {
   const navigate = useNavigate();
@@ -132,7 +132,12 @@ function StudentProfile() {
   }
 
   return (
-    <div className="dashboard">
+    <div className="profile-container">
+      <div className="profile__objects" aria-hidden="true">
+        <span className="profile__object profile__object--sphere" />
+        <span className="profile__object profile__object--ring" />
+        <span className="profile__object profile__object--cube" />
+      </div>
       <header className="dashboard__header">
         <div>
           <h1 className="dashboard__title">Student Profile</h1>
@@ -146,7 +151,7 @@ function StudentProfile() {
         </button>
       </header>
 
-      <main className="profile-container">
+      <main className="profile-card" style={{position:'relative', zIndex:1}}>
         {/* Message Display */}
         {message.text && (
           <div className={`message-box ${message.type}`}>

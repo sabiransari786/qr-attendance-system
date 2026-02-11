@@ -18,6 +18,11 @@ function TeacherProfile() {
 
   return (
     <div className="profile-container">
+      <div className="profile__objects" aria-hidden="true">
+        <span className="profile__object profile__object--sphere" />
+        <span className="profile__object profile__object--ring" />
+        <span className="profile__object profile__object--cube" />
+      </div>
       <button className="profile__back-btn" onClick={handleBack}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -75,14 +80,17 @@ function TeacherProfile() {
             <h2 className="profile__section-title">Statistics</h2>
             <div className="profile__stats">
               <div className="profile__stat">
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.9 }}>📚</div>
                 <p className="profile__stat-value">0</p>
                 <p className="profile__stat-label">Sessions Created</p>
               </div>
               <div className="profile__stat">
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.9 }}>👥</div>
                 <p className="profile__stat-value">0</p>
                 <p className="profile__stat-label">Students Managed</p>
               </div>
               <div className="profile__stat">
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem', opacity: 0.9 }}>✓</div>
                 <p className="profile__stat-value">0</p>
                 <p className="profile__stat-label">Attendance Records</p>
               </div>

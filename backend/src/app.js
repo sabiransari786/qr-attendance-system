@@ -50,6 +50,8 @@ const sessionRoutes = require('./routes/session/session');
 const attendanceRoutes = require('./routes/attendance/attendance');
 // QR request routes - QR code generation aur validation ke liye
 const qrRequestRoutes = require('./routes/qr-request/qr-request.routes');
+// OTP routes - Password reset OTP functionality ke liye
+const otpRoutes = require('./routes/otp/otp.routes');
 
 
 // ============================================================================
@@ -159,6 +161,9 @@ app.use('/api/attendance', attendanceRoutes);
 // QR request routes - QR code generation aur validation ke liye
 // Example endpoints: POST /api/qr-request/generate, POST /api/qr-request/validate
 app.use('/api/qr-request', qrRequestRoutes);
+// OTP routes - Password reset OTP functionality ke liye
+// Example endpoints: POST /api/otp/send, POST /api/otp/verify, POST /api/otp/reset-password
+app.use('/api/otp', otpRoutes);
 
 
 // ============================================================================

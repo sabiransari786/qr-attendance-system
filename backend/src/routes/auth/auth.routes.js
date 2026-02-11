@@ -140,6 +140,39 @@ router.get('/me', getCurrentUser);
  */
 router.post('/register', register);
 
+/**
+ * GET /students - Get All Students (Admin Only)
+ * 
+ * Request: GET /api/auth/students
+ * Headers: { Authorization: "Bearer <admin_token>" }
+ * 
+ * Response: { success: true, data: [...students] }
+ */
+router.get('/students', async (req, res) => {
+  try {
+    const { pool } = require('../../config/database');
+    
+    const [students] = await pool.query(
+      `SELECT id, name, email, student_id, is_active, created_at 
+       FROM users 
+       WHERE role = 'student' 
+       ORDER BY name ASC`
+    );
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Students retrieved successfully',
+      data: students || []
+    });
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch students'
+    });
+  }
+});
+
 // ============================================================================
 // ROUTER EXPORT
 // ============================================================================
@@ -156,6 +189,7 @@ router.post('/register', register);
  * - POST /api/auth/logout
  * - GET /api/auth/me
  * - POST /api/auth/register
+ * - GET /api/auth/students
  * 
  * Kyun '/api/auth' prefix?
  * - API versioning: /api/v1/auth (future mein versioning ke liye)

@@ -133,6 +133,11 @@ function Login() {
 
   return (
     <div className="login__container">
+      <div className="auth__objects" aria-hidden="true">
+        <span className="auth__object auth__object--sphere" />
+        <span className="auth__object auth__object--ring" />
+        <span className="auth__object auth__object--cube" />
+      </div>
       {/* Success Modal */}
       {showSuccessModal && (
         <LoginSuccessModal
@@ -173,9 +178,14 @@ function Login() {
 
           {/* Password Field */}
           <div className="login__form-group">
-            <label className="login__label" htmlFor="password">
-              Password
-            </label>
+            <div className="login__password-header">
+              <label className="login__label" htmlFor="password">
+                Password
+              </label>
+              <Link to="/forgot-password" className="login__forgot-password">
+                Forgot Password?
+              </Link>
+            </div>
             <div className="login__password-wrapper">
               <input
                 id="password"

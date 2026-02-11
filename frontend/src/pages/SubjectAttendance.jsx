@@ -154,6 +154,11 @@ function SubjectAttendance() {
 
   return (
     <div className="dashboard">
+      <div className="dashboard__objects" aria-hidden="true">
+        <span className="dashboard__object dashboard__object--sphere" />
+        <span className="dashboard__object dashboard__object--torus" />
+        <span className="dashboard__object dashboard__object--diamond" />
+      </div>
       <header className="dashboard__header">
         <div>
           <h1 className="dashboard__title">{subjectData.name}</h1>

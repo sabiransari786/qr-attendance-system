@@ -38,6 +38,12 @@ function Unauthorized() {
 
   return (
     <div className="unauthorized__container">
+      <div className="unauthorized__objects" aria-hidden="true">
+        <span className="unauthorized__object unauthorized__object--sphere" />
+        <span className="unauthorized__object unauthorized__object--ring" />
+        <span className="unauthorized__object unauthorized__object--cube" />
+      </div>
+      {/* Start of card */}
       <section className="unauthorized__card" aria-labelledby="unauthorized-title">
         {/* Message Section */}
         <header className="unauthorized__header">
