@@ -1,5 +1,7 @@
 import { API_BASE_URL } from "../utils/constants";
 
+const useMockApi = import.meta.env.VITE_USE_MOCK_API === "true";
+
 // In-memory mock user database (more reliable than localStorage)
 const MOCK_USERS = [
 	{
@@ -102,6 +104,10 @@ const request = async (path, options = {}) => {
 
 		return data;
 	} catch (error) {
+		if (!useMockApi) {
+			throw error;
+		}
+
 		// Backend not available - use mock API
 		console.log("Request failed, triggering mock API:", error.message);
 		try {

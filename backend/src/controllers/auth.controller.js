@@ -377,7 +377,7 @@ const register = async (req, res, next) => {
         // ---------------------------------------------------------------------
         // Destructuring use kar rahe hain - required fields extract kar rahe hain
         // Extra fields bhi aa sakte hain jo schema mein allowed hain
-        const { name, email, password, role, ...extraFields } = req.body;
+        const { name, email, password, contact_number, role, student_id, teacher_id, ...extraFields } = req.body;
 
         // ---------------------------------------------------------------------
         // STEP 2: Basic Validation - Required fields check karo
@@ -410,6 +410,14 @@ const register = async (req, res, next) => {
             });
         }
 
+        // Contact number check - contact number required hai
+        if (!contact_number || contact_number.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                message: 'Contact number is required. 10-digit number enter karo.'
+            });
+        }
+
         // Optional: Basic password length check (Service layer mein detailed validation hogi)
         if (password.length < 6) {
             return res.status(400).json({
@@ -426,8 +434,11 @@ const register = async (req, res, next) => {
         const userData = {
             name: name.trim(),
             email: email.trim().toLowerCase(),  // Email lowercase karo for consistency
+            contactNumber: contact_number?.trim(),  // Convert snake_case to camelCase
             password: password,                  // Plain text - service hash karega
             role: role || 'student',            // Default role 'student' agar nahi diya
+            studentId: student_id ? student_id.trim().toUpperCase() : undefined,  // Normalize to uppercase
+            teacherId: teacher_id ? teacher_id.trim().toUpperCase() : undefined,  // Normalize to uppercase
             ...extraFields                       // Koi extra fields ho toh include karo
         };
 

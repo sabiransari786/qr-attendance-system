@@ -36,7 +36,8 @@ router.post('/send', async (req, res) => {
       });
     }
 
-    const result = await sendOTPToEmail(email.trim());
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await sendOTPToEmail(normalizedEmail);
 
     res.status(result.success ? 200 : 400).json(result);
   } catch (error) {
@@ -87,7 +88,8 @@ router.post('/verify', async (req, res) => {
       });
     }
 
-    const result = await verifyOTP(email.trim(), otp.toString().trim());
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await verifyOTP(normalizedEmail, otp.toString().trim());
 
     res.status(result.success ? 200 : 400).json(result);
   } catch (error) {
@@ -145,7 +147,8 @@ router.post('/reset-password', async (req, res) => {
       });
     }
 
-    const result = await resetPassword(email.trim(), newPassword);
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await resetPassword(normalizedEmail, newPassword);
 
     res.status(result.success ? 200 : 400).json(result);
   } catch (error) {

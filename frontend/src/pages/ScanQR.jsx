@@ -1,22 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import jsQR from "jsqr";
 import "../styles/dashboard.css";
 
 function ScanQR() {
   const navigate = useNavigate();
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const animationRef = useRef(null);
   const [qrCode, setQrCode] = useState("");
   const [sessionInfo, setSessionInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [cameraActive, setCameraActive] = useState(false);
+  const [scannedCode, setScannedCode] = useState(null);
 
   const handleQrInputChange = (e) => {
     setQrCode(e.target.value);
     setMessage({ type: "", text: "" });
   };
 
-  const verifyQrCode = async () => {
-    if (!qrCode.trim()) {
+  const verifyQrCode = async (code = null) => {
+    const codeToVerify = code || qrCode;
+    
+    if (!codeToVerify.trim()) {
       setMessage({ type: "error", text: "Please enter a QR code" });
       return;
     }
@@ -28,7 +36,7 @@ function ScanQR() {
       const token = localStorage.getItem("token");
       
       // Verify session exists
-      const sessionResponse = await fetch(`http://localhost:5001/api/session/${qrCode}`, {
+      const sessionResponse = await fetch(`http://localhost:5001/api/session/${codeToVerify}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -105,14 +113,97 @@ function ScanQR() {
     }
   };
 
-  const activateCamera = () => {
-    setCameraActive(true);
-    setMessage({ 
-      type: "info", 
-      text: "Camera feature coming soon! Please enter QR code manually for now." 
-    });
-    setTimeout(() => setCameraActive(false), 3000);
+  const activateCamera = async () => {
+    try {
+      setCameraActive(true);
+      setMessage({ type: "info", text: "Requesting camera access..." });
+
+      // Get camera stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setMessage({ type: "success", text: "Camera active - Position QR code in frame" });
+        startScanning();
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      setCameraActive(false);
+      if (error.name === "NotAllowedError") {
+        setMessage({ 
+          type: "error", 
+          text: "Camera permission denied. Please allow camera access and try again." 
+        });
+      } else if (error.name === "NotFoundError") {
+        setMessage({ 
+          type: "error", 
+          text: "No camera found on this device. Please enter QR code manually." 
+        });
+      } else {
+        setMessage({ 
+          type: "error", 
+          text: "Failed to access camera. Please try again or enter QR code manually." 
+        });
+      }
+    }
   };
+
+  const startScanning = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    const scan = () => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+        if (code && code.data && code.data !== scannedCode) {
+          setScannedCode(code.data);
+          setQrCode(code.data);
+          setMessage({ 
+            type: "success", 
+            text: "✓ QR code detected! Verifying..." 
+          });
+          deactivateCamera();
+          verifyQrCode(code.data);
+        }
+      }
+
+      if (cameraActive) {
+        animationRef.current = requestAnimationFrame(scan);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(scan);
+  };
+
+  const deactivateCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+    setCameraActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      deactivateCamera();
+    };
+  }, []);
 
   return (
     <div className="dashboard">
@@ -140,9 +231,34 @@ function ScanQR() {
           <div className="scanner-card">
             <div className={`scanner-area ${cameraActive ? "active" : ""}`}>
               {cameraActive ? (
-                <div className="camera-placeholder">
-                  <span className="camera-icon">📷</span>
-                  <p>Camera Preview</p>
+                <div className="camera-placeholder" style={{ position: "relative" }}>
+                  <video
+                    ref={videoRef}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "12px",
+                      display: "block"
+                    }}
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    style={{
+                      display: "none"
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "200px",
+                    height: "200px",
+                    border: "2px solid #fbbf24",
+                    borderRadius: "8px",
+                    boxShadow: "0 0 0 2px rgba(251, 191, 36, 0.2)"
+                  }} />
                 </div>
               ) : (
                 <div className="scanner-placeholder">
@@ -151,13 +267,21 @@ function ScanQR() {
                 </div>
               )}
             </div>
-            <button 
-              className="action-btn action-btn--primary"
-              onClick={activateCamera}
-              disabled={cameraActive}
-            >
-              {cameraActive ? "Scanning..." : "📷 Activate Camera"}
-            </button>
+            {!cameraActive ? (
+              <button 
+                className="action-btn action-btn--primary"
+                onClick={activateCamera}
+              >
+                📷 Activate Camera
+              </button>
+            ) : (
+              <button 
+                className="action-btn action-btn--danger"
+                onClick={deactivateCamera}
+              >
+                ✕ Stop Camera
+              </button>
+            )}
           </div>
 
           <div className="divider">

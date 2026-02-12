@@ -305,12 +305,12 @@ const login = async (email, password) => {
         // ---------------------------------------------------------------------
         // STEP 2: Find User in Database
         // ---------------------------------------------------------------------
-        // Email se user find karo
+        // Email se user find karo (using LOWER for case-insensitive comparison)
         // Email unique hai - sirf ek user milega (if exists)
         const [users] = await pool.query(
             `SELECT id, name, email, password, role, created_at
              FROM users 
-             WHERE email = ?`,
+             WHERE LOWER(email) = LOWER(?)`,
             [normalizedEmail]
         );
         
@@ -451,11 +451,12 @@ const register = async (userData) => {
             throw new ValidationError('Faculty ID is required for faculty registration.');
         }
         
-        // Check duplicate IDs
+        // Check duplicate IDs (with proper null handling and case-insensitive matching)
         if (userRole === ROLE.STUDENT && studentId) {
+            const normalizedStudentId = studentId.trim().toUpperCase();
             const [existingStudents] = await pool.query(
-                `SELECT id FROM users WHERE student_id = ? AND role = ?`,
-                [studentId.trim(), ROLE.STUDENT]
+                `SELECT id FROM users WHERE UPPER(student_id) = ? AND role = ?`,
+                [normalizedStudentId, ROLE.STUDENT]
             );
             if (existingStudents && existingStudents.length > 0) {
                 throw new UserAlreadyExistsError('This Student ID is already registered.');
@@ -463,9 +464,10 @@ const register = async (userData) => {
         }
 
         if (userRole === ROLE.FACULTY && teacherId) {
+            const normalizedTeacherId = teacherId.trim().toUpperCase();
             const [existingFaculty] = await pool.query(
-                `SELECT id FROM users WHERE teacher_id = ? AND role = ?`,
-                [teacherId.trim(), ROLE.FACULTY]
+                `SELECT id FROM users WHERE UPPER(teacher_id) = ? AND role = ?`,
+                [normalizedTeacherId, ROLE.FACULTY]
             );
             if (existingFaculty && existingFaculty.length > 0) {
                 throw new UserAlreadyExistsError('This Faculty ID is already registered.');
@@ -475,10 +477,10 @@ const register = async (userData) => {
         // ---------------------------------------------------------------------
         // STEP 2: Check Email Uniqueness
         // ---------------------------------------------------------------------
-        // Email already exist karta hai ya nahi check karo
+        // Email already exist karta hai ya nahi check karo (using LOWER for case-insensitive comparison)
         // Unique constraint database level pe bhi honi chahiye - defense in depth
         const [existingUsers] = await pool.query(
-            `SELECT id FROM users WHERE email = ?`,
+            `SELECT id FROM users WHERE LOWER(email) = LOWER(?)`,
             [normalizedEmail]
         );
         
@@ -497,6 +499,10 @@ const register = async (userData) => {
         
         const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
         
+        // Normalize student ID and teacher ID for consistent storage
+        const normalizedStudentId = userRole === ROLE.STUDENT ? studentId?.trim().toUpperCase() : null;
+        const normalizedTeacherId = userRole === ROLE.FACULTY ? teacherId?.trim().toUpperCase() : null;
+        
         // ---------------------------------------------------------------------
         // STEP 4: Insert User into Database
         // ---------------------------------------------------------------------
@@ -511,8 +517,8 @@ const register = async (userData) => {
                 normalizedContact,
                 hashedPassword,
                 userRole,
-                userRole === ROLE.STUDENT ? studentId?.trim() : null,
-                userRole === ROLE.FACULTY ? teacherId?.trim() : null
+                normalizedStudentId,
+                normalizedTeacherId
             ]
         );
         

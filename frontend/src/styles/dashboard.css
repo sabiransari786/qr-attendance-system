@@ -411,6 +411,15 @@
   color: #ffffff;
 }
 
+.action-btn--danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.action-btn--danger:hover {
+  background: #dc2626;
+}
+
 .action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

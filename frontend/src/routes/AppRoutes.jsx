@@ -7,7 +7,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
-import StudentDashboard from "../pages/StudentDashboardWithRecords";
+import StudentDashboard from "../pages/StudentDashboard";
 import FacultyDashboard from "../pages/FacultyDashboardWithCharts";
 import FacultyProfile from "../pages/FacultyProfile";
 import FacultySessions from "../pages/FacultySessions";
@@ -17,6 +17,7 @@ import NotFound from "../pages/NotFound";
 import Unauthorized from "../pages/Unauthorized";
 import FacultyQRGeneration from "../pages/FacultyQRGeneration";
 import StudentProfile from "../pages/StudentProfile";
+import ScanQR from "../pages/ScanQR";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -63,6 +64,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["student"]}>
             <StudentProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scan-qr"
+        element={
+          <ProtectedRoute requiredRoles={["student"]}>
+            <ScanQR />
           </ProtectedRoute>
         }
       />

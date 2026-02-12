@@ -31,6 +31,7 @@ function Signup() {
     fullName: "",
     email: "",
     rollNumber: "",
+    contactNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -50,6 +51,7 @@ function Signup() {
       !formValues.fullName.trim() ||
       !formValues.email.trim() ||
       !formValues.rollNumber.trim() ||
+      !formValues.contactNumber.trim() ||
       !formValues.password.trim() ||
       !formValues.confirmPassword.trim()
     );
@@ -107,6 +109,11 @@ function Signup() {
       return;
     }
 
+    if (!/^\d{10}$/.test(formValues.contactNumber.trim())) {
+      setErrorMessage("Please enter a valid 10-digit contact number.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -114,7 +121,8 @@ function Signup() {
       const payload = {
         name: formValues.fullName.trim(),
         email: formValues.email.trim(),
-        rollNumber: formValues.rollNumber.trim(),
+        student_id: formValues.rollNumber.trim(),
+        contact_number: formValues.contactNumber.trim(),
         password: formValues.password,
         role: "student",
       };
@@ -131,6 +139,7 @@ function Signup() {
         fullName: "",
         email: "",
         rollNumber: "",
+        contactNumber: "",
         password: "",
         confirmPassword: "",
       });
@@ -229,6 +238,25 @@ function Signup() {
               value={formValues.rollNumber}
               onChange={handleChange}
               autoComplete="off"
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
+          {/* Contact Number Field */}
+          <div className="signup__form-group">
+            <label className="signup__label" htmlFor="contactNumber">
+              Contact Number
+            </label>
+            <input
+              id="contactNumber"
+              name="contactNumber"
+              type="tel"
+              className="signup__input"
+              placeholder="Enter your 10-digit contact number"
+              value={formValues.contactNumber}
+              onChange={handleChange}
+              autoComplete="tel"
               disabled={isSubmitting}
               required
             />

@@ -18,13 +18,14 @@ const generateOTP = () => {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 const sendOTPToEmail = async (email) => {
-  const connection = await pool.getConnection();
-  
   try {
-    // Check if user exists
-    const [users] = await connection.execute(
-      'SELECT id, name FROM users WHERE email = ?',
-      [email]
+    // Normalize email for consistent storage and querying
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // Check if user exists (using LOWER for case-insensitive comparison)
+    const [users] = await pool.query(
+      'SELECT id, name FROM users WHERE LOWER(email) = LOWER(?)',
+      [normalizedEmail]
     );
 
     if (users.length === 0) {
@@ -38,15 +39,15 @@ const sendOTPToEmail = async (email) => {
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
 
-    // Save OTP to database
-    await connection.execute(
+    // Save OTP to database with normalized email to avoid UNIQUE constraint conflicts
+    await pool.query(
       'INSERT INTO otp_verification (user_id, email, otp, expires_at, created_at) VALUES (?, ?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE otp = ?, expires_at = ?, created_at = NOW()',
-      [user.id, email, otp, expiresAt, otp, expiresAt]
+      [user.id, normalizedEmail, otp, expiresAt, otp, expiresAt]
     );
 
-    // Send OTP email
+    // Send OTP email (use normalized email for consistency)
     const { sendOTPEmail } = require('../config/email');
-    await sendOTPEmail(email, otp, user.name);
+    await sendOTPEmail(normalizedEmail, otp, user.name);
 
     return {
       success: true,
@@ -56,8 +57,6 @@ const sendOTPToEmail = async (email) => {
   } catch (error) {
     console.error('Error in sendOTPToEmail:', error);
     throw error;
-  } finally {
-    connection.release();
   }
 };
 
@@ -68,13 +67,14 @@ const sendOTPToEmail = async (email) => {
  * @returns {Promise<{success: boolean, message: string, userId?: string}>}
  */
 const verifyOTP = async (email, otp) => {
-  const connection = await pool.getConnection();
-  
   try {
-    // Get OTP record
-    const [otpRecords] = await connection.execute(
-      'SELECT user_id, email, otp, expires_at FROM otp_verification WHERE email = ?',
-      [email]
+    // Normalize email for consistent querying
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // Get OTP record (using LOWER for case-insensitive comparison)
+    const [otpRecords] = await pool.query(
+      'SELECT user_id, email, otp, expires_at FROM otp_verification WHERE LOWER(email) = LOWER(?)',
+      [normalizedEmail]
     );
 
     if (otpRecords.length === 0) {
@@ -89,9 +89,9 @@ const verifyOTP = async (email, otp) => {
     // Check if OTP is expired
     if (new Date() > new Date(otpRecord.expires_at)) {
       // Delete expired OTP
-      await connection.execute(
-        'DELETE FROM otp_verification WHERE email = ?',
-        [email]
+      await pool.query(
+        'DELETE FROM otp_verification WHERE LOWER(email) = LOWER(?)',
+        [normalizedEmail]
       );
       
       return {
@@ -109,9 +109,9 @@ const verifyOTP = async (email, otp) => {
     }
 
     // OTP is valid - mark as verified
-    await connection.execute(
-      'UPDATE otp_verification SET verified = 1, verified_at = NOW() WHERE email = ?',
-      [email]
+    await pool.query(
+      'UPDATE otp_verification SET verified = 1, verified_at = NOW() WHERE LOWER(email) = LOWER(?)',
+      [normalizedEmail]
     );
 
     return {
@@ -122,8 +122,6 @@ const verifyOTP = async (email, otp) => {
   } catch (error) {
     console.error('Error in verifyOTP:', error);
     throw error;
-  } finally {
-    connection.release();
   }
 };
 
@@ -134,13 +132,14 @@ const verifyOTP = async (email, otp) => {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 const resetPassword = async (email, newPassword) => {
-  const connection = await pool.getConnection();
-  
   try {
+    // Normalize email for consistent querying
+    const normalizedEmail = email.trim().toLowerCase();
+    
     // Check if OTP was verified
-    const [otpRecords] = await connection.execute(
-      'SELECT verified FROM otp_verification WHERE email = ? AND verified = 1',
-      [email]
+    const [otpRecords] = await pool.query(
+      'SELECT verified FROM otp_verification WHERE LOWER(email) = LOWER(?) AND verified = 1',
+      [normalizedEmail]
     );
 
     if (otpRecords.length === 0) {
@@ -151,9 +150,9 @@ const resetPassword = async (email, newPassword) => {
     }
 
     // Get user
-    const [users] = await connection.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
+    const [users] = await pool.query(
+      'SELECT id FROM users WHERE LOWER(email) = LOWER(?)',
+      [normalizedEmail]
     );
 
     if (users.length === 0) {
@@ -170,26 +169,26 @@ const resetPassword = async (email, newPassword) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password
-    await connection.execute(
+    await pool.query(
       'UPDATE users SET password = ? WHERE id = ?',
       [hashedPassword, userId]
     );
 
     // Delete OTP record after use
-    await connection.execute(
-      'DELETE FROM otp_verification WHERE email = ?',
-      [email]
+    await pool.query(
+      'DELETE FROM otp_verification WHERE LOWER(email) = LOWER(?)',
+      [normalizedEmail]
     );
 
     // Send confirmation email
     const { sendPasswordResetConfirmation } = require('../config/email');
-    const [userDetails] = await connection.execute(
+    const [userDetails] = await pool.query(
       'SELECT name FROM users WHERE id = ?',
       [userId]
     );
     
     if (userDetails.length > 0) {
-      await sendPasswordResetConfirmation(email, userDetails[0].name);
+      await sendPasswordResetConfirmation(normalizedEmail, userDetails[0].name);
     }
 
     return {
@@ -199,8 +198,6 @@ const resetPassword = async (email, newPassword) => {
   } catch (error) {
     console.error('Error in resetPassword:', error);
     throw error;
-  } finally {
-    connection.release();
   }
 };
 
@@ -208,17 +205,13 @@ const resetPassword = async (email, newPassword) => {
  * Cleanup expired OTPs (can be run periodically)
  */
 const cleanupExpiredOTPs = async () => {
-  const connection = await pool.getConnection();
-  
   try {
-    await connection.execute(
+    await pool.query(
       'DELETE FROM otp_verification WHERE expires_at < NOW()'
     );
     console.log('✓ Expired OTPs cleaned up');
   } catch (error) {
     console.error('Error cleaning up expired OTPs:', error);
-  } finally {
-    connection.release();
   }
 };
 
