@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import jsQR from "jsqr";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 
 function ScanQR() {
@@ -33,10 +34,10 @@ function ScanQR() {
     setMessage({ type: "", text: "" });
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       
       // Verify session exists
-      const sessionResponse = await fetch(`http://localhost:5001/api/session/${codeToVerify}`, {
+      const sessionResponse = await fetch(`${API_BASE_URL}/session/${codeToVerify}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -67,10 +68,10 @@ function ScanQR() {
     setMessage({ type: "", text: "" });
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const userId = localStorage.getItem("userId");
 
-      const response = await fetch("http://localhost:5001/api/attendance", {
+      const response = await fetch(`${API_BASE_URL}/attendance`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +207,7 @@ function ScanQR() {
   }, []);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard--student">
       <div className="dashboard__objects" aria-hidden="true">
         <span className="dashboard__object dashboard__object--sphere" />
         <span className="dashboard__object dashboard__object--torus" />
@@ -214,8 +215,9 @@ function ScanQR() {
       </div>
       <header className="dashboard__header">
         <div>
+          <p className="student-dashboard__eyebrow">Mark Attendance</p>
           <h1 className="dashboard__title">Scan QR Code</h1>
-          <p className="dashboard__subtitle">Mark your attendance by scanning the QR code</p>
+          <p className="dashboard__subtitle">Quick and secure attendance marking</p>
         </div>
         <button
           className="dashboard__button dashboard__button--secondary"
@@ -248,40 +250,40 @@ function ScanQR() {
                       display: "none"
                     }}
                   />
-                  <div style={{
+                  <div className="scanner-crosshair" style={{
                     position: "absolute",
                     top: "50%",
                     left: "50%",
                     transform: "translate(-50%, -50%)",
-                    width: "200px",
-                    height: "200px",
-                    border: "2px solid #fbbf24",
-                    borderRadius: "8px",
-                    boxShadow: "0 0 0 2px rgba(251, 191, 36, 0.2)"
-                  }} />
+                  }}>
+                    <div className="scanner-crosshair-frame"></div>
+                    <div className="scanner-crosshair-corners"></div>
+                  </div>
                 </div>
               ) : (
                 <div className="scanner-placeholder">
-                  <span className="qr-icon">📱</span>
-                  <p>Scan QR Code</p>
+                  <div className="scanner-placeholder-icon">📱</div>
+                  <p className="scanner-placeholder-text">Ready to Scan</p>
+                  <p className="scanner-placeholder-hint">Tap the button below to start</p>
                 </div>
               )}
             </div>
-            {!cameraActive ? (
-              <button 
-                className="action-btn action-btn--primary"
-                onClick={activateCamera}
-              >
-                📷 Activate Camera
-              </button>
-            ) : (
-              <button 
-                className="action-btn action-btn--danger"
-                onClick={deactivateCamera}
-              >
-                ✕ Stop Camera
-              </button>
-            )}
+            <button 
+              className={`action-btn ${cameraActive ? 'action-btn--danger' : 'action-btn--primary'}`}
+              onClick={cameraActive ? deactivateCamera : activateCamera}
+            >
+              {cameraActive ? (
+                <>
+                  <span className="btn-icon">⏹️</span>
+                  <span>Stop Camera</span>
+                </>
+              ) : (
+                <>
+                  <span className="btn-icon">📷</span>
+                  <span>Activate Camera</span>
+                </>
+              )}
+            </button>
           </div>
 
           <div className="divider">
@@ -290,11 +292,14 @@ function ScanQR() {
 
           {/* Manual Entry Section */}
           <div className="manual-entry-card">
-            <label className="input-label">Enter QR Code Manually</label>
+            <div className="manual-entry-header">
+              <h3 className="manual-entry-title">Manual Entry</h3>
+              <span className="manual-entry-subtitle">Enter code if camera is unavailable</span>
+            </div>
             <input
               type="text"
               className="qr-input"
-              placeholder="Enter session QR code"
+              placeholder="Paste or enter session QR code"
               value={qrCode}
               onChange={handleQrInputChange}
               disabled={loading}
@@ -304,47 +309,58 @@ function ScanQR() {
               onClick={verifyQrCode}
               disabled={loading || !qrCode.trim()}
             >
-              {loading ? "Verifying..." : "🔍 Verify Code"}
+              <span className="btn-icon">🔍</span>
+              <span>{loading ? "Verifying..." : "Verify Code"}</span>
             </button>
           </div>
         </section>
 
         {/* Message Display */}
         {message.text && (
-          <div className={`message-box ${message.type}`}>
-            {message.text}
+          <div className={`message-box message-box--${message.type}`}>
+            <div className="message-content">
+              <span className="message-icon">
+                {message.type === 'success' && '✓'}
+                {message.type === 'error' && '✕'}
+                {message.type === 'info' && 'ℹ'}
+              </span>
+              <span className="message-text">{message.text}</span>
+            </div>
           </div>
         )}
 
         {/* Session Info Display */}
         {sessionInfo && (
           <section className="session-info-card">
-            <h2 className="section-title">Session Details</h2>
+            <div className="session-info-header">
+              <h2 className="session-info-title">Session Details</h2>
+              <div className="session-info-badge">✓ Verified</div>
+            </div>
             <div className="session-details">
               <div className="detail-row">
-                <span className="detail-label">Subject:</span>
-                <span className="detail-value">{sessionInfo.subject}</span>
+                <div className="detail-item">
+                  <span className="detail-label">Subject</span>
+                  <span className="detail-value">{sessionInfo.subject}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Faculty</span>
+                  <span className="detail-value">{sessionInfo.facultyName}</span>
+                </div>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Faculty:</span>
-                <span className="detail-value">{sessionInfo.facultyName}</span>
+                <div className="detail-item">
+                  <span className="detail-label">Date</span>
+                  <span className="detail-value">{new Date(sessionInfo.date).toLocaleDateString()}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Time</span>
+                  <span className="detail-value">{sessionInfo.startTime} - {sessionInfo.endTime}</span>
+                </div>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Date:</span>
-                <span className="detail-value">
-                  {new Date(sessionInfo.date).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Time:</span>
-                <span className="detail-value">
-                  {sessionInfo.startTime} - {sessionInfo.endTime}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Status:</span>
-                <span className={`status-badge ${sessionInfo.status}`}>
-                  {sessionInfo.status}
+              <div className="detail-row detail-row--full">
+                <span className="detail-label">Session Status</span>
+                <span className={`status-badge status-badge--${sessionInfo.status}`}>
+                  {sessionInfo.status === 'active' ? '🟢' : '🔴'} {sessionInfo.status.charAt(0).toUpperCase() + sessionInfo.status.slice(1)}
                 </span>
               </div>
             </div>
@@ -353,20 +369,45 @@ function ScanQR() {
               onClick={submitAttendance}
               disabled={loading}
             >
-              {loading ? "Submitting..." : "✓ Submit Attendance"}
+              <span className="btn-icon">✓</span>
+              <span>{loading ? "Submitting..." : "Submit Attendance"}</span>
             </button>
           </section>
         )}
 
         {/* Instructions */}
         <section className="instructions-card">
-          <h3 className="section-title">Instructions</h3>
-          <ul className="instructions-list">
-            <li>📱 Make sure you're in the class when scanning</li>
-            <li>⏱️ QR code must be scanned within the session time</li>
-            <li>✓ Verify session details before submitting</li>
-            <li>🔄 Contact faculty if you face any issues</li>
-          </ul>
+          <h3 className="instructions-title">How to Mark Attendance</h3>
+          <div className="instructions-list">
+            <div className="instruction-item">
+              <span className="instruction-icon">1</span>
+              <div className="instruction-content">
+                <div className="instruction-heading">Activate Camera</div>
+                <div className="instruction-text">Click "Activate Camera" or use manual entry</div>
+              </div>
+            </div>
+            <div className="instruction-item">
+              <span className="instruction-icon">2</span>
+              <div className="instruction-content">
+                <div className="instruction-heading">Position QR Code</div>
+                <div className="instruction-text">Keep the code within the frame for scanning</div>
+              </div>
+            </div>
+            <div className="instruction-item">
+              <span className="instruction-icon">3</span>
+              <div className="instruction-content">
+                <div className="instruction-heading">Verify Details</div>
+                <div className="instruction-text">Check session details before submission</div>
+              </div>
+            </div>
+            <div className="instruction-item">
+              <span className="instruction-icon">4</span>
+              <div className="instruction-content">
+                <div className="instruction-heading">Submit</div>
+                <div className="instruction-text">Click submit to mark your attendance</div>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
     </div>

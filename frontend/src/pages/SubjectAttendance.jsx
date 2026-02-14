@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 
 function SubjectAttendance() {
@@ -14,11 +15,11 @@ function SubjectAttendance() {
 
   const fetchSubjectData = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const userId = localStorage.getItem("userId");
 
       // Fetch attendance data and filter by subject
-      const response = await fetch(`http://localhost:5001/api/attendance/student/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/attendance/student/${userId}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }

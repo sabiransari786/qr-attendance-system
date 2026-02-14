@@ -84,18 +84,44 @@ const app = express();
 // Frontend (React) alag port pe chalega (e.g., localhost:3000), backend alag (e.g., localhost:5000)
 // Browser security ke wajah se alag origins se requests block ho sakte hain
 // CORS middleware headers add karke frontend ko backend access karne ki permission deta hai
-app.use(cors());
+// Network access (phone/tablet) ke liye bhi CORS enable kar rahe hain
+app.use(cors({
+  origin: '*', // Allow all origins for development (phone/network access)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+  preflightContinue: false,
+  maxAge: 86400 // 24 hours preflight cache
+}));
+
+// Additional CORS headers for mobile browsers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle OPTIONS preflight
+  if (req.method === 'OPTIONS') {
+    console.log('📋 Handling OPTIONS preflight for:', req.path);
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // express.json() middleware - JSON request body ko parse karne ke liye
 // Frontend se JSON data aata hai (e.g., login credentials) - ye middleware use parse karke req.body mein daalta hai
 // Bina iske req.body undefined rahega - isliye zaroori hai
-app.use(express.json());
+// limit: '10mb' - Base64 encoded images ke liye - 5MB image ≈ 6.67MB Base64 (33% overhead)
+app.use(express.json({ limit: '10mb' }));
 
 // express.urlencoded() middleware - URL-encoded data ko parse karne ke liye
 // Form submissions mein URL-encoded format hota hai (e.g., email=user@example.com&password=123)
 // Ye middleware is format ko parse karke req.body mein object banata hai
 // extended: true ka matlab hai ki nested objects bhi parse ho sakte hain
-app.use(express.urlencoded({ extended: true }));
+// limit: '10mb' - Same limit as express.json() for consistency
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Morgan middleware - HTTP request logging ke liye (development mein helpful)
 // Console mein har request ki details dikh jayengi: method (GET/POST), URL, status code, response time
@@ -113,7 +139,10 @@ if (process.env.NODE_ENV === 'development') {
 // Kyun zaroori hai? - Routes se pehle database ready honi chahiye, warna queries fail ho jayengi
 // connectDatabase() function config/database.js file se aata hai - ye MySQL connection establish karta hai
 // Error handling connectDatabase() function ke andar hi hogi - yahan bas call karte hain
-connectDatabase();
+connectDatabase().catch(error => {
+  console.error('Failed to connect database:', error);
+  // App can continue with fallback behavior
+});
 
 // ============================================================================
 // STEP 8: Health Check Route - Application Status Check Karne Ke Liye

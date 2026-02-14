@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 
 function AdminDashboard() {
@@ -17,7 +18,7 @@ function AdminDashboard() {
   const fetchStudents = async () => {
     setIsLoadingStudents(true);
     try {
-      const response = await fetch('http://localhost:5001/api/auth/students', {
+      const response = await fetch(`${API_BASE_URL}/auth/students`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

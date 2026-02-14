@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/profile.css";
 
 function StudentProfile() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [profileData, setProfileData] = useState({
     name: "",
@@ -17,54 +20,114 @@ function StudentProfile() {
     section: ""
   });
   const [editedData, setEditedData] = useState({ ...profileData });
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+  const [photoZoom, setPhotoZoom] = useState(1);
+  const [photoPosition, setPhotoPosition] = useState({ x: 0, y: 0 });
+  const [tempPhoto, setTempPhoto] = useState(null);
 
   useEffect(() => {
     fetchProfileData();
   }, []);
 
+  // Close photo menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showPhotoMenu && !event.target.closest('.profile-avatar-container')) {
+        setShowPhotoMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPhotoMenu]);
+
+  const loadProfilePhoto = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/photo/${userId}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setPhotoPreview(url);
+      }
+    } catch (error) {
+      console.log("No profile photo found");
+    }
+  };
+
   const fetchProfileData = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       
       if (!token) {
         navigate("/login");
         return;
       }
-
-      const response = await fetch("http://localhost:5001/api/auth/me", {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
       });
 
+      // Handle token expiry or unauthorized
+      if (response.status === 403 || response.status === 401) {
+        const data = await response.json();
+        console.error("Authentication error:", data.message);
+        
+        // Clear localStorage and redirect to login
+        localStorage.clear();
+        navigate("/login");
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         const userData = data.data || data.user;
+        
+        // Get data from API or fallback to localStorage
         const profile = {
-          name: userData.name || "",
-          email: userData.email || "",
-          studentId: userData.studentId || userData.id || "",
-          phone: userData.phone || "",
-          department: userData.department || "Computer Science",
-          semester: userData.semester || "4th",
-          section: userData.section || "A"
+          name: userData.name || localStorage.getItem("userName") || "",
+          email: userData.email || localStorage.getItem("userEmail") || "",
+          studentId: userData.studentId || userData.student_id || userData.id || localStorage.getItem("userId") || "",
+          phone: userData.phone || userData.contactNumber || userData.contact_number || "",
+          department: userData.department || "",
+          semester: userData.semester || "",
+          section: userData.section || ""
         };
         setProfileData(profile);
         setEditedData(profile);
       } else {
-        // Use fallback data
+        // Use fallback data from localStorage
         const fallbackProfile = {
-          name: localStorage.getItem("userName") || "Student Name",
-          email: localStorage.getItem("userEmail") || "student@example.com",
-          studentId: localStorage.getItem("studentId") || "STU-0001",
-          phone: "123-456-7890",
-          department: "Computer Science",
-          semester: "4th",
-          section: "A"
+          name: localStorage.getItem("userName") || "",
+          email: localStorage.getItem("userEmail") || "",
+          studentId: localStorage.getItem("userId") || "",
+          phone: "",
+          department: "",
+          semester: "",
+          section: ""
         };
         setProfileData(fallbackProfile);
         setEditedData(fallbackProfile);
       }
+      
+      // Load profile photo if userId available
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          const userId = parsedUser.id;
+          if (userId) {
+            loadProfilePhoto(userId);
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
+      
       setLoading(false);
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -91,11 +154,163 @@ function StudentProfile() {
     setMessage({ type: "", text: "" });
   };
 
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setMessage({ type: "error", text: "Invalid file type. Please upload JPEG, PNG, GIF, or WebP." });
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: "error", text: "File size exceeds 5MB limit" });
+      return;
+    }
+
+    setProfilePhoto(file);
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setTempPhoto(e.target.result);
+      setShowPhotoEditor(true);
+      setPhotoZoom(1);
+      setPhotoPosition({ x: 0, y: 0 });
+    };
+    reader.readAsDataURL(file);
+    
+    setMessage({ type: "success", text: "Adjust your photo and click 'Upload Photo' to save." });
+  };
+
+  const handlePhotoClick = () => {
+    if (photoPreview) {
+      setShowPhotoMenu(!showPhotoMenu);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleViewPhoto = () => {
+    setShowPhotoModal(true);
+    setShowPhotoMenu(false);
+  };
+
+  const handleEditPhoto = () => {
+    setShowPhotoMenu(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleRemovePhoto = async () => {
+    if (window.confirm("Are you sure you want to remove your profile photo?")) {
+      setPhotoPreview(null);
+      setShowPhotoMenu(false);
+      setMessage({ type: "success", text: "Photo removed. Upload a new one to update." });
+    }
+  };
+
+  const handleCancelEditor = () => {
+    setShowPhotoEditor(false);
+    setTempPhoto(null);
+    setProfilePhoto(null);
+    setPhotoZoom(1);
+    setPhotoPosition({ x: 0, y: 0 });
+    setMessage({ type: "", text: "" });
+  };
+
+  const handleApplyAdjustments = () => {
+    setPhotoPreview(tempPhoto);
+    setShowPhotoEditor(false);
+    setMessage({ type: "success", text: "Photo adjusted. Click 'Upload Photo' to save." });
+  };
+
+  const handleUploadPhoto = async () => {
+    if (!profilePhoto) {
+      setMessage({ type: "error", text: "Please select a photo first" });
+      return;
+    }
+
+    setUploading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const token = localStorage.getItem("authToken");
+      
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Photo = e.target.result;
+        
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/upload-photo`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              photo: base64Photo,
+              mimeType: profilePhoto.type
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setMessage({ type: "success", text: "Profile photo uploaded successfully!" });
+            setProfilePhoto(null);
+            
+            // Reload preview after upload
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+              try {
+                const parsedUser = JSON.parse(storedUser);
+                const userId = parsedUser.id;
+                if (userId) {
+                  setTimeout(() => {
+                    loadProfilePhoto(userId);
+                  }, 500);
+                }
+              } catch (error) {
+                console.error("Error parsing user data:", error);
+              }
+            }
+          } else {
+            const errorData = await response.json();
+            console.error('Upload error:', errorData);
+            setMessage({ type: "error", text: errorData.message || "Failed to upload photo" });
+          }
+        } catch (error) {
+          console.error("Error uploading photo:", error);
+          setMessage({ type: "error", text: "Failed to upload photo. Please try again." });
+        } finally {
+          setUploading(false);
+        }
+      };
+      
+      reader.onerror = () => {
+        setMessage({ type: "error", text: "Failed to read file" });
+        setUploading(false);
+      };
+      
+      reader.readAsDataURL(profilePhoto);
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      setMessage({ type: "error", text: "Failed to upload photo. Please try again." });
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       
-      const response = await fetch("http://localhost:5001/api/auth/profile", {
+      console.log('📝 Saving profile...');
+      console.log('Data being sent:', editedData);
+      
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -104,18 +319,61 @@ function StudentProfile() {
         body: JSON.stringify(editedData)
       });
 
+      const data = await response.json();
+      
+      console.log('📨 Server response:', data);
+
+      // Handle token expiry
+      if (response.status === 403 || response.status === 401) {
+        setMessage({ 
+          type: "error", 
+          text: data.message || "Session expired. Please login again." 
+        });
+        
+        // Clear localStorage and redirect to login after 2 seconds
+        setTimeout(() => {
+          localStorage.clear();
+          navigate("/login");
+        }, 2000);
+        return;
+      }
+
       if (response.ok) {
-        setProfileData({ ...editedData });
+        // Use the updated data from server response
+        const updatedUser = data.data || data.user;
+        console.log('✅ Update successful! Server returned:', updatedUser);
+        
+        const updatedProfile = {
+          name: updatedUser.name || editedData.name,
+          email: updatedUser.email || editedData.email,
+          studentId: updatedUser.studentId || updatedUser.student_id || updatedUser.id || editedData.studentId,
+          phone: updatedUser.phone || updatedUser.contactNumber || updatedUser.contact_number || editedData.phone,
+          department: updatedUser.department || editedData.department,
+          semester: updatedUser.semester || editedData.semester,
+          section: updatedUser.section || editedData.section
+        };
+        
+        console.log('💾 Setting profile data to:', updatedProfile);
+        
+        setProfileData(updatedProfile);
+        setEditedData(updatedProfile);
         setEditing(false);
         setMessage({ type: "success", text: "Profile updated successfully!" });
         
-        // Update localStorage
-        localStorage.setItem("userName", editedData.name);
-        localStorage.setItem("userEmail", editedData.email);
+        // Update localStorage with latest data
+        localStorage.setItem("userName", updatedProfile.name);
+        localStorage.setItem("userEmail", updatedProfile.email);
         
-        setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+        // Refresh profile data from server to ensure consistency
+        setTimeout(() => {
+          fetchProfileData();
+          setMessage({ type: "", text: "" });
+        }, 2000);
       } else {
-        setMessage({ type: "error", text: "Failed to update profile" });
+        setMessage({ 
+          type: "error", 
+          text: data.message || "Failed to update profile" 
+        });
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -145,7 +403,7 @@ function StudentProfile() {
         </div>
         <button
           className="dashboard__button dashboard__button--secondary"
-          onClick={() => navigate("/student/dashboard")}
+          onClick={() => navigate("/student-dashboard")}
         >
           ← Back to Dashboard
         </button>
@@ -162,16 +420,147 @@ function StudentProfile() {
         {/* Profile Card */}
         <section className="profile-card">
           <div className="profile-header">
-            <div className="profile-avatar">
-              <span className="avatar-text">
-                {profileData.name.charAt(0).toUpperCase()}
-              </span>
+            <div className="profile-avatar-container">
+              <div 
+                className="profile-avatar" 
+                onClick={handlePhotoClick}
+                style={{ cursor: 'pointer' }}
+                title={photoPreview ? "Click to view/edit photo" : "Click to upload photo"}
+              >
+                {photoPreview ? (
+                  <img 
+                    src={photoPreview} 
+                    alt={profileData.name}
+                    className="profile-avatar-image"
+                  />
+                ) : (
+                  <span className="avatar-text">
+                    {profileData.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handlePhotoSelect}
+                accept="image/*"
+                style={{ display: "none" }}
+              />
+              
+              {/* Photo Menu */}
+              {showPhotoMenu && photoPreview && (
+                <div className="photo-menu">
+                  <button className="photo-menu-item" onClick={handleViewPhoto}>
+                    👁️ View Photo
+                  </button>
+                  <button className="photo-menu-item" onClick={handleEditPhoto}>
+                    ✏️ Change Photo
+                  </button>
+                  <button className="photo-menu-item photo-menu-item--danger" onClick={handleRemovePhoto}>
+                    🗑️ Remove Photo
+                  </button>
+                </div>
+              )}
+              
+              <button
+                className="photo-upload-btn"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload profile photo"
+              >
+                📷
+              </button>
             </div>
             <div className="profile-title">
               <h2>{profileData.name}</h2>
               <p>{profileData.email}</p>
             </div>
           </div>
+
+          {/* Photo Editor Modal */}
+          {showPhotoEditor && tempPhoto && (
+            <div className="photo-editor-modal" onClick={() => setShowPhotoEditor(false)}>
+              <div className="photo-editor-content" onClick={(e) => e.stopPropagation()}>
+                <div className="photo-editor-header">
+                  <h3>Adjust Your Photo</h3>
+                  <button className="close-btn" onClick={handleCancelEditor}>✕</button>
+                </div>
+                
+                <div className="photo-editor-preview">
+                  <div className="photo-editor-canvas">
+                    <img 
+                      src={tempPhoto}
+                      alt="Photo preview"
+                      style={{
+                        transform: `scale(${photoZoom}) translate(${photoPosition.x}px, ${photoPosition.y}px)`,
+                        transition: 'transform 0.1s ease'
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="photo-editor-controls">
+                  <div className="control-group">
+                    <label>Zoom: {photoZoom.toFixed(1)}x</label>
+                    <input 
+                      type="range" 
+                      min="0.5" 
+                      max="3" 
+                      step="0.1" 
+                      value={photoZoom}
+                      onChange={(e) => setPhotoZoom(parseFloat(e.target.value))}
+                      className="zoom-slider"
+                    />
+                  </div>
+                  
+                  <div className="control-group">
+                    <label>Position</label>
+                    <div className="position-controls">
+                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y - 10 }))}>⬆️</button>
+                      <div>
+                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x - 10 }))}>⬅️</button>
+                        <button onClick={() => setPhotoPosition({ x: 0, y: 0 })}>⭕</button>
+                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x + 10 }))}>➡️</button>
+                      </div>
+                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y + 10 }))}>⬇️</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="photo-editor-actions">
+                  <button className="action-btn action-btn--secondary" onClick={handleCancelEditor}>
+                    Cancel
+                  </button>
+                  <button className="action-btn action-btn--primary" onClick={handleApplyAdjustments}>
+                    Apply & Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Photo View Modal */}
+          {showPhotoModal && photoPreview && (
+            <div className="photo-view-modal" onClick={() => setShowPhotoModal(false)}>
+              <div className="photo-view-content" onClick={(e) => e.stopPropagation()}>
+                <button className="close-btn" onClick={() => setShowPhotoModal(false)}>✕</button>
+                <img src={photoPreview} alt={profileData.name} />
+              </div>
+            </div>
+          )}
+
+          {/* Photo Upload Section */}
+          {profilePhoto && !showPhotoEditor && (
+            <div className="photo-upload-section">
+              <p className="photo-upload-hint">Photo adjusted. Ready to upload: {profilePhoto.name}</p>
+              <button
+                className="action-btn action-btn--primary"
+                onClick={handleUploadPhoto}
+                disabled={uploading}
+              >
+                {uploading ? "⏳ Uploading..." : "✓ Upload Photo"}
+              </button>
+            </div>
+          )}
 
           <div className="profile-body">
             <div className="form-grid">
@@ -184,9 +573,10 @@ function StudentProfile() {
                     className="form-input"
                     value={editedData.name}
                     onChange={handleInputChange}
+                    placeholder="Enter your full name"
                   />
                 ) : (
-                  <p className="form-value">{profileData.name}</p>
+                  <p className="form-value">{profileData.name || "Not provided"}</p>
                 )}
               </div>
 
@@ -204,9 +594,10 @@ function StudentProfile() {
                     className="form-input"
                     value={editedData.email}
                     onChange={handleInputChange}
+                    placeholder="your.email@example.com"
                   />
                 ) : (
-                  <p className="form-value">{profileData.email}</p>
+                  <p className="form-value">{profileData.email || "Not provided"}</p>
                 )}
               </div>
 
@@ -219,9 +610,10 @@ function StudentProfile() {
                     className="form-input"
                     value={editedData.phone}
                     onChange={handleInputChange}
+                    placeholder="123-456-7890"
                   />
                 ) : (
-                  <p className="form-value">{profileData.phone}</p>
+                  <p className="form-value">{profileData.phone || "Not provided"}</p>
                 )}
               </div>
 
@@ -234,9 +626,10 @@ function StudentProfile() {
                     className="form-input"
                     value={editedData.department}
                     onChange={handleInputChange}
+                    placeholder="e.g., Computer Science"
                   />
                 ) : (
-                  <p className="form-value">{profileData.department}</p>
+                  <p className="form-value">{profileData.department || "Not specified"}</p>
                 )}
               </div>
 
@@ -273,9 +666,10 @@ function StudentProfile() {
                     value={editedData.section}
                     onChange={handleInputChange}
                     maxLength={2}
+                    placeholder="A, B, C, etc."
                   />
                 ) : (
-                  <p className="form-value">{profileData.section}</p>
+                  <p className="form-value">{profileData.section || "Not specified"}</p>
                 )}
               </div>
             </div>
@@ -331,13 +725,13 @@ function StudentProfile() {
             <div className="quick-links">
               <button 
                 className="link-btn"
-                onClick={() => navigate("/student/attendance-history")}
+                onClick={() => navigate("/attendance-history")}
               >
                 📊 View Attendance
               </button>
               <button 
                 className="link-btn"
-                onClick={() => navigate("/student/scan-qr")}
+                onClick={() => navigate("/scan-qr")}
               >
                 📱 Scan QR Code
               </button>

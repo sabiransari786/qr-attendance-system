@@ -10,6 +10,7 @@ function Navbar() {
   const isAuthenticated = authContext?.isAuthenticated;
   const user = authContext?.user;
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Check localStorage or default to light theme
@@ -19,6 +20,18 @@ function Navbar() {
     setIsDarkMode(isDark);
     applyTheme(isDark);
   }, []);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
 
   const applyTheme = (isDark) => {
     const root = document.documentElement;
@@ -77,7 +90,21 @@ function Navbar() {
           </div>
         </Link>
 
-        <nav className="navbar__nav" aria-label="Main navigation">
+        {/* Mobile Menu Toggle Button */}
+        <button 
+          className="navbar__mobile-toggle"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
+          aria-expanded={isMobileMenuOpen}
+        >
+          <span className={`hamburger ${isMobileMenuOpen ? 'open' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+
+        <nav className={`navbar__nav ${isMobileMenuOpen ? 'navbar__nav--open' : ''}`} aria-label="Main navigation">
           {!isAuthenticated ? (
             <>
               <NavLink
@@ -86,6 +113,7 @@ function Navbar() {
                 className={({ isActive }) =>
                   `navbar__link${isActive ? " navbar__link--active" : ""}`
                 }
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Home
               </NavLink>
@@ -94,6 +122,7 @@ function Navbar() {
                 className={({ isActive }) =>
                   `navbar__link${isActive ? " navbar__link--active" : ""}`
                 }
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Login
               </NavLink>
@@ -104,6 +133,7 @@ function Navbar() {
                     isActive ? " navbar__link--active-primary" : ""
                   }`
                 }
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 Sign up
               </NavLink>
@@ -112,14 +142,20 @@ function Navbar() {
             <>
               <button 
                 className="navbar__link"
-                onClick={handleProfileClick}
+                onClick={() => {
+                  handleProfileClick();
+                  setIsMobileMenuOpen(false);
+                }}
                 style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
               >
                 👤 Profile
               </button>
               <button 
                 className="navbar__link navbar__link--primary"
-                onClick={handleLogout}
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
                 style={{ cursor: 'pointer', border: 'none' }}
               >
                 Logout
@@ -153,6 +189,14 @@ function Navbar() {
           </button>
         </nav>
       </div>
+      
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="navbar__overlay" 
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
     </header>
   );
 }

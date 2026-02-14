@@ -12,9 +12,9 @@
   background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
   animation: home-bg-float 18s ease-in-out infinite;
   color: var(--color-text);
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
-  margin-top: 110px;
+  font-family: var(--font-primary);
+  margin-top: 0;
+  padding-top: 80px;
   position: relative;
   overflow: hidden;
 }
@@ -200,7 +200,7 @@
   font-size: clamp(2.5rem, 5vw, 3.8rem);
   font-weight: 800;
   color: var(--color-text);
-  font-family: "Fearless", "Manrope", sans-serif;
+  font-family: "Inter", "Poppins", sans-serif;
   line-height: 1.15;
   letter-spacing: -0.8px;
   text-shadow: 0 2px 30px rgba(49, 156, 181, 0.15);
@@ -564,7 +564,7 @@
   margin: 0 0 1rem;
   font-size: clamp(2rem, 4vw, 2.8rem);
   font-weight: 800;
-  font-family: "Fearless", "Manrope", sans-serif;
+  font-family: "Inter", "Poppins", sans-serif;
   background: linear-gradient(135deg, var(--color-text) 0%, var(--color-text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

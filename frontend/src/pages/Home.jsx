@@ -9,6 +9,7 @@ function Home() {
         <span className="home__object home__object--diamond" />
         <span className="home__object home__object--chip" />
       </div>
+      
       {/* Introduction / Hero Section */}
       <section className="home__hero">
         <div className="home__hero-inner">

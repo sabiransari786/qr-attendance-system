@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 
 function StudentDashboard() {
@@ -8,11 +9,84 @@ function StudentDashboard() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [attendanceStats, setAttendanceStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    fetchAttendanceData();
+  }, [user]);
+
+  const fetchAttendanceData = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/attendance/student/${user.id}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const records = data.data || [];
+        
+        // Calculate overall stats
+        const totalClasses = records.length;
+        const presentClasses = records.filter(r => r.status === 'present').length;
+        const overallPercentage = totalClasses > 0 ? Math.round((presentClasses / totalClasses) * 100) : 0;
+
+        // Group by subject and calculate subject-wise stats
+        const subjectMap = {};
+        records.forEach(record => {
+          const subject = record.subject || 'Unknown Subject';
+          if (!subjectMap[subject]) {
+            subjectMap[subject] = { total: 0, present: 0 };
+          }
+          subjectMap[subject].total++;
+          if (record.status === 'present') {
+            subjectMap[subject].present++;
+          }
+        });
+
+        const subjects = Object.keys(subjectMap).map(subject => ({
+          name: subject,
+          total: subjectMap[subject].total,
+          present: subjectMap[subject].present,
+          percentage: Math.round((subjectMap[subject].present / subjectMap[subject].total) * 100)
+        }));
+
+        setAttendanceStats({
+          overall: overallPercentage,
+          present: presentClasses,
+          total: totalClasses,
+          subjects: subjects
+        });
+      } else {
+        // Set default empty stats if API fails
+        setAttendanceStats({
+          overall: 0,
+          present: 0,
+          total: 0,
+          subjects: []
+        });
+      }
+    } catch (error) {
+      setAttendanceStats({
+        overall: 0,
+        present: 0,
+        total: 0,
+        subjects: []
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', { 
@@ -31,18 +105,6 @@ function StudentDashboard() {
     });
   };
 
-  // Sample data - will be replaced with real API data
-  const attendanceStats = {
-    overall: 85,
-    present: 34,
-    total: 40,
-    subjects: [
-      { name: 'Data Structures', percentage: 90, present: 9, total: 10 },
-      { name: 'Web Development', percentage: 85, present: 17, total: 20 },
-      { name: 'Operating Systems', percentage: 75, present: 8, total: 10 }
-    ]
-  };
-
   const getAttendanceColor = (percentage) => {
     if (percentage >= 85) return '#10b981';
     if (percentage >= 75) return '#f59e0b';
@@ -55,423 +117,218 @@ function StudentDashboard() {
     return 'Low';
   };
 
+  if (loading) {
+    return (
+      <div className="dashboard">
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+          fontSize: '1.2rem',
+          color: 'var(--color-text-secondary)'
+        }}>
+          Loading your dashboard...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard--student">
       <div className="dashboard__objects" aria-hidden="true">
         <span className="dashboard__object dashboard__object--sphere" />
         <span className="dashboard__object dashboard__object--torus" />
         <span className="dashboard__object dashboard__object--diamond" />
       </div>
       
-      <header className="dashboard__header">
-        <div>
-          <h1 className="dashboard__title">
-            <span style={{ fontSize: '2rem', marginRight: '0.5rem' }}>👨‍🎓</span>
-            Student Dashboard
+      <header className="dashboard__header student-dashboard__header">
+        <div className="student-dashboard__intro">
+          <p className="student-dashboard__eyebrow">Student Dashboard</p>
+          <h1 className="dashboard__title student-dashboard__title">
+            Welcome, {user?.name}
           </h1>
-          <p className="dashboard__subtitle">
-            Welcome back, <strong>{user?.name}</strong>!
+          <p className="dashboard__subtitle student-dashboard__subtitle">
+            Your attendance snapshot and shortcuts in one place.
           </p>
         </div>
-        <div style={{ 
-          textAlign: 'right',
-          fontSize: '0.9rem',
-          color: 'var(--color-text-secondary)'
-        }}>
-          <div style={{ fontWeight: '600', color: 'var(--color-primary)', marginBottom: '0.25rem' }}>
-            {formatTime(currentTime)}
-          </div>
-          <div>{formatDate(currentTime)}</div>
+        <div className="student-dashboard__time">
+          <div className="student-dashboard__time-value">{formatTime(currentTime)}</div>
+          <div className="student-dashboard__time-date">{formatDate(currentTime)}</div>
         </div>
       </header>
 
       {/* Overall Stats Banner */}
-      <section style={{
-        background: 'linear-gradient(135deg, rgba(49, 156, 181, 0.15) 0%, rgba(49, 156, 181, 0.05) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(49, 156, 181, 0.2)',
-        borderRadius: '16px',
-        padding: '2rem',
-        marginBottom: '2rem',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '2rem',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              fontSize: '3rem', 
-              fontWeight: '700',
-              background: `linear-gradient(135deg, ${getAttendanceColor(attendanceStats.overall)}, var(--color-primary))`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '0.5rem'
-            }}>
+      <section className="student-dashboard__stats">
+        <div className="student-dashboard__stats-grid">
+          <div className="student-dashboard__stat">
+            <div
+              className="student-dashboard__stat-value"
+              style={{ color: getAttendanceColor(attendanceStats.overall) }}
+            >
               {attendanceStats.overall}%
             </div>
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: 'var(--color-text-secondary)',
-              marginBottom: '0.25rem'
-            }}>
-              Overall Attendance
-            </div>
-            <div style={{
-              display: 'inline-block',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '12px',
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              background: `${getAttendanceColor(attendanceStats.overall)}20`,
-              color: getAttendanceColor(attendanceStats.overall)
-            }}>
+            <div className="student-dashboard__stat-label">Overall Attendance</div>
+            <div
+              className="student-dashboard__stat-pill"
+              style={{
+                color: getAttendanceColor(attendanceStats.overall),
+                backgroundColor: `${getAttendanceColor(attendanceStats.overall)}20`
+              }}
+            >
               {getAttendanceStatus(attendanceStats.overall)}
             </div>
           </div>
-          
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              fontSize: '3rem', 
-              fontWeight: '700',
-              color: 'var(--color-primary)',
-              marginBottom: '0.5rem'
-            }}>
+
+          <div className="student-dashboard__stat">
+            <div className="student-dashboard__stat-value student-dashboard__stat-value--primary">
               {attendanceStats.present}
             </div>
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: 'var(--color-text-secondary)'
-            }}>
-              Classes Attended
-            </div>
+            <div className="student-dashboard__stat-label">Classes Attended</div>
           </div>
-          
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ 
-              fontSize: '3rem', 
-              fontWeight: '700',
-              color: 'var(--color-primary)',
-              marginBottom: '0.5rem'
-            }}>
+
+          <div className="student-dashboard__stat">
+            <div className="student-dashboard__stat-value student-dashboard__stat-value--primary">
               {attendanceStats.total}
             </div>
-            <div style={{ 
-              fontSize: '0.9rem', 
-              color: 'var(--color-text-secondary)'
-            }}>
-              Total Classes
-            </div>
+            <div className="student-dashboard__stat-label">Total Classes</div>
           </div>
         </div>
       </section>
 
       <main className="dashboard__grid" aria-label="Student overview">
-        {/* Scan QR - Primary Action (Full Width) */}
-        <section 
-          className="dashboard__card" 
-          style={{ 
-            gridColumn: 'span 3',
-            background: 'linear-gradient(135deg, rgba(49, 156, 181, 0.15) 0%, rgba(49, 156, 181, 0.08) 100%)',
-            border: '2px solid rgba(49, 156, 181, 0.3)',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}
+        {/* Scan QR - Primary Action */}
+        <section
+          className="dashboard__card student-dashboard__hero"
           onClick={() => navigate("/scan-qr")}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.boxShadow = '0 20px 60px rgba(49, 156, 181, 0.3)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
         >
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '2rem'
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '1rem',
-                marginBottom: '1rem'
-              }}>
-                <div style={{
-                  fontSize: '3.5rem',
-                  background: 'linear-gradient(135deg, var(--color-primary), rgba(49, 156, 181, 0.6))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  lineHeight: 1
-                }}>
-                  📱
-                </div>
-                <div>
-                  <h2 className="dashboard__card-title" style={{ marginBottom: '0.5rem' }}>
-                    Scan QR Code
-                  </h2>
-                  <p className="dashboard__card-text" style={{ margin: 0 }}>
-                    Mark your attendance by scanning the QR code displayed by your faculty
-                  </p>
-                </div>
+          <div className="student-dashboard__hero-glow" aria-hidden="true"></div>
+          <div className="student-dashboard__hero-content">
+            <div className="student-dashboard__hero-text">
+              <div className="student-dashboard__hero-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 4h4v4H3z"></path>
+                  <path d="M17 4h4v4h-4z"></path>
+                  <path d="M3 17h4v4H3z"></path>
+                  <path d="M17 17h4v4h-4z"></path>
+                  <path d="M8 8v8M16 8v8M8 16h8"></path>
+                </svg>
               </div>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                background: 'rgba(49, 156, 181, 0.15)',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                color: 'var(--color-primary)'
-              }}>
-                <span>✓</span> Quick & Easy Attendance
+              <p className="student-dashboard__hero-kicker">Instant attendance</p>
+              <h2 className="dashboard__card-title student-dashboard__hero-title">Scan QR Code</h2>
+              <p className="dashboard__card-text student-dashboard__hero-text-desc">
+                Mark attendance by scanning the QR code shared by your faculty.
+              </p>
+              <div className="student-dashboard__hero-meta">
+                <span className="student-dashboard__hero-meta-item">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.5 8.5H8.5v3h-1v-3H4.5v-1h3v-3h1v3h3.5v1z"></path></svg>
+                  Secure check-in
+                </span>
+                <span className="student-dashboard__hero-meta-item">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14A6 6 0 118 2a6 6 0 010 12zM8 1A7 7 0 100 8a7 7 0 008-7zm0 11a4 4 0 110-8 4 4 0 010 8z"></path></svg>
+                  Auto sync
+                </span>
               </div>
+              <div className="student-dashboard__hero-badge">⚡ Fast check-in</div>
             </div>
             <button
+              className="student-dashboard__hero-button"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate("/scan-qr");
               }}
-              style={{
-                padding: '1.25rem 2.5rem',
-                background: 'linear-gradient(135deg, var(--color-primary), rgba(49, 156, 181, 0.8))',
-                border: 'none',
-                borderRadius: '12px',
-                color: 'white',
-                fontWeight: '700',
-                fontSize: '1.1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 8px 20px rgba(49, 156, 181, 0.3)',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(49, 156, 181, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(49, 156, 181, 0.3)';
-              }}
             >
-              Open Scanner →
+              <span className="student-dashboard__hero-button-icon">📱</span>
+              <span>Open Scanner</span>
             </button>
           </div>
         </section>
 
         {/* Quick Actions Card */}
-        <section className="dashboard__card" style={{ 
-          background: 'linear-gradient(135deg, rgba(49, 156, 181, 0.1) 0%, rgba(204, 245, 254, 0.05) 100%)'
-        }}>
-          <h2 className="dashboard__card-title" style={{ marginBottom: '1.5rem' }}>
-            ⚡ Quick Actions
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            
+        <section className="dashboard__card student-dashboard__card">
+          <h2 className="dashboard__card-title">Quick Actions</h2>
+          <div className="student-dashboard__actions">
             <button
-              onClick={() => navigate("/attendance-history")}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                background: 'rgba(49, 156, 181, 0.1)',
-                border: '1px solid rgba(49, 156, 181, 0.3)',
-                borderRadius: '12px',
-                color: 'var(--color-text)',
-                fontWeight: '600',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(49, 156, 181, 0.2)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(49, 156, 181, 0.1)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <span style={{ fontSize: '1.25rem' }}>📊</span>
-              View History
-            </button>
-            
-            <button
+              className="student-dashboard__action student-dashboard__action--primary"
               onClick={() => navigate("/student-profile")}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                background: 'rgba(49, 156, 181, 0.1)',
-                border: '1px solid rgba(49, 156, 181, 0.3)',
-                borderRadius: '12px',
-                color: 'var(--color-text)',
-                fontWeight: '600',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(49, 156, 181, 0.2)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(49, 156, 181, 0.1)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
             >
-              <span style={{ fontSize: '1.25rem' }}>👤</span>
               My Profile
+            </button>
+
+            <button
+              className="student-dashboard__action student-dashboard__action--ghost"
+              onClick={() => navigate("/attendance-history")}
+            >
+              View History
             </button>
           </div>
         </section>
 
         {/* Subject-wise Attendance Card */}
-        <section 
-          className="dashboard__card"
-          style={{
-            gridColumn: 'span 2',
-            background: 'linear-gradient(135deg, rgba(49, 156, 181, 0.08) 0%, rgba(204, 245, 254, 0.03) 100%)'
-          }}
-        >
-          <h2 className="dashboard__card-title" style={{ marginBottom: '1.5rem' }}>
-            📚 Subject-wise Attendance
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {attendanceStats.subjects.map((subject, index) => (
-              <div 
-                key={index}
-                style={{
-                  padding: '1.25rem',
-                  background: 'var(--card-bg)',
-                  border: '1px solid var(--border-soft)',
-                  borderRadius: '12px',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateX(4px)';
-                  e.currentTarget.style.borderColor = 'var(--color-primary)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateX(0)';
-                  e.currentTarget.style.borderColor = 'var(--border-soft)';
-                }}
-                onClick={() => navigate("/attendance-history")}
-              >
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  marginBottom: '0.75rem'
-                }}>
-                  <h3 style={{ 
-                    fontSize: '1.1rem', 
-                    fontWeight: '600',
-                    color: 'var(--color-text)'
-                  }}>
-                    {subject.name}
-                  </h3>
-                  <div style={{
-                    fontSize: '1.25rem',
-                    fontWeight: '700',
-                    color: getAttendanceColor(subject.percentage)
-                  }}>
-                    {subject.percentage}%
-                  </div>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}>
-                  <div style={{
-                    flex: 1,
-                    height: '8px',
-                    background: 'rgba(49, 156, 181, 0.1)',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      width: `${subject.percentage}%`,
-                      height: '100%',
-                      background: `linear-gradient(90deg, ${getAttendanceColor(subject.percentage)}, var(--color-primary))`,
-                      borderRadius: '4px',
-                      transition: 'width 0.5s ease'
-                    }} />
-                  </div>
-                  <span style={{
-                    fontSize: '0.85rem',
-                    color: 'var(--color-text-secondary)',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {subject.present}/{subject.total} classes
-                  </span>
-                </div>
-              </div>
-            ))}
+        <section className="dashboard__card student-dashboard__card student-dashboard__subjects">
+          <div className="student-dashboard__card-head">
+            <h2 className="dashboard__card-title">Subject-wise Attendance</h2>
+            <button
+              className="student-dashboard__link"
+              onClick={() => navigate("/attendance-history")}
+            >
+              View All
+            </button>
           </div>
-          <button
-            onClick={() => navigate("/attendance-history")}
-            style={{
-              marginTop: '1rem',
-              padding: '0.75rem',
-              width: '100%',
-              background: 'transparent',
-              border: '1px solid rgba(49, 156, 181, 0.3)',
-              borderRadius: '12px',
-              color: 'var(--color-primary)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(49, 156, 181, 0.1)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-          >
-            View All Subjects →
-          </button>
+          {attendanceStats && attendanceStats.subjects && attendanceStats.subjects.length > 0 ? (
+            <div className="student-dashboard__subject-list">
+              {attendanceStats.subjects.map((subject, index) => (
+                <button
+                  key={index}
+                  className="student-dashboard__subject"
+                  type="button"
+                  onClick={() => navigate("/attendance-history")}
+                >
+                  <div className="student-dashboard__subject-top">
+                    <h3 className="student-dashboard__subject-name">{subject.name}</h3>
+                    <div
+                      className="student-dashboard__subject-value"
+                      style={{ color: getAttendanceColor(subject.percentage) }}
+                    >
+                      {subject.percentage}%
+                    </div>
+                  </div>
+                  <div className="student-dashboard__subject-progress">
+                    <div className="student-dashboard__subject-track">
+                      <div
+                        className="student-dashboard__subject-fill"
+                        style={{
+                          width: `${subject.percentage}%`,
+                          background: `linear-gradient(90deg, ${getAttendanceColor(
+                            subject.percentage
+                          )}, var(--color-primary))`
+                        }}
+                      />
+                    </div>
+                    <span className="student-dashboard__subject-meta">
+                      {subject.present}/{subject.total} classes
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="student-dashboard__empty">
+              <p className="student-dashboard__empty-title">No attendance records yet</p>
+              <p className="student-dashboard__empty-subtitle">
+                Start attending classes to see subject-wise statistics.
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Today's Schedule Card */}
-        <section className="dashboard__card" style={{
-          gridColumn: 'span 3',
-          background: 'linear-gradient(135deg, rgba(49, 156, 181, 0.08) 0%, rgba(204, 245, 254, 0.03) 100%)'
-        }}>
-          <h2 className="dashboard__card-title" style={{ marginBottom: '1.5rem' }}>
-            📅 Today's Sessions
-          </h2>
-          <div style={{
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'var(--color-text-secondary)'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>
-              📭
-            </div>
-            <p style={{ fontSize: '1rem' }}>
-              No sessions scheduled for today
-            </p>
-            <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Check back later or contact your faculty for updates
+        <section className="dashboard__card student-dashboard__card student-dashboard__sessions">
+          <h2 className="dashboard__card-title">Today's Sessions</h2>
+          <div className="student-dashboard__empty">
+            <p className="student-dashboard__empty-title">No sessions scheduled for today</p>
+            <p className="student-dashboard__empty-subtitle">
+              Check back later or contact your faculty for updates.
             </p>
           </div>
         </section>

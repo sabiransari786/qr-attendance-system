@@ -578,8 +578,213 @@ const register = async (userData) => {
  * await authService.login(email, password);
  * await authService.register(userData);
  */
+/**
+ * Update User Profile
+ * 
+ * @param {number} userId - User ID
+ * @param {Object} updateData - Profile data to update
+ * @returns {Promise<Object>} Updated user object
+ */
+const updateProfile = async (userId, updateData) => {
+    try {
+        const { pool } = require('../config/database');
+        
+        console.log('🔧 Service: Starting profile update');
+        console.log('User ID:', userId);
+        console.log('Update Data received:', updateData);
+        
+        // Fields that can be updated
+        const allowedFields = ['name', 'phone', 'contactNumber', 'department', 'semester', 'section'];
+        const updates = [];
+        const values = [];
+        
+        // Build dynamic update query
+        Object.keys(updateData).forEach(key => {
+            // Convert camelCase to snake_case for database
+            let dbKey = key;
+            if (key === 'contactNumber' || key === 'phone') {
+                dbKey = 'contact_number';
+            }
+            
+            if (allowedFields.includes(key) && updateData[key] !== undefined && updateData[key] !== null) {
+                updates.push(`${dbKey} = ?`);
+                values.push(updateData[key]);
+                console.log(`  ✓ Adding field: ${dbKey} = ${updateData[key]}`);
+            }
+        });
+        
+        if (updates.length === 0) {
+            throw new Error('No valid fields to update');
+        }
+        
+        // Add userId to values array
+        values.push(userId);
+        
+        const updateQuery = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+        console.log('📊 SQL Query:', updateQuery);
+        console.log('📊 Values:', values);
+        
+        // Update user in database
+        await pool.query(updateQuery, values);
+        
+        console.log('✅ Database updated successfully');
+        
+        // Fetch updated user data
+        const [users] = await pool.query(
+            `SELECT id, name, email, contact_number, role, student_id, teacher_id, 
+                    department, semester, section, created_at, updated_at
+             FROM users 
+             WHERE id = ?`,
+            [userId]
+        );
+        
+        if (users.length === 0) {
+            throw new Error('User not found');
+        }
+        
+        console.log('📤 Fetched updated user from DB:', users[0]);
+        
+        const userResponse = prepareUserResponse(users[0]);
+        console.log('📤 Prepared user response:', userResponse);
+        
+        return userResponse;
+        
+    } catch (error) {
+        console.error('❌ Update profile error:', error);
+        throw new Error(`Profile update failed: ${error.message}`);
+    }
+};
+
+/**
+ * Fetch User Profile by ID
+ *
+ * @param {number} userId - User ID
+ * @returns {Promise<Object>} User object (without password)
+ */
+const getUserById = async (userId) => {
+    try {
+        const { pool } = require('../config/database');
+
+        const [users] = await pool.query(
+            `SELECT id, name, email, contact_number, role, student_id, teacher_id,
+                    department, semester, section, created_at, updated_at
+             FROM users
+             WHERE id = ?`,
+            [userId]
+        );
+
+        if (!users || users.length === 0) {
+            throw new UserNotFoundError('User not found.');
+        }
+
+        return prepareUserResponse(users[0]);
+    } catch (error) {
+        if (error.name && error.statusCode) {
+            throw error;
+        }
+
+        throw new Error(`Failed to fetch user: ${error.message}`);
+    }
+};
+
+/**
+ * Upload User Profile Photo
+ * Stores user's profile photo as binary data in database
+ * 
+ * @param {number} userId - User ID
+ * @param {Buffer} photoBuffer - Photo file buffer
+ * @param {string} mimeType - Photo MIME type (e.g., 'image/jpeg')
+ * @returns {Object} Updated user profile
+ */
+const uploadProfilePhoto = async (userId, photoBuffer, mimeType) => {
+    try {
+        if (!photoBuffer || photoBuffer.length === 0) {
+            throw new Error('Photo buffer is empty');
+        }
+        
+        if (!mimeType) {
+            throw new Error('MIME type is required');
+        }
+        
+        console.log(`📸 Uploading photo for user ${userId}`);
+        console.log(`   Photo size: ${photoBuffer.length} bytes`);
+        console.log(`   MIME type: ${mimeType}`);
+        
+        // Store photo in database
+        const updateQuery = `
+            UPDATE users 
+            SET profile_photo = ?, photo_mime_type = ?, updated_at = NOW() 
+            WHERE id = ?
+        `;
+        
+        try {
+            await pool.query(updateQuery, [photoBuffer, mimeType, userId]);
+        } catch (dbError) {
+            console.error('Database error:', dbError);
+            throw new Error(`Database update failed: ${dbError.message}`);
+        }
+        
+        console.log('✅ Photo uploaded successfully');
+        
+        // Fetch updated user
+        const [users] = await pool.query(
+            `SELECT id, name, email, contact_number, role, student_id, teacher_id, 
+                    department, semester, section, created_at, updated_at
+             FROM users 
+             WHERE id = ?`,
+            [userId]
+        );
+        
+        if (users.length === 0) {
+            throw new Error('User not found');
+        }
+        
+        return prepareUserResponse(users[0]);
+    } catch (error) {
+        console.error('❌ Error uploading photo:', error.message);
+        throw new Error(`Failed to upload photo: ${error.message}`);
+    }
+};
+
+/**
+ * Get User Profile Photo
+ * Retrieves user's profile photo from database
+ * 
+ * @param {number} userId - User ID
+ * @returns {Object} { photo: Buffer, mimeType: string } or null if no photo
+ */
+const getProfilePhoto = async (userId) => {
+    try {
+        console.log(`📷 Fetching photo for user ${userId}`);
+        
+        const [users] = await pool.query(
+            `SELECT profile_photo, photo_mime_type FROM users WHERE id = ?`,
+            [userId]
+        );
+        
+        if (users.length === 0 || !users[0].profile_photo) {
+            console.log('   No photo found');
+            return null;
+        }
+        
+        console.log(`   Photo size: ${users[0].profile_photo.length} bytes`);
+        
+        return {
+            photo: users[0].profile_photo,
+            mimeType: users[0].photo_mime_type || 'image/jpeg'
+        };
+    } catch (error) {
+        console.error('❌ Error fetching photo:', error.message);
+        throw new Error(`Failed to fetch photo: ${error.message}`);
+    }
+};
+
 module.exports = {
     login,
-    register
+    register,
+    updateProfile,
+    getUserById,
+    uploadProfilePhoto,
+    getProfilePhoto
 };
 

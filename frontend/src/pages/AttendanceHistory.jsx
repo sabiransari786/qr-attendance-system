@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 
 function AttendanceHistory() {
@@ -25,7 +26,7 @@ function AttendanceHistory() {
 
   const fetchAttendanceHistory = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const userId = localStorage.getItem("userId");
 
       if (!token || !userId) {
@@ -33,7 +34,7 @@ function AttendanceHistory() {
         return;
       }
 
-      const response = await fetch(`http://localhost:5001/api/attendance/student/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/attendance/student/${userId}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }

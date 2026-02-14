@@ -35,10 +35,26 @@ const PORT = process.env.PORT || 5000;
 // PORT pe server listen karega - incoming requests accept karega
 // Callback function execute hota hai jab server successfully start ho jata hai
 // Production-ready: NODE_ENV check karke environment-specific message dikha rahe hain
-app.listen(PORT, () => {
+// 0.0.0.0 se bind karke network se bhi accessible ho jayega
+const os = require('os');
+const getLocalIP = () => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+};
+
+app.listen(PORT, '0.0.0.0', () => {
+  const localIP = getLocalIP();
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Server URL: http://localhost:${PORT}`);
+  console.log(`🌐 Local: http://localhost:${PORT}`);
+  console.log(`🌐 Network: http://${localIP}:${PORT}`);
   console.log(`✅ API Health Check: http://localhost:${PORT}/api/health`);
 });
 

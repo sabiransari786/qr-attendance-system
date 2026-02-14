@@ -1,7 +1,7 @@
 import { useMemo, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/api";
-import { ROLE_ROUTES } from "../utils/constants";
+import { ROLE_ROUTES, API_BASE_URL } from "../utils/constants";
 import { AuthContext } from "../context/AuthContext";
 import LoginSuccessModal from "../components/LoginSuccessModal";
 import "../styles/auth.css";
@@ -82,6 +82,12 @@ function Login() {
     setIsLoading(true);
 
     try {
+      // Debug: Log current window location and expected API URL
+      console.log("🌐 Window location:", window.location.href);
+      console.log("🌐 Hostname:", window.location.hostname);
+      console.log("🔗 Using API_BASE_URL:", API_BASE_URL);
+      console.log("🔗 Login endpoint:", `${API_BASE_URL}/auth/login`);
+      
       // Send login request to backend
       console.log("Attempting login with:", { email: formValues.email.trim(), password: "***" });
       const response = await login({
@@ -255,6 +261,21 @@ function Login() {
             </Link>
           </p>
         </div>
+        
+        {/* Debug Info - Only show on network access */}
+        {window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && (
+          <div style={{
+            marginTop: '20px',
+            padding: '10px',
+            background: '#f0f0f0',
+            borderRadius: '4px',
+            fontSize: '12px',
+            textAlign: 'center',
+            color: '#666'
+          }}>
+            📡 Backend: {API_BASE_URL}
+          </div>
+        )}
       </section>
     </div>
   );

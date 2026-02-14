@@ -103,11 +103,20 @@ const authService = require('../services/auth.service');
  */
 const login = async (req, res, next) => {
     try {
+        // Log incoming request
+        console.log('🔐 LOGIN REQUEST RECEIVED');
+        console.log('   From IP:', req.ip || req.connection.remoteAddress);
+        console.log('   Origin:', req.get('origin'));
+        console.log('   User-Agent:', req.get('user-agent'));
+        
         // ---------------------------------------------------------------------
         // STEP 1: Request body se login credentials extract karo
         // ---------------------------------------------------------------------
         // Destructuring use kar rahe hain - clean aur readable hai
         const { email, password } = req.body;
+        
+        console.log('   Email:', email);
+        console.log('   Password:', password ? '***' : 'missing');
 
         // ---------------------------------------------------------------------
         // STEP 2: Basic Validation - Required fields check karo
@@ -323,12 +332,13 @@ const getCurrentUser = async (req, res, next) => {
         // ---------------------------------------------------------------------
         // STEP 3: User Data return karo
         // ---------------------------------------------------------------------
-        // Service layer call ki zarurat nahi - middleware ne already data de diya
-        // Bas formatted response bhej do
+        // Database se fresh user data fetch karo taaki profile fields mil sakein
+        const fullUser = await authService.getUserById(user.id);
+
         return res.status(200).json({
             success: true,
             message: 'User data fetched successfully.',
-            data: user
+            data: fullUser
         });
 
     } catch (error) {
@@ -503,10 +513,201 @@ const register = async (req, res, next) => {
  * router.get('/me', authMiddleware, authController.getCurrentUser);
  * router.post('/register', authController.register);
  */
+/**
+ * -----------------------------------------------------------------------------
+ * UPDATE PROFILE CONTROLLER
+ * -----------------------------------------------------------------------------
+ * 
+ * Route: PUT /api/auth/profile
+ * 
+ * Updates user profile information
+ * Requires authentication
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
+const updateProfile = async (req, res, next) => {
+    try {
+        // Get user ID from authenticated user (set by auth middleware)
+        const userId = req.user?.id;
+        
+        console.log('📝 Profile Update Request:');
+        console.log('User ID:', userId);
+        console.log('Update Data:', req.body);
+        
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+        
+        // Extract update data from request body
+        const updateData = req.body;
+        
+        // Basic validation
+        if (!updateData || Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No data provided to update'
+            });
+        }
+        
+        // Call service to update profile
+        const updatedUser = await authService.updateProfile(userId, updateData);
+        
+        console.log('✅ Profile Updated Successfully:');
+        console.log('Updated User:', JSON.stringify(updatedUser, null, 2));
+        
+        // Return success response
+        return res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: updatedUser
+        });
+        
+    } catch (error) {
+        console.error('❌ Update profile error:', error);
+        next(error);
+    }
+};
+
+/**
+ * Upload Profile Photo
+ * POST /api/auth/upload-photo
+ * 
+ * Uploads a profile photo for the authenticated user
+ * Can accept file from multer or direct binary data from frontend
+ */
+const uploadProfilePhoto = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'Unauthorized - User ID not found'
+            });
+        }
+        
+        let photoBuffer = null;
+        let mimeType = null;
+        
+        // Check if multer processed the file
+        if (req.file) {
+            photoBuffer = req.file.buffer;
+            mimeType = req.file.mimetype;
+        } 
+        // Check if frontend sent base64 encoded data in body
+        else if (req.body.photo && req.body.mimeType) {
+            // Handle base64 encoded photo from frontend
+            try {
+                const base64Data = req.body.photo.split(',')[1] || req.body.photo;
+                photoBuffer = Buffer.from(base64Data, 'base64');
+                mimeType = req.body.mimeType;
+            } catch (error) {
+                console.error('Failed to decode base64 photo:', error);
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid photo format'
+                });
+            }
+        }
+        
+        if (!photoBuffer || photoBuffer.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No photo provided'
+            });
+        }
+        
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (photoBuffer.length > maxSize) {
+            return res.status(400).json({
+                success: false,
+                message: 'File size exceeds maximum limit of 5MB'
+            });
+        }
+        
+        // Validate MIME type
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedMimeTypes.includes(mimeType)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed'
+            });
+        }
+        
+        console.log(`📸 Controller: Uploading photo for user ${userId}`);
+        console.log(`   Photo size: ${photoBuffer.length} bytes`);
+        console.log(`   MIME type: ${mimeType}`);
+        
+        // Call service to upload photo
+        const updatedUser = await authService.uploadProfilePhoto(userId, photoBuffer, mimeType);
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Profile photo uploaded successfully',
+            data: updatedUser
+        });
+        
+    } catch (error) {
+        console.error('❌ Upload photo error:', error);
+        next(error);
+    }
+};
+
+/**
+ * Get Profile Photo
+ * GET /api/auth/photo/:userId
+ * 
+ * Retrieves the profile photo for a user
+ * Returns the image file directly
+ */
+const getProfilePhoto = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required'
+            });
+        }
+        
+        console.log(`📷 Controller: Fetching photo for user ${userId}`);
+        
+        // Call service to get photo
+        const photoData = await authService.getProfilePhoto(userId);
+        
+        if (!photoData) {
+            // Return a default placeholder response
+            return res.status(404).json({
+                success: false,
+                message: 'No profile photo found for this user'
+            });
+        }
+        
+        // Send image file
+        res.set('Content-Type', photoData.mimeType);
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        return res.send(photoData.photo);
+        
+    } catch (error) {
+        console.error('❌ Get photo error:', error);
+        next(error);
+    }
+};
+
 module.exports = {
     login,
     logout,
     getCurrentUser,
-    register
+    register,
+    updateProfile,
+    uploadProfilePhoto,
+    getProfilePhoto
 };
 

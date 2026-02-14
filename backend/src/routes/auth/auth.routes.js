@@ -36,8 +36,45 @@ const {
   login,
   logout,
   getCurrentUser,
-  register
+  register,
+  updateProfile,
+  uploadProfilePhoto,
+  getProfilePhoto
 } = require('../../controllers/auth.controller');
+
+// Authentication middleware import kar rahe hain
+// Protected routes ke liye authentication check karne ke liye
+const authMiddleware = require('../../middleware/auth.middleware');
+
+// Try to import multer - if not available, create a fallback
+let upload;
+try {
+  const multer = require('multer');
+  upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB max file size
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow only image files
+      const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (allowedMimes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only images are allowed.'), false);
+      }
+    }
+  });
+} catch (err) {
+  console.warn('⚠️ Multer not installed. Install with: npm install multer');
+  // Fallback middleware that just passes through
+  upload = {
+    single: (fieldName) => (req, res, next) => {
+      console.log('⚠️ Multer fallback: install multer package for file uploads');
+      next();
+    }
+  };
+}
 
 // ============================================================================
 // ROUTES KYA HAIN? (What are Routes?)
@@ -119,7 +156,7 @@ router.post('/logout', logout);
  * 
  * Response: { success: true, data: { user: { id, email, role, ... } } }
  */
-router.get('/me', getCurrentUser);
+router.get('/me', authMiddleware, getCurrentUser);
 
 /**
  * POST /register - User Registration Route (Optional)
@@ -178,6 +215,49 @@ router.get('/students', async (req, res) => {
 // ============================================================================
 
 /**
+ * PUT /profile - Update User Profile
+ * 
+ * Request: PUT /api/auth/profile
+ * Headers: { Authorization: "Bearer <token>" }
+ * Body: { name: "New Name", phone: "1234567890", department: "CS" }
+ * 
+ * Flow:
+ * - Frontend sends updated profile data
+ * - Auth middleware verifies token and sets req.user
+ * - Route calls updateProfile controller
+ * - Controller validates and calls service
+ * - Service updates database and returns updated user
+ * 
+ * Response: { success: true, data: { user: {...} } }
+ */
+router.put('/profile', authMiddleware, updateProfile);
+
+/**
+ * POST /upload-photo - Upload Profile Photo
+ * 
+ * Request: POST /api/auth/upload-photo (FormData)
+ * - Body: FormData with field 'photo' containing image file
+ * - Headers: Authorization token required
+ * 
+ * Uploads user's profile photo to database
+ * File stored as binary data (BLOB) in database
+ * Max file size: 5MB
+ * Allowed formats: JPEG, PNG, GIF, WebP
+ */
+router.post('/upload-photo', authMiddleware, upload.single('photo'), uploadProfilePhoto);
+
+/**
+ * GET /photo/:userId - Get Profile Photo
+ * 
+ * Request: GET /api/auth/photo/123
+ * - Params: userId - User ID to get photo for
+ * 
+ * Returns the user's profile photo as image file
+ * Response: Image binary data with appropriate MIME type
+ */
+router.get('/photo/:userId', getProfilePhoto);
+
+/**
  * Router ko export kar rahe hain - app.js mein use hoga
  * 
  * app.js mein usage:
@@ -189,6 +269,7 @@ router.get('/students', async (req, res) => {
  * - POST /api/auth/logout
  * - GET /api/auth/me
  * - POST /api/auth/register
+ * - PUT /api/auth/profile
  * - GET /api/auth/students
  * 
  * Kyun '/api/auth' prefix?
