@@ -158,6 +158,14 @@ const login = async (req, res, next) => {
         // - Return { token, user }
         const result = await authService.login(email, password);
 
+        req.activityLogContext = {
+            userId: result.user?.id,
+            userRole: result.user?.role,
+            action: 'AUTH_LOGIN',
+            entityType: 'user',
+            entityId: result.user?.id ? String(result.user.id) : null
+        };
+
         // ---------------------------------------------------------------------
         // STEP 4: Success Response bhejo
         // ---------------------------------------------------------------------
@@ -253,6 +261,14 @@ const logout = async (req, res, next) => {
         // Success Response bhejo
         // ---------------------------------------------------------------------
         // 200 OK - Logout successful (server side pe kuch nahi karna)
+        req.activityLogContext = {
+            userId: req.user?.id,
+            userRole: req.user?.role,
+            action: 'AUTH_LOGOUT',
+            entityType: 'user',
+            entityId: req.user?.id ? String(req.user.id) : null
+        };
+
         return res.status(200).json({
             success: true,
             message: 'Logout successful! Aapka token frontend pe remove ho gaya hai.'

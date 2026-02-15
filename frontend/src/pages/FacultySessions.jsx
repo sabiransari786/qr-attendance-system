@@ -14,9 +14,22 @@ function FacultySessions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [editError, setEditError] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [newSession, setNewSession] = useState({
+    subject: '',
+    location: '',
+    startTime: '',
+    duration: 60
+  });
+  const [editSession, setEditSession] = useState({
     subject: '',
     location: '',
     startTime: '',
@@ -67,6 +80,90 @@ function FacultySessions() {
 
   const handleGenerateQR = (sessionId) => {
     navigate(`/faculty/qr-generation?sessionId=${sessionId}`);
+  };
+
+  const handleOpenEdit = (session) => {
+    const date = new Date(session.startTime);
+    const localIso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setEditSession({
+      subject: session.subject,
+      location: session.location,
+      startTime: localIso,
+      duration: session.duration || 60
+    });
+    setSelectedSession(session);
+    setEditError(null);
+    setShowEditModal(true);
+  };
+
+  const handleEditSession = async (e) => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          subject: editSession.subject.trim(),
+          location: editSession.location.trim(),
+          startTime: editSession.startTime,
+          duration: parseInt(editSession.duration)
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update session');
+      }
+
+      setSessions((prev) =>
+        prev.map((s) => (s.id === selectedSession.id ? data.data : s))
+      );
+      setShowEditModal(false);
+      setSelectedSession(null);
+    } catch (err) {
+      setEditError(err.message || 'Failed to update session');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleOpenDelete = (session) => {
+    setSelectedSession(session);
+    setDeleteError(null);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteSession = async () => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete session');
+      }
+
+      setSessions((prev) => prev.filter((s) => s.id !== selectedSession.id));
+      setShowDeleteModal(false);
+      setSelectedSession(null);
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete session');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const handleOpenCreate = () => {
@@ -237,6 +334,28 @@ function FacultySessions() {
                 >
                   Generate QR →
                 </button>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                  <button
+                    className="dashboard__button dashboard__button--secondary"
+                    onClick={() => handleOpenEdit(session)}
+                    style={{ flex: 1 }}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    className="dashboard__button"
+                    onClick={() => handleOpenDelete(session)}
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      border: '1px solid #ef4444'
+                    }}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -311,6 +430,129 @@ function FacultySessions() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && selectedSession && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '12px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '520px',
+            border: '1px solid var(--color-border)'
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0' }}>Edit Session</h2>
+            <form onSubmit={handleEditSession}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Subject"
+                  value={editSession.subject}
+                  onChange={(e) => setEditSession((prev) => ({ ...prev, subject: e.target.value }))}
+                  required
+                />
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Location"
+                  value={editSession.location}
+                  onChange={(e) => setEditSession((prev) => ({ ...prev, location: e.target.value }))}
+                  required
+                />
+                <input
+                  type="datetime-local"
+                  className="form-input"
+                  value={editSession.startTime}
+                  onChange={(e) => setEditSession((prev) => ({ ...prev, startTime: e.target.value }))}
+                  required
+                />
+                <input
+                  type="number"
+                  className="form-input"
+                  min="1"
+                  max="240"
+                  placeholder="Duration (minutes)"
+                  value={editSession.duration}
+                  onChange={(e) => setEditSession((prev) => ({ ...prev, duration: e.target.value }))}
+                  required
+                />
+                {editError && (
+                  <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{editError}</div>
+                )}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                <button type="button" className="dashboard__button dashboard__button--secondary" onClick={() => { setShowEditModal(false); setSelectedSession(null); }}>
+                  Cancel
+                </button>
+                <button type="submit" className="dashboard__button dashboard__button--primary" disabled={editLoading}>
+                  {editLoading ? 'Updating...' : 'Update Session'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && selectedSession && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '12px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '420px',
+            border: '1px solid var(--color-border)'
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#ef4444' }}>🗑️ Delete Session</h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
+              Are you sure you want to delete the session <strong>"{selectedSession.subject}"</strong>? This action cannot be undone.
+            </p>
+            {deleteError && (
+              <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{deleteError}</div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button 
+                className="dashboard__button dashboard__button--secondary" 
+                onClick={() => { setShowDeleteModal(false); setSelectedSession(null); }}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="dashboard__button" 
+                onClick={handleDeleteSession}
+                disabled={deleteLoading}
+                style={{
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none'
+                }}
+              >
+                {deleteLoading ? 'Deleting...' : '🗑️ Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

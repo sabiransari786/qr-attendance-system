@@ -132,6 +132,10 @@ function FacultyDashboardWithCharts() {
     navigate("/faculty/attendance-reports");
   };
 
+  const handleViewSuspiciousActivity = () => {
+    navigate("/faculty/suspicious-activity");
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard__header">
@@ -268,6 +272,30 @@ function FacultyDashboardWithCharts() {
                 )}
                 <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
                   View Reports →
+                </button>
+              </section>
+
+              <section
+                className="dashboard__card dashboard__card--clickable"
+                onClick={handleViewSuspiciousActivity}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => e.key === 'Enter' && handleViewSuspiciousActivity()}
+                style={{ cursor: 'pointer' }}
+              >
+                <div style={{
+                  fontSize: '2.5rem',
+                  marginBottom: '1rem',
+                  opacity: 0.9
+                }}>
+                  🚨
+                </div>
+                <h2 className="dashboard__card-title">Suspicious Activity</h2>
+                <p className="dashboard__card-text">
+                  Monitor and review flagged attendance attempts and security anomalies.
+                </p>
+                <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
+                  View Activity →
                 </button>
               </section>
             </section>

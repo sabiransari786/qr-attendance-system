@@ -372,27 +372,17 @@ const createSession = async (facultyId, sessionData) => {
         // ---------------------------------------------------------------------
         // STEP 4: Generate Session Identifiers
         // ---------------------------------------------------------------------
-        // Unique session ID generate karo
-        const sessionId = generateSessionId();
-        
         // Secure QR token generate karo
         const qrToken = generateSecureQRToken();
-        
-        // QR payload generate karo
-        const qrPayload = generateQRPayload(
-            sessionId,
-            qrExpiryTime.getTime(), // Timestamp in milliseconds
-            qrToken
-        );
         
         // ---------------------------------------------------------------------
         // STEP 5: Insert Session into Database
         // ---------------------------------------------------------------------
         // Session record database mein insert karo
         // QR token aur expiry time bhi store karte hain - validation ke liye
+        // ID auto-increment hogi, so we don't provide it
         const [result] = await pool.query(
             `INSERT INTO sessions (
-                id, 
                 faculty_id, 
                 subject, 
                 location, 
@@ -402,9 +392,8 @@ const createSession = async (facultyId, sessionData) => {
                 qr_token, 
                 qr_expiry, 
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
             [
-                sessionId,
                 facultyId,
                 subject.trim(),
                 location.trim(),
@@ -415,6 +404,16 @@ const createSession = async (facultyId, sessionData) => {
                 qrExpiryTime,
                 // created_at automatically NOW() se set hoga
             ]
+        );
+        
+        // Get the auto-generated session ID
+        const sessionId = result.insertId;
+        
+        // QR payload generate karo with auto-generated session ID
+        const qrPayload = generateQRPayload(
+            sessionId,
+            qrExpiryTime.getTime(), // Timestamp in milliseconds
+            qrToken
         );
         
         // ---------------------------------------------------------------------

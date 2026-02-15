@@ -528,7 +528,7 @@ const getAttendanceByStudent = async (studentId, filters = {}) => {
         // ---------------------------------------------------------------------
         // Student exist karta hai ya nahi check karo
         const [students] = await pool.query(
-            `SELECT id, name, roll_no, email
+            `SELECT id, name, student_id, email
              FROM users 
              WHERE id = ? AND role = 'student'`,
             [studentId]

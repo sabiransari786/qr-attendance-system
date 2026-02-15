@@ -24,6 +24,19 @@ function AdminDashboard() {
   const [activeUserAction, setActiveUserAction] = useState(null);
   const [useMockUsers, setUseMockUsers] = useState(false);
 
+  // State for activity logs view
+  const [showLogs, setShowLogs] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [logSearch, setLogSearch] = useState("");
+  const [logRoleFilter, setLogRoleFilter] = useState("all");
+  const [logActionFilter, setLogActionFilter] = useState("all");
+  const [logStatusFilter, setLogStatusFilter] = useState("all");
+  const [logStartDate, setLogStartDate] = useState("");
+  const [logEndDate, setLogEndDate] = useState("");
+  const [logPage, setLogPage] = useState(1);
+  const [logPagination, setLogPagination] = useState({ total: 0, page: 1, pages: 1, limit: 50 });
+
   const isMockMode = import.meta.env.VITE_USE_MOCK_API === "true";
 
   // Fetch students data
@@ -68,6 +81,12 @@ function AdminDashboard() {
       fetchUsers();
     }
   }, [showUsers]);
+
+  useEffect(() => {
+    if (showLogs) {
+      fetchLogs();
+    }
+  }, [showLogs, logPage]);
 
   const getMockUsers = () => ([
     { id: 1, name: 'Admin User', email: 'admin@attendance.com', role: 'admin', is_active: true, department: 'Administration' },
@@ -121,6 +140,75 @@ function AdminDashboard() {
     } finally {
       setIsLoadingUsers(false);
     }
+  };
+
+  const fetchLogs = async (pageValue = logPage) => {
+    setIsLoadingLogs(true);
+
+    try {
+      const params = new URLSearchParams();
+
+      params.append('page', String(pageValue));
+      params.append('limit', String(logPagination.limit || 50));
+
+      if (logSearch.trim()) {
+        params.append('search', logSearch.trim());
+      }
+      if (logRoleFilter !== 'all') {
+        params.append('role', logRoleFilter);
+      }
+      if (logActionFilter !== 'all') {
+        params.append('action', logActionFilter);
+      }
+      if (logStatusFilter !== 'all') {
+        params.append('status', logStatusFilter);
+      }
+      if (logStartDate) {
+        params.append('startDate', logStartDate);
+      }
+      if (logEndDate) {
+        params.append('endDate', logEndDate);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/admin/logs?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authContext?.token}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setLogs(data.data.logs || []);
+        setLogPagination(data.data.pagination || { total: 0, page: 1, pages: 1, limit: 50 });
+      } else {
+        setLogs([]);
+      }
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      setLogs([]);
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  const handleLogFilterApply = () => {
+    if (logPage === 1) {
+      fetchLogs(1);
+    } else {
+      setLogPage(1);
+    }
+  };
+
+  const getLogStatusClass = (statusCode) => {
+    if (statusCode >= 500) {
+      return 'admin-dashboard__log-status admin-dashboard__log-status--error';
+    }
+    if (statusCode >= 400) {
+      return 'admin-dashboard__log-status admin-dashboard__log-status--warn';
+    }
+    return 'admin-dashboard__log-status admin-dashboard__log-status--ok';
   };
 
   const handleRoleChange = async (userId, role) => {
@@ -281,6 +369,7 @@ function AdminDashboard() {
             onClick={() => {
               setShowStudents(!showStudents);
               setShowUsers(false);
+              setShowLogs(false);
             }}
           >
             View Students
@@ -291,9 +380,21 @@ function AdminDashboard() {
             onClick={() => {
               setShowUsers(!showUsers);
               setShowStudents(false);
+              setShowLogs(false);
             }}
           >
             Manage Users
+          </button>
+          <button
+            type="button"
+            className={`admin-dashboard__action ${showLogs ? "admin-dashboard__action--active" : ""}`}
+            onClick={() => {
+              setShowLogs(!showLogs);
+              setShowUsers(false);
+              setShowStudents(false);
+            }}
+          >
+            Activity Logs
           </button>
           <button
             type="button"
@@ -314,7 +415,11 @@ function AdminDashboard() {
         <section className="admin-dashboard__cards">
           <article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
-            onClick={() => setShowStudents(!showStudents)}
+            onClick={() => {
+              setShowStudents(!showStudents);
+              setShowUsers(false);
+              setShowLogs(false);
+            }}
           >
             <h2 className="dashboard__card-title">Student Directory</h2>
             <p className="dashboard__card-text">
@@ -328,6 +433,7 @@ function AdminDashboard() {
             onClick={() => {
               setShowUsers(true);
               setShowStudents(false);
+              setShowLogs(false);
             }}
           >
             <h2 className="dashboard__card-title">User Access</h2>
@@ -351,6 +457,21 @@ function AdminDashboard() {
               Track attendance trends, health metrics, and audit logs.
             </p>
             <span className="dashboard__card-action">Coming soon</span>
+          </article>
+
+          <article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => {
+              setShowLogs(true);
+              setShowUsers(false);
+              setShowStudents(false);
+            }}
+          >
+            <h2 className="dashboard__card-title">Activity Logs</h2>
+            <p className="dashboard__card-text">
+              Monitor authentication, attendance, and admin actions in real time.
+            </p>
+            <span className="dashboard__card-action">View activity</span>
           </article>
         </section>
 
@@ -524,6 +645,161 @@ function AdminDashboard() {
             ) : (
               <p className="admin-dashboard__users-state">No users found.</p>
             )}
+          </section>
+        )}
+
+        {showLogs && (
+          <section className="admin-dashboard__logs" aria-label="Activity logs">
+            <div className="admin-dashboard__logs-head">
+              <div>
+                <p className="admin-dashboard__logs-eyebrow">System Audit</p>
+                <h3 className="admin-dashboard__logs-title">
+                  Activity Logs ({isLoadingLogs ? "Loading..." : logPagination.total})
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="admin-dashboard__logs-refresh"
+                onClick={fetchLogs}
+                disabled={isLoadingLogs}
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div className="admin-dashboard__filters">
+              <input
+                type="text"
+                placeholder="Search by user, action, or path"
+                value={logSearch}
+                onChange={(event) => setLogSearch(event.target.value)}
+                className="admin-dashboard__search"
+              />
+              <select
+                className="admin-dashboard__select"
+                value={logRoleFilter}
+                onChange={(event) => setLogRoleFilter(event.target.value)}
+              >
+                <option value="all">All Roles</option>
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+                <option value="admin">Admin</option>
+              </select>
+              <select
+                className="admin-dashboard__select"
+                value={logActionFilter}
+                onChange={(event) => setLogActionFilter(event.target.value)}
+              >
+                <option value="all">All Actions</option>
+                <option value="AUTH_LOGIN">AUTH_LOGIN</option>
+                <option value="AUTH_LOGOUT">AUTH_LOGOUT</option>
+                <option value="ATTENDANCE_MARK">ATTENDANCE_MARK</option>
+                <option value="SESSION_CREATE">SESSION_CREATE</option>
+                <option value="SESSION_CLOSE">SESSION_CLOSE</option>
+                <option value="ADMIN_USER_ROLE_UPDATE">ADMIN_USER_ROLE_UPDATE</option>
+                <option value="ADMIN_USER_STATUS_UPDATE">ADMIN_USER_STATUS_UPDATE</option>
+                <option value="ADMIN_USER_DELETE">ADMIN_USER_DELETE</option>
+              </select>
+              <select
+                className="admin-dashboard__select"
+                value={logStatusFilter}
+                onChange={(event) => setLogStatusFilter(event.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="200">200 OK</option>
+                <option value="201">201 Created</option>
+                <option value="400">400 Bad Request</option>
+                <option value="401">401 Unauthorized</option>
+                <option value="403">403 Forbidden</option>
+                <option value="404">404 Not Found</option>
+                <option value="500">500 Error</option>
+              </select>
+              <input
+                type="date"
+                value={logStartDate}
+                onChange={(event) => setLogStartDate(event.target.value)}
+                className="admin-dashboard__search"
+              />
+              <input
+                type="date"
+                value={logEndDate}
+                onChange={(event) => setLogEndDate(event.target.value)}
+                className="admin-dashboard__search"
+              />
+              <button
+                type="button"
+                className="admin-dashboard__filter-btn"
+                onClick={handleLogFilterApply}
+              >
+                Apply
+              </button>
+            </div>
+
+            {isLoadingLogs ? (
+              <p className="admin-dashboard__users-state">Loading logs...</p>
+            ) : logs.length > 0 ? (
+              <div className="admin-dashboard__table admin-dashboard__table--logs">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>User</th>
+                      <th>Role</th>
+                      <th>Action</th>
+                      <th>Status</th>
+                      <th>Path</th>
+                      <th>IP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log) => (
+                      <tr key={log.id}>
+                        <td className="admin-dashboard__log-time">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td>
+                          <div className="admin-dashboard__log-user">
+                            <span>{log.user_name || 'System'}</span>
+                            <span className="admin-dashboard__log-meta">{log.user_email || 'anonymous'}</span>
+                          </div>
+                        </td>
+                        <td>{log.user_role || '-'}</td>
+                        <td>{log.action}</td>
+                        <td>
+                          <span className={getLogStatusClass(log.status_code)}>{log.status_code}</span>
+                        </td>
+                        <td className="admin-dashboard__log-path">{log.path}</td>
+                        <td className="admin-dashboard__log-meta">{log.ip_address || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="admin-dashboard__users-state">No activity logs found.</p>
+            )}
+
+            <div className="admin-dashboard__pagination">
+              <button
+                type="button"
+                className="admin-dashboard__pagination-btn"
+                onClick={() => setLogPage((prev) => Math.max(prev - 1, 1))}
+                disabled={logPagination.page <= 1}
+              >
+                Previous
+              </button>
+              <span className="admin-dashboard__pagination-info">
+                Page {logPagination.page} of {logPagination.pages}
+              </span>
+              <button
+                type="button"
+                className="admin-dashboard__pagination-btn"
+                onClick={() => setLogPage((prev) => Math.min(prev + 1, logPagination.pages))}
+                disabled={logPagination.page >= logPagination.pages}
+              >
+                Next
+              </button>
+            </div>
           </section>
         )}
       </main>

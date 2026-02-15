@@ -42,6 +42,8 @@ const {
   getProfilePhoto
 } = require('../../controllers/auth.controller');
 
+const { getActivityLogs } = require('../../controllers/activity-log.controller');
+
 // Authentication middleware import kar rahe hain
 // Protected routes ke liye authentication check karne ke liye
 const authMiddleware = require('../../middleware/auth.middleware');
@@ -270,6 +272,12 @@ router.get('/admin/users', authMiddleware, requireAdmin, async (req, res) => {
     });
   }
 });
+
+/**
+ * GET /admin/logs - Admin activity logs
+ * Query params: search, role, action, userId, status, startDate, endDate, page, limit
+ */
+router.get('/admin/logs', authMiddleware, requireAdmin, getActivityLogs);
 
 /**
  * PATCH /admin/users/:id/role - Update user role

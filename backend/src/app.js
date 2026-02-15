@@ -29,6 +29,9 @@ const cors = require('cors');
 // Production mein bhi enable kar sakte hain logging ke liye
 const morgan = require('morgan');
 
+// Activity logging middleware
+const activityLogger = require('./middleware/activity-logger.middleware');
+
 // ============================================================================
 // STEP 2: Database Connection Import
 // ============================================================================
@@ -130,6 +133,9 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Activity logging for admin audit trail
+app.use(activityLogger);
 
 // ============================================================================
 // STEP 7: Database Connection Initialize Kar Rahe Hain

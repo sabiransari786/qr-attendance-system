@@ -7,17 +7,20 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
-import StudentDashboard from "../pages/StudentDashboard";
+import StudentDashboardEnhanced from "../pages/StudentDashboardEnhanced";
 import FacultyDashboard from "../pages/FacultyDashboardWithCharts";
 import FacultyProfile from "../pages/FacultyProfile";
 import FacultySessions from "../pages/FacultySessions";
 import FacultyAttendanceReports from "../pages/FacultyAttendanceReports";
+import FacultySuspiciousActivity from "../pages/FacultySuspiciousActivity";
 import AdminDashboard from "../pages/AdminDashboard";
 import NotFound from "../pages/NotFound";
 import Unauthorized from "../pages/Unauthorized";
 import FacultyQRGeneration from "../pages/FacultyQRGeneration";
 import StudentProfile from "../pages/StudentProfile";
-import ScanQR from "../pages/ScanQR";
+import ScanQREnhanced from "../pages/ScanQREnhanced";
+import AttendanceHistory from "../pages/AttendanceHistory";
+import Notifications from "../pages/Notifications";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -55,7 +58,7 @@ function AppRoutes() {
         path="/student-dashboard"
         element={
           <ProtectedRoute requiredRoles={["student"]}>
-            <StudentDashboard />
+            <StudentDashboardEnhanced />
           </ProtectedRoute>
         }
       />
@@ -71,7 +74,23 @@ function AppRoutes() {
         path="/scan-qr"
         element={
           <ProtectedRoute requiredRoles={["student"]}>
-            <ScanQR />
+            <ScanQREnhanced />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendance-history"
+        element={
+          <ProtectedRoute requiredRoles={["student"]}>
+            <AttendanceHistory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute requiredRoles={["student"]}>
+            <Notifications />
           </ProtectedRoute>
         }
       />
@@ -112,6 +131,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["faculty"]}>
             <FacultyQRGeneration />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/faculty/suspicious-activity"
+        element={
+          <ProtectedRoute requiredRoles={["faculty"]}>
+            <FacultySuspiciousActivity />
           </ProtectedRoute>
         }
       />
