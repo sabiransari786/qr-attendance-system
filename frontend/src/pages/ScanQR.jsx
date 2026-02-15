@@ -16,6 +16,10 @@ function ScanQR() {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [cameraActive, setCameraActive] = useState(false);
   const [scannedCode, setScannedCode] = useState(null);
+  const [facingMode, setFacingMode] = useState("environment");
+  const [canSwitchCamera, setCanSwitchCamera] = useState(false);
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [torchEnabled, setTorchEnabled] = useState(false);
 
   const handleQrInputChange = (e) => {
     setQrCode(e.target.value);
@@ -94,7 +98,7 @@ function ScanQR() {
         
         // Redirect to dashboard after 2 seconds
         setTimeout(() => {
-          navigate("/student/dashboard");
+          navigate("/student-dashboard");
         }, 2000);
       } else {
         const errorData = await response.json();
@@ -114,18 +118,38 @@ function ScanQR() {
     }
   };
 
-  const activateCamera = async () => {
+  const getVideoTrack = () => streamRef.current?.getVideoTracks?.()[0] || null;
+
+  const applyAutoFocus = async (track) => {
+    if (!track?.getCapabilities || !track?.applyConstraints) return;
+    const capabilities = track.getCapabilities();
+    if (capabilities?.focusMode?.includes("continuous")) {
+      await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+    }
+  };
+
+  const activateCamera = async (mode = facingMode) => {
     try {
       setCameraActive(true);
       setMessage({ type: "info", text: "Requesting camera access..." });
 
       // Get camera stream
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       });
 
       streamRef.current = stream;
+      const track = getVideoTrack();
+      if (track?.getCapabilities) {
+        const capabilities = track.getCapabilities();
+        setTorchAvailable(Boolean(capabilities?.torch));
+      } else {
+        setTorchAvailable(false);
+      }
+      setTorchEnabled(false);
+      await applyAutoFocus(track);
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -150,6 +174,41 @@ function ScanQR() {
           type: "error", 
           text: "Failed to access camera. Please try again or enter QR code manually." 
         });
+      }
+    }
+  };
+
+  const toggleTorch = async () => {
+    const track = getVideoTrack();
+    if (!track?.applyConstraints || !torchAvailable) return;
+    try {
+      const nextValue = !torchEnabled;
+      await track.applyConstraints({ advanced: [{ torch: nextValue }] });
+      setTorchEnabled(nextValue);
+    } catch (error) {
+      console.error("Error toggling torch:", error);
+      setMessage({ type: "error", text: "Torch not available on this device." });
+    }
+  };
+
+  const switchCamera = async () => {
+    const nextMode = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(nextMode);
+    if (cameraActive) {
+      deactivateCamera();
+      await activateCamera(nextMode);
+    }
+  };
+
+  const requestFocus = async () => {
+    const track = getVideoTrack();
+    if (!track?.getCapabilities || !track?.applyConstraints) return;
+    const capabilities = track.getCapabilities();
+    if (capabilities?.focusMode?.includes("single-shot")) {
+      try {
+        await track.applyConstraints({ advanced: [{ focusMode: "single-shot" }] });
+      } catch (error) {
+        console.error("Focus request failed:", error);
       }
     }
   };
@@ -198,9 +257,23 @@ function ScanQR() {
       cancelAnimationFrame(animationRef.current);
     }
     setCameraActive(false);
+    setTorchAvailable(false);
+    setTorchEnabled(false);
   };
 
   useEffect(() => {
+    const detectCameras = async () => {
+      try {
+        if (!navigator.mediaDevices?.enumerateDevices) return;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter((device) => device.kind === "videoinput");
+        setCanSwitchCamera(videoInputs.length > 1);
+      } catch (error) {
+        console.error("Failed to enumerate devices:", error);
+      }
+    };
+
+    detectCameras();
     return () => {
       deactivateCamera();
     };
@@ -221,7 +294,7 @@ function ScanQR() {
         </div>
         <button
           className="dashboard__button dashboard__button--secondary"
-          onClick={() => navigate("/student/dashboard")}
+          onClick={() => navigate("/student-dashboard")}
         >
           ← Back to Dashboard
         </button>
@@ -243,6 +316,7 @@ function ScanQR() {
                       borderRadius: "12px",
                       display: "block"
                     }}
+                    onClick={requestFocus}
                   />
                   <canvas
                     ref={canvasRef}
@@ -284,6 +358,38 @@ function ScanQR() {
                 </>
               )}
             </button>
+            {(canSwitchCamera || torchAvailable) && (
+              <div className="scanner-controls">
+                {canSwitchCamera && (
+                  <button
+                    className="action-btn action-btn--secondary action-btn--compact"
+                    onClick={switchCamera}
+                    disabled={!cameraActive}
+                  >
+                    <span className="btn-icon">🔄</span>
+                    <span>Switch Camera</span>
+                  </button>
+                )}
+                {torchAvailable && (
+                  <button
+                    className={`action-btn ${torchEnabled ? "action-btn--primary" : "action-btn--secondary"} action-btn--compact`}
+                    onClick={toggleTorch}
+                    disabled={!cameraActive}
+                  >
+                    <span className="btn-icon">🔦</span>
+                    <span>{torchEnabled ? "Torch On" : "Torch Off"}</span>
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="scanner-status">
+              <span>Camera: {cameraActive ? "On" : "Off"}</span>
+              <span>Facing: {facingMode === "environment" ? "Back" : "Front"}</span>
+              {torchAvailable && (
+                <span>Torch: {torchEnabled ? "On" : "Off"}</span>
+              )}
+              <span>Tap preview to refocus</span>
+            </div>
           </div>
 
           <div className="divider">

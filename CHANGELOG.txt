@@ -13,7 +13,7 @@ Format: [DATE] [TIME] - Description of changes
 MOBILE UI IMPROVEMENTS:
 - Fixed password toggle button visibility on phone view
 - Optimized toggle button sizing: 40x40px with proper positioning
-- Replaced SVG icons with emoji: 🫣 (hidden) and 😊 (visible) 
+- Replaced SVG icons with emoji: 🫣 (hidden) and 😊 (visible)
 - Positioned toggle button at input field corner (right: 0.3rem)
 - Fixed CSS import order in App.css (moved @import to top for Vite compatibility)
 - Applied changes to Login.jsx and Signup.jsx password fields
@@ -33,19 +33,19 @@ DESKTOP NAVBAR IMPROVEMENTS:
 - Removed all borders from Signup button (!important overrides)
 - Applied consistent hover effects (translateY, shadows)
 - Unified active state gradients:
-  * Dark theme: linear-gradient(135deg, teal → cyan)
+  * Dark theme: linear-gradient(135deg, teal -> cyan)
   * Light theme: linear-gradient(135deg, blue gradient)
 
 FILES MODIFIED:
 - /frontend/src/styles/navbar.css (extensive refactoring)
 
 RESULTS:
-✅ Mobile UI has native app feel with emoji-based password toggles
-✅ Desktop navbar buttons are visually and behaviorally identical
-✅ Both light and dark themes working consistently
-✅ No CSS errors across all modified files
-✅ Servers running: Backend (PID 9475, port 5001), Frontend (PID 9645, port 5173)
-✅ Network accessible at 10.13.28.232 for phone and desktop testing
+- Mobile UI has native app feel with emoji-based password toggles
+- Desktop navbar buttons are visually and behaviorally identical
+- Both light and dark themes working consistently
+- No CSS errors across all modified files
+- Servers running: Backend (PID 9475, port 5001), Frontend (PID 9645, port 5173)
+- Network accessible at 10.13.28.232 for phone and desktop testing
 
 ================================================================================
 
@@ -53,20 +53,54 @@ RESULTS:
 
 ================================================================================
 
+[2026-02-15] [Evening] - Scan QR UX, Theme Polish, Footer Redesign
+--------------------------------------------------------------------------------
+
+SCAN QR IMPROVEMENTS:
+- Added camera UX controls: switch camera, torch toggle (when supported), tap-to-refocus
+- Added camera status row (On/Off, facing, torch state)
+- Fixed back navigation to correct student dashboard route
+
+THEME POLISH:
+- Applied theme tokens to enhanced dashboard cards/containers for consistent light/dark
+- Updated QR generation page UI to use theme variables for backgrounds, borders, inputs, and alerts
+- Added light-theme styling for student dashboard hero and stats panel
+
+FOOTER REDESIGN:
+- Rebuilt footer layout with brand block, links, CTA, and social row
+- Removed legacy social card UI
+- Removed department/initiative text and Resources column
+- Disabled footer animations/hover effects and cleaned CSS structure
+
+FILES MODIFIED:
+- /frontend/src/pages/ScanQR.jsx
+- /frontend/src/styles/dashboard.css
+- /frontend/src/styles/enhanced-dashboard.css
+- /frontend/src/styles/qr-generation.css
+- /frontend/src/components/Footer.jsx
+- /frontend/src/styles/footer.css
+
+RESULTS:
+- Scan QR page has improved camera controls and correct navigation
+- Light/dark theming consistent across dashboard and QR generation
+- Footer UI refreshed and simplified
+
+================================================================================
+
 [2026-02-15] [Evening] - Git Operations
 --------------------------------------------------------------------------------
 BRANCH OPERATIONS:
-✅ Committed all changes to Front-End-Sabir branch
-   - 25 files changed, 4615 insertions(+), 314 deletions(-)
-   - New files: CHANGELOG.txt, mobile-app-ui.css, mobile-enhanced.css, guides
-   
-✅ Merged Front-End-Sabir into develop branch (fast-forward)
-   
-✅ Pushed develop branch to origin
-   - Commit hash: 4bb72a5
-   
-✅ Pushed Front-End-Sabir branch to origin
-   - Commit hash: 4bb72a5
+- Committed all changes to Front-End-Sabir branch
+  - 25 files changed, 4615 insertions(+), 314 deletions(-)
+  - New files: CHANGELOG.txt, mobile-app-ui.css, mobile-enhanced.css, guides
+
+- Merged Front-End-Sabir into develop branch (fast-forward)
+
+- Pushed develop branch to origin
+  - Commit hash: 4bb72a5
+
+- Pushed Front-End-Sabir branch to origin
+  - Commit hash: 4bb72a5
 
 COMMIT MESSAGE:
 "Mobile UI & Desktop Navbar Improvements - Password toggle emoji, navbar consistency, responsive fixes"

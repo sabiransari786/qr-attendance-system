@@ -24,10 +24,10 @@
   align-items: flex-start;
   gap: 1.2rem;
   padding: 1.5rem;
-  background: white;
+  background: var(--color-surface);
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(2, 12, 16, 0.08);
   transition: all 0.3s ease;
 }
 
@@ -124,11 +124,11 @@
 }
 
 .chart-container {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(2, 12, 16, 0.08);
 }
 
 .chart-container--large {
@@ -151,11 +151,11 @@
    ============================================================================ */
 .dashboard__sessions,
 .dashboard__records {
-  background: white;
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(2, 12, 16, 0.08);
 }
 
 .section-title {
@@ -240,7 +240,7 @@
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: white;
+  background: var(--color-surface);
   border-radius: 0.75rem;
   border: 1px dashed var(--color-border);
 }
