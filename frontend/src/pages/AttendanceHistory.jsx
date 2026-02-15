@@ -26,8 +26,8 @@ function AttendanceHistory() {
 
   const fetchAttendanceHistory = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const userId = localStorage.getItem("userId");
+      const token = sessionStorage.getItem("authToken");
+      const userId = sessionStorage.getItem("userId");
 
       if (!token || !userId) {
         navigate("/login");

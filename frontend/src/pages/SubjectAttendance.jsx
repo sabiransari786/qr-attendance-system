@@ -15,8 +15,8 @@ function SubjectAttendance() {
 
   const fetchSubjectData = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const userId = localStorage.getItem("userId");
+      const token = sessionStorage.getItem("authToken");
+      const userId = sessionStorage.getItem("userId");
 
       // Fetch attendance data and filter by subject
       const response = await fetch(`${API_BASE_URL}/attendance/student/${userId}`, {

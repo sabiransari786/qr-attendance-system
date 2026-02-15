@@ -14,6 +14,18 @@ function AdminDashboard() {
   const [students, setStudents] = useState([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
 
+  // State for user management view
+  const [showUsers, setShowUsers] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [userStatusFilter, setUserStatusFilter] = useState("all");
+  const [activeUserAction, setActiveUserAction] = useState(null);
+  const [useMockUsers, setUseMockUsers] = useState(false);
+
+  const isMockMode = import.meta.env.VITE_USE_MOCK_API === "true";
+
   // Fetch students data
   const fetchStudents = async () => {
     setIsLoadingStudents(true);
@@ -51,6 +63,190 @@ function AdminDashboard() {
     }
   }, [showStudents]);
 
+  useEffect(() => {
+    if (showUsers && users.length === 0) {
+      fetchUsers();
+    }
+  }, [showUsers]);
+
+  const getMockUsers = () => ([
+    { id: 1, name: 'Admin User', email: 'admin@attendance.com', role: 'admin', is_active: true, department: 'Administration' },
+    { id: 2, name: 'Student One', email: 'student@attendance.com', role: 'student', is_active: true, department: 'Computer Science' },
+    { id: 3, name: 'Faculty User', email: 'faculty@attendance.com', role: 'faculty', is_active: true, department: 'Electrical' },
+    { id: 4, name: 'Riya Sharma', email: 'riya@demo.com', role: 'student', is_active: false, department: 'Mechanical' },
+    { id: 5, name: 'Arjun Verma', email: 'arjun@demo.com', role: 'student', is_active: true, department: 'Civil' }
+  ]);
+
+  const fetchUsers = async () => {
+    setIsLoadingUsers(true);
+    setUseMockUsers(false);
+
+    if (isMockMode) {
+      setUsers(getMockUsers());
+      setUseMockUsers(true);
+      setIsLoadingUsers(false);
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      if (userSearch.trim()) {
+        params.append('search', userSearch.trim());
+      }
+      if (userRoleFilter !== 'all') {
+        params.append('role', userRoleFilter);
+      }
+      if (userStatusFilter !== 'all') {
+        params.append('status', userStatusFilter);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/admin/users?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authContext?.token}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setUsers(data.data);
+      } else {
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers(getMockUsers());
+      setUseMockUsers(true);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleRoleChange = async (userId, role) => {
+    setActiveUserAction(`role-${userId}`);
+    try {
+      if (!isMockMode && !useMockUsers) {
+        const response = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}/role`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authContext?.token}`
+          },
+          body: JSON.stringify({ role })
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to update role');
+        }
+      }
+
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
+    } catch (error) {
+      console.error('Error updating role:', error);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
+      setUseMockUsers(true);
+    } finally {
+      setActiveUserAction(null);
+    }
+  };
+
+  const handleStatusToggle = async (userId, isActive) => {
+    setActiveUserAction(`status-${userId}`);
+    try {
+      if (!isMockMode && !useMockUsers) {
+        const response = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authContext?.token}`
+          },
+          body: JSON.stringify({ is_active: !isActive })
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to update status');
+        }
+      }
+
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: !isActive } : u)));
+    } catch (error) {
+      console.error('Error updating status:', error);
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: !isActive } : u)));
+      setUseMockUsers(true);
+    } finally {
+      setActiveUserAction(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const confirmed = window.confirm('Are you sure you want to delete this user?');
+    if (!confirmed) {
+      return;
+    }
+    setActiveUserAction(`delete-${userId}`);
+
+    try {
+      if (!isMockMode && !useMockUsers) {
+        const response = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authContext?.token}`
+          }
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to delete user');
+        }
+      }
+
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setUseMockUsers(true);
+    } finally {
+      setActiveUserAction(null);
+    }
+  };
+
+  const totalStudents = isLoadingStudents ? "..." : students.length;
+  const totalUsers = isLoadingUsers ? "..." : users.length;
+  const activeUsers = isLoadingUsers
+    ? "..."
+    : users.filter((u) => u.is_active).length;
+  const stats = [
+    {
+      label: "Total Students",
+      value: totalStudents,
+      note: showStudents ? "Loaded" : "Tap View Students"
+    },
+    {
+      label: "Total Users",
+      value: totalUsers,
+      note: showUsers ? "Loaded" : "Tap Manage Users"
+    },
+    {
+      label: "Active Users",
+      value: activeUsers,
+      note: "Includes faculty & students"
+    }
+  ];
+
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch = userSearch
+      ? `${u.name} ${u.email} ${u.department || ''}`.toLowerCase().includes(userSearch.toLowerCase())
+      : true;
+    const matchesRole = userRoleFilter === 'all' ? true : u.role === userRoleFilter;
+    const matchesStatus = userStatusFilter === 'all'
+      ? true
+      : userStatusFilter === 'active'
+        ? u.is_active
+        : !u.is_active;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
   return (
     <div className="dashboard">
       <div className="dashboard__objects" aria-hidden="true">
@@ -67,91 +263,267 @@ function AdminDashboard() {
         </div>
       </header>
 
-      <main className="dashboard__grid" aria-label="Admin overview">
-        <section className="dashboard__card" onClick={() => { setShowStudents(!showStudents); }} style={{ cursor: 'pointer' }}>
-          <h2 className="dashboard__card-title">📚 View Students ({students.length || '...'})</h2>
-          <p className="dashboard__card-text">Click to view all registered students in the system.</p>
-        </section>
-
-        <section className="dashboard__card">
-          <h2 className="dashboard__card-title">Manage Users</h2>
-          <p className="dashboard__card-text">User provisioning and roles will be managed here.</p>
-        </section>
-
-        <section className="dashboard__card">
-          <h2 className="dashboard__card-title">Manage Departments/Courses</h2>
-          <p className="dashboard__card-text">Department and course data will be configured here.</p>
-        </section>
-
-        <section className="dashboard__card">
-          <h2 className="dashboard__card-title">System Reports</h2>
-          <p className="dashboard__card-text">System health and analytics dashboards will appear here.</p>
-        </section>
-
-        {/* Students List View */}
-        {showStudents && (
-          <section className="dashboard__students-view" style={{ gridColumn: '1 / -1' }}>
-            <div style={{ padding: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#319CB5' }}>
-                  📊 Student List ({isLoadingStudents ? 'Loading...' : students.length})
-                </h3>
-                <button 
-                  onClick={() => setShowStudents(false)}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#319CB5',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-
-              {isLoadingStudents ? (
-                <p style={{ textAlign: 'center', color: '#666' }}>Loading student data...</p>
-              ) : students.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    marginTop: '10px'
-                  }}>
-                    <thead>
-                      <tr style={{ background: '#f0f5fa', borderBottom: '2px solid #319CB5' }}>
-                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#319CB5' }}>ID</th>
-                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#319CB5' }}>Name</th>
-                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#319CB5' }}>Email</th>
-                        <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#319CB5' }}>Roll Number</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map((student, index) => (
-                        <tr key={student.id} style={{
-                          borderBottom: '1px solid #e0e0e0',
-                          background: index % 2 === 0 ? '#ffffff' : '#f9fbfc',
-                          transition: 'background 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#f0f5fa'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = (index % 2 === 0 ? '#ffffff' : '#f9fbfc')}
-                        >
-                          <td style={{ padding: '12px' }}>#{student.id}</td>
-                          <td style={{ padding: '12px' }}>{student.name}</td>
-                          <td style={{ padding: '12px', color: '#666', fontSize: '0.9rem' }}>{student.email}</td>
-                          <td style={{ padding: '12px', fontWeight: '500', color: '#319CB5' }}>{student.student_id || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p style={{ textAlign: 'center', color: '#999' }}>No students found</p>
-              )}
+      <main className="admin-dashboard" aria-label="Admin overview">
+        <section className="admin-dashboard__stats" aria-label="Admin highlights">
+          {stats.map((stat) => (
+            <div key={stat.label} className="admin-dashboard__stat">
+              <p className="admin-dashboard__stat-label">{stat.label}</p>
+              <div className="admin-dashboard__stat-value">{stat.value}</div>
+              <span className="admin-dashboard__stat-note">{stat.note}</span>
             </div>
+          ))}
+        </section>
+
+        <section className="admin-dashboard__actions" aria-label="Admin quick actions">
+          <button
+            type="button"
+            className={`admin-dashboard__action ${showStudents ? "admin-dashboard__action--active" : ""}`}
+            onClick={() => {
+              setShowStudents(!showStudents);
+              setShowUsers(false);
+            }}
+          >
+            View Students
+          </button>
+          <button
+            type="button"
+            className={`admin-dashboard__action ${showUsers ? "admin-dashboard__action--active" : ""}`}
+            onClick={() => {
+              setShowUsers(!showUsers);
+              setShowStudents(false);
+            }}
+          >
+            Manage Users
+          </button>
+          <button
+            type="button"
+            className="admin-dashboard__action admin-dashboard__action--disabled"
+            disabled
+          >
+            Departments
+          </button>
+          <button
+            type="button"
+            className="admin-dashboard__action admin-dashboard__action--disabled"
+            disabled
+          >
+            Reports
+          </button>
+        </section>
+
+        <section className="admin-dashboard__cards">
+          <article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => setShowStudents(!showStudents)}
+          >
+            <h2 className="dashboard__card-title">Student Directory</h2>
+            <p className="dashboard__card-text">
+              Review every registered student and manage their access status.
+            </p>
+            <span className="dashboard__card-action">View students</span>
+          </article>
+
+          <article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => {
+              setShowUsers(true);
+              setShowStudents(false);
+            }}
+          >
+            <h2 className="dashboard__card-title">User Access</h2>
+            <p className="dashboard__card-text">
+              Control roles, permissions, and account status in one place.
+            </p>
+            <span className="dashboard__card-action">Manage users</span>
+          </article>
+
+          <article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted">
+            <h2 className="dashboard__card-title">Departments & Courses</h2>
+            <p className="dashboard__card-text">
+              Configure departments, courses, and timetable assignments.
+            </p>
+            <span className="dashboard__card-action">Coming soon</span>
+          </article>
+
+          <article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted">
+            <h2 className="dashboard__card-title">System Reports</h2>
+            <p className="dashboard__card-text">
+              Track attendance trends, health metrics, and audit logs.
+            </p>
+            <span className="dashboard__card-action">Coming soon</span>
+          </article>
+        </section>
+
+        {showStudents && (
+          <section className="admin-dashboard__students" aria-label="Student list">
+            <div className="admin-dashboard__students-head">
+              <div>
+                <p className="admin-dashboard__students-eyebrow">Student Directory</p>
+                <h3 className="admin-dashboard__students-title">
+                  Student List ({isLoadingStudents ? "Loading..." : students.length})
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="admin-dashboard__students-close"
+                onClick={() => setShowStudents(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            {isLoadingStudents ? (
+              <p className="admin-dashboard__students-state">Loading student data...</p>
+            ) : students.length > 0 ? (
+              <div className="admin-dashboard__table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Roll Number</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.map((student) => (
+                      <tr key={student.id}>
+                        <td>#{student.id}</td>
+                        <td>{student.name}</td>
+                        <td className="admin-dashboard__table-email">{student.email}</td>
+                        <td className="admin-dashboard__table-id">{student.student_id || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="admin-dashboard__students-state">No students found.</p>
+            )}
+          </section>
+        )}
+
+        {showUsers && (
+          <section className="admin-dashboard__users" aria-label="User management">
+            <div className="admin-dashboard__users-head">
+              <div>
+                <p className="admin-dashboard__users-eyebrow">User Access</p>
+                <h3 className="admin-dashboard__users-title">
+                  Manage Users ({isLoadingUsers ? "Loading..." : filteredUsers.length})
+                </h3>
+                {useMockUsers && (
+                  <span className="admin-dashboard__users-note">Mock mode enabled for phone testing.</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="admin-dashboard__users-refresh"
+                onClick={fetchUsers}
+                disabled={isLoadingUsers}
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div className="admin-dashboard__filters">
+              <input
+                type="text"
+                placeholder="Search by name, email, department"
+                value={userSearch}
+                onChange={(event) => setUserSearch(event.target.value)}
+                className="admin-dashboard__search"
+              />
+              <select
+                className="admin-dashboard__select"
+                value={userRoleFilter}
+                onChange={(event) => setUserRoleFilter(event.target.value)}
+              >
+                <option value="all">All Roles</option>
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+                <option value="admin">Admin</option>
+              </select>
+              <select
+                className="admin-dashboard__select"
+                value={userStatusFilter}
+                onChange={(event) => setUserStatusFilter(event.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <button
+                type="button"
+                className="admin-dashboard__filter-btn"
+                onClick={fetchUsers}
+              >
+                Apply
+              </button>
+            </div>
+
+            {isLoadingUsers ? (
+              <p className="admin-dashboard__users-state">Loading users...</p>
+            ) : filteredUsers.length > 0 ? (
+              <div className="admin-dashboard__table admin-dashboard__table--users">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Department</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((u) => (
+                      <tr key={u.id}>
+                        <td>#{u.id}</td>
+                        <td>{u.name}</td>
+                        <td className="admin-dashboard__table-email">{u.email}</td>
+                        <td>{u.department || "-"}</td>
+                        <td>
+                          <select
+                            className="admin-dashboard__select admin-dashboard__select--inline"
+                            value={u.role}
+                            onChange={(event) => handleRoleChange(u.id, event.target.value)}
+                            disabled={activeUserAction === `role-${u.id}`}
+                          >
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className={`admin-dashboard__status ${u.is_active ? "admin-dashboard__status--active" : "admin-dashboard__status--inactive"}`}
+                            onClick={() => handleStatusToggle(u.id, u.is_active)}
+                            disabled={activeUserAction === `status-${u.id}`}
+                          >
+                            {u.is_active ? "Active" : "Inactive"}
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="admin-dashboard__delete"
+                            onClick={() => handleDeleteUser(u.id)}
+                            disabled={activeUserAction === `delete-${u.id}`}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="admin-dashboard__users-state">No users found.</p>
+            )}
           </section>
         )}
       </main>

@@ -60,7 +60,7 @@ function StudentProfile() {
 
   const fetchProfileData = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = sessionStorage.getItem("authToken");
       
       if (!token) {
         navigate("/login");
@@ -87,11 +87,11 @@ function StudentProfile() {
         const data = await response.json();
         const userData = data.data || data.user;
         
-        // Get data from API or fallback to localStorage
+        // Get data from API or fallback to sessionStorage
         const profile = {
-          name: userData.name || localStorage.getItem("userName") || "",
-          email: userData.email || localStorage.getItem("userEmail") || "",
-          studentId: userData.studentId || userData.student_id || userData.id || localStorage.getItem("userId") || "",
+          name: userData.name || sessionStorage.getItem("userName") || "",
+          email: userData.email || sessionStorage.getItem("userEmail") || "",
+          studentId: userData.studentId || userData.student_id || userData.id || sessionStorage.getItem("userId") || "",
           phone: userData.phone || userData.contactNumber || userData.contact_number || "",
           department: userData.department || "",
           semester: userData.semester || "",
@@ -100,11 +100,11 @@ function StudentProfile() {
         setProfileData(profile);
         setEditedData(profile);
       } else {
-        // Use fallback data from localStorage
+        // Use fallback data from sessionStorage
         const fallbackProfile = {
-          name: localStorage.getItem("userName") || "",
-          email: localStorage.getItem("userEmail") || "",
-          studentId: localStorage.getItem("userId") || "",
+          name: sessionStorage.getItem("userName") || "",
+          email: sessionStorage.getItem("userEmail") || "",
+          studentId: sessionStorage.getItem("userId") || "",
           phone: "",
           department: "",
           semester: "",
@@ -115,7 +115,7 @@ function StudentProfile() {
       }
       
       // Load profile photo if userId available
-      const storedUser = localStorage.getItem("user");
+      const storedUser = sessionStorage.getItem("user");
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
@@ -237,7 +237,7 @@ function StudentProfile() {
     setMessage({ type: "", text: "" });
 
     try {
-      const token = localStorage.getItem("authToken");
+      const token = sessionStorage.getItem("authToken");
       
       // Convert file to base64
       const reader = new FileReader();
@@ -263,7 +263,7 @@ function StudentProfile() {
             setProfilePhoto(null);
             
             // Reload preview after upload
-            const storedUser = localStorage.getItem("user");
+            const storedUser = sessionStorage.getItem("user");
             if (storedUser) {
               try {
                 const parsedUser = JSON.parse(storedUser);
@@ -305,7 +305,7 @@ function StudentProfile() {
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = sessionStorage.getItem("authToken");
       
       console.log('📝 Saving profile...');
       console.log('Data being sent:', editedData);
@@ -360,9 +360,9 @@ function StudentProfile() {
         setEditing(false);
         setMessage({ type: "success", text: "Profile updated successfully!" });
         
-        // Update localStorage with latest data
-        localStorage.setItem("userName", updatedProfile.name);
-        localStorage.setItem("userEmail", updatedProfile.email);
+        // Update sessionStorage with latest data
+        sessionStorage.setItem("userName", updatedProfile.name);
+        sessionStorage.setItem("userEmail", updatedProfile.email);
         
         // Refresh profile data from server to ensure consistency
         setTimeout(() => {

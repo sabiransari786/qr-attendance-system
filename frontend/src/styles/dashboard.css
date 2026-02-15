@@ -277,6 +277,413 @@
 }
 
 /* ============================================ */
+/* Admin Module Styles */
+/* ============================================ */
+
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.admin-dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.admin-dashboard__stat {
+  padding: 1.6rem;
+  border-radius: 16px;
+  border: 1px solid rgba(49, 156, 181, 0.25);
+  background: linear-gradient(135deg, rgba(6, 30, 40, 0.85), rgba(10, 36, 46, 0.7));
+  box-shadow: 0 16px 30px rgba(2, 12, 16, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.admin-dashboard__stat-label {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.admin-dashboard__stat-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.admin-dashboard__stat-note {
+  font-size: 0.85rem;
+  color: var(--primary-accent);
+  font-weight: 600;
+}
+
+.admin-dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-dashboard__action {
+  border: 1px solid rgba(49, 156, 181, 0.4);
+  background: rgba(3, 24, 31, 0.65);
+  color: var(--color-text);
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard__action:hover {
+  background: rgba(49, 156, 181, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(49, 156, 181, 0.2);
+}
+
+.admin-dashboard__action--active {
+  background: linear-gradient(135deg, rgba(49, 156, 181, 0.7), rgba(24, 104, 129, 0.7));
+  border-color: rgba(49, 156, 181, 0.7);
+}
+
+.admin-dashboard__action--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: rgba(3, 24, 31, 0.4);
+}
+
+.admin-dashboard__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.admin-dashboard__card {
+  min-height: 200px;
+}
+
+.admin-dashboard__card--muted {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.admin-dashboard__students {
+  border-radius: 18px;
+  border: 1px solid rgba(49, 156, 181, 0.25);
+  background: rgba(3, 24, 31, 0.8);
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(2, 12, 16, 0.35);
+}
+
+.admin-dashboard__students-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard__students-eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.admin-dashboard__students-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.admin-dashboard__students-close {
+  border: none;
+  background: var(--primary-accent);
+  color: #ffffff;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-dashboard__students-close:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(49, 156, 181, 0.3);
+}
+
+.admin-dashboard__students-state {
+  text-align: center;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.admin-dashboard__users-state {
+  text-align: center;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.admin-dashboard__table {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(49, 156, 181, 0.2);
+}
+
+.admin-dashboard__table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.admin-dashboard__table--users table {
+  min-width: 900px;
+}
+
+.admin-dashboard__table thead {
+  background: rgba(49, 156, 181, 0.12);
+}
+
+.admin-dashboard__table th,
+.admin-dashboard__table td {
+  padding: 0.95rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(49, 156, 181, 0.15);
+  font-size: 0.92rem;
+}
+
+.admin-dashboard__table th {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.78rem;
+  color: var(--primary-accent);
+}
+
+.admin-dashboard__table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.admin-dashboard__table tbody tr:hover {
+  background: rgba(49, 156, 181, 0.08);
+}
+
+.admin-dashboard__table-email {
+  color: var(--color-text-secondary);
+}
+
+.admin-dashboard__table-id {
+  color: var(--primary-accent);
+  font-weight: 600;
+}
+
+.admin-dashboard__users {
+  border-radius: 18px;
+  border: 1px solid rgba(49, 156, 181, 0.25);
+  background: rgba(3, 24, 31, 0.8);
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(2, 12, 16, 0.35);
+}
+
+.admin-dashboard__users-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard__users-eyebrow {
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.admin-dashboard__users-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-text);
+}
+
+.admin-dashboard__users-note {
+  display: inline-flex;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--primary-accent);
+  font-weight: 600;
+}
+
+.admin-dashboard__users-refresh {
+  border: none;
+  background: var(--primary-accent);
+  color: #ffffff;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-dashboard__users-refresh:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(49, 156, 181, 0.3);
+}
+
+.admin-dashboard__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-dashboard__search {
+  flex: 1 1 280px;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(49, 156, 181, 0.35);
+  background: rgba(3, 24, 31, 0.5);
+  color: var(--color-text);
+}
+
+.admin-dashboard__select {
+  min-width: 160px;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(49, 156, 181, 0.35);
+  background: rgba(3, 24, 31, 0.5);
+  color: var(--color-text);
+}
+
+.admin-dashboard__select--inline {
+  min-width: 120px;
+  padding: 0.5rem 0.7rem;
+}
+
+.admin-dashboard__filter-btn {
+  border: none;
+  background: rgba(49, 156, 181, 0.4);
+  color: #ffffff;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-dashboard__table--users th,
+.admin-dashboard__table--users td {
+  vertical-align: middle;
+}
+
+.admin-dashboard__status {
+  border: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.admin-dashboard__status--active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.admin-dashboard__status--inactive {
+  background: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.admin-dashboard__delete {
+  border: none;
+  background: rgba(248, 113, 113, 0.25);
+  color: #f87171;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard__actions {
+    flex-direction: column;
+  }
+
+  .admin-dashboard__action {
+    width: 100%;
+    text-align: center;
+  }
+
+  .admin-dashboard__students {
+    padding: 1.5rem;
+  }
+
+  .admin-dashboard__users {
+    padding: 1.5rem;
+  }
+
+  .admin-dashboard__filters {
+    flex-direction: column;
+  }
+
+  .admin-dashboard__search,
+  .admin-dashboard__select,
+  .admin-dashboard__filter-btn {
+    width: 100%;
+  }
+
+  .admin-dashboard__students-title {
+    font-size: 1.25rem;
+  }
+}
+
+[data-theme="light"] .admin-dashboard__stat {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(90, 168, 245, 0.3);
+  box-shadow: 0 16px 30px rgba(90, 168, 245, 0.18);
+}
+
+[data-theme="light"] .admin-dashboard__action {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(90, 168, 245, 0.45);
+  color: #1d3342;
+}
+
+[data-theme="light"] .admin-dashboard__students {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(90, 168, 245, 0.3);
+}
+
+[data-theme="light"] .admin-dashboard__users {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(90, 168, 245, 0.3);
+}
+
+[data-theme="light"] .admin-dashboard__search,
+[data-theme="light"] .admin-dashboard__select {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(90, 168, 245, 0.4);
+  color: #1d3342;
+}
+
+[data-theme="light"] .admin-dashboard__filter-btn {
+  background: rgba(90, 168, 245, 0.6);
+}
+
+[data-theme="light"] .admin-dashboard__table thead {
+  background: rgba(90, 168, 245, 0.12);
+}
+
+/* ============================================ */
 /* Student Module Styles */
 /* ============================================ */
 

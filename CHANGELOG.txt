@@ -1,0 +1,54 @@
+================================================================================
+                    ATTENDANCE TRACKER - DEVELOPMENT CHANGELOG
+================================================================================
+
+Purpose: Track all code changes, feature additions, and bug fixes with timestamps
+Format: [DATE] [TIME] - Description of changes
+
+================================================================================
+
+[2026-02-15] [Evening] - Desktop Navbar Consistency & Mobile UI Optimization
+--------------------------------------------------------------------------------
+
+MOBILE UI IMPROVEMENTS:
+- Fixed password toggle button visibility on phone view
+- Optimized toggle button sizing: 40x40px with proper positioning
+- Replaced SVG icons with emoji: 🫣 (hidden) and 😊 (visible) 
+- Positioned toggle button at input field corner (right: 0.3rem)
+- Fixed CSS import order in App.css (moved @import to top for Vite compatibility)
+- Applied changes to Login.jsx and Signup.jsx password fields
+
+FILES MODIFIED:
+- /frontend/src/styles/mobile-app-ui.css
+- /frontend/src/App.css
+- /frontend/src/pages/Login.jsx
+- /frontend/src/pages/Signup.jsx
+
+DESKTOP NAVBAR IMPROVEMENTS:
+- Unified all navbar buttons (Home, Login, Signup) styling
+- Removed separate .navbar__link--primary custom styling
+- Made Signup button inherit base .navbar__link properties
+- Fixed light theme active state colors
+- Fixed dark theme gradient consistency
+- Removed all borders from Signup button (!important overrides)
+- Applied consistent hover effects (translateY, shadows)
+- Unified active state gradients:
+  * Dark theme: linear-gradient(135deg, teal → cyan)
+  * Light theme: linear-gradient(135deg, blue gradient)
+
+FILES MODIFIED:
+- /frontend/src/styles/navbar.css (extensive refactoring)
+
+RESULTS:
+✅ Mobile UI has native app feel with emoji-based password toggles
+✅ Desktop navbar buttons are visually and behaviorally identical
+✅ Both light and dark themes working consistently
+✅ No CSS errors across all modified files
+✅ Servers running: Backend (PID 9475, port 5001), Frontend (PID 9645, port 5173)
+✅ Network accessible at 10.13.28.232 for phone and desktop testing
+
+================================================================================
+
+[FUTURE CHANGES WILL BE LOGGED BELOW]
+
+================================================================================

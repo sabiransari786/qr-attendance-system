@@ -2,6 +2,7 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { logout } from "../services/api";
+import { API_BASE_URL } from "../utils/constants";
 import "../styles/navbar.css";
 
 function Navbar() {
@@ -11,6 +12,7 @@ function Navbar() {
   const user = authContext?.user;
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState(null);
 
   useEffect(() => {
     // Check localStorage or default to light theme
@@ -20,6 +22,29 @@ function Navbar() {
     setIsDarkMode(isDark);
     applyTheme(isDark);
   }, []);
+
+  // Load profile photo when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      loadProfilePhoto(user.id);
+    } else {
+      setProfilePhoto(null);
+    }
+  }, [isAuthenticated, user?.id]);
+
+  const loadProfilePhoto = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/photo/${userId}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setProfilePhoto(url);
+      }
+    } catch (error) {
+      console.log("No profile photo found");
+      setProfilePhoto(null);
+    }
+  };
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -141,14 +166,24 @@ function Navbar() {
           ) : (
             <>
               <button 
-                className="navbar__link"
+                className="navbar__link navbar__profile-link"
                 onClick={() => {
                   handleProfileClick();
                   setIsMobileMenuOpen(false);
                 }}
-                style={{ cursor: 'pointer', border: 'none', background: 'transparent' }}
               >
-                👤 Profile
+                {profilePhoto ? (
+                  <img 
+                    src={profilePhoto} 
+                    alt="Profile" 
+                    className="navbar__profile-img"
+                  />
+                ) : (
+                  <span className="navbar__profile-placeholder">
+                    {user?.name?.charAt(0)?.toUpperCase() || '👤'}
+                  </span>
+                )}
+                <span>Profile</span>
               </button>
               <button 
                 className="navbar__link navbar__link--primary"

@@ -34,7 +34,7 @@ function ScanQR() {
     setMessage({ type: "", text: "" });
 
     try {
-      const token = localStorage.getItem("authToken");
+      const token = sessionStorage.getItem("authToken");
       
       // Verify session exists
       const sessionResponse = await fetch(`${API_BASE_URL}/session/${codeToVerify}`, {
@@ -68,8 +68,8 @@ function ScanQR() {
     setMessage({ type: "", text: "" });
 
     try {
-      const token = localStorage.getItem("authToken");
-      const userId = localStorage.getItem("userId");
+      const token = sessionStorage.getItem("authToken");
+      const userId = sessionStorage.getItem("userId");
 
       const response = await fetch(`${API_BASE_URL}/attendance`, {
         method: "POST",

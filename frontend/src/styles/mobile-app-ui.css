@@ -1,0 +1,1006 @@
+/* ============================================================================
+   MOBILE APP-LIKE UI - PROFESSIONAL RESPONSIVE DESIGN
+   ============================================================================
+   
+   Complete redesign for mobile with native app feel:
+   - Proper font scaling
+   - Card-based layouts
+   - Clear visual hierarchy
+   - Touch-optimized interactions
+   - Modern mobile UI patterns
+   
+   ============================================================================ */
+
+/* ============================================================================
+   ROOT & BASE STYLES FOR MOBILE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  
+  /* Root element optimization */
+  :root {
+    --mobile-padding: 1rem;
+    --mobile-card-radius: 16px;
+    --mobile-button-height: 52px;
+    --mobile-input-height: 50px;
+    --mobile-font-base: 16px;
+    --mobile-font-small: 14px;
+    --mobile-font-large: 18px;
+    --mobile-spacing: 1rem;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    font-size: var(--mobile-font-base);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* ============================================================================
+     MOBILE NAVBAR - APP-LIKE HEADER
+     ============================================================================ */
+  
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .navbar__inner {
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-height: 70px;
+  }
+  
+  .navbar__brand {
+    flex: 1;
+    gap: 0.95rem;
+    justify-content: center;
+  }
+  
+  .navbar__brand-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    color: var(--primary-accent);
+  }
+  
+  .navbar__brand-title {
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    text-align: center;
+    color: var(--color-text);
+  }
+  
+  .navbar__brand-subtitle {
+    display: none;
+  }
+  
+  /* Mobile menu toggle */
+  .navbar__mobile-toggle {
+    display: flex;
+    padding: 10px;
+    background: var(--color-bg-secondary);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+  
+  .navbar__mobile-toggle:active {
+    background: var(--border-soft);
+    transform: scale(0.95);
+  }
+  
+  .hamburger span {
+    height: 2.5px;
+    border-radius: 3px;
+  }
+  
+  /* Mobile navigation drawer */
+  .navbar__nav {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 85%;
+    max-width: 340px;
+    height: 100vh;
+    background: var(--card-bg);
+    backdrop-filter: blur(25px);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.5);
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1001;
+    overflow-y: auto;
+    padding: 6rem 1.5rem 2rem;
+    gap: 0.7rem;
+  }
+  
+  .navbar__nav--open {
+    right: 0;
+  }
+  
+  .navbar__link {
+    width: 100%;
+    padding: 1.1rem 1.3rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 14px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-soft);
+    transition: all 0.25s ease;
+  }
+  
+  .navbar__link:active {
+    transform: scale(0.98);
+    background: var(--border-soft);
+  }
+  
+  .navbar__link--active {
+    background: var(--primary-accent);
+    color: var(--text-light);
+    font-weight: 700;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(49, 156, 181, 0.3);
+  }
+  
+  .navbar__theme-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-soft);
+  }
+  
+  .navbar__theme-toggle:active {
+    transform: scale(0.95);
+    background: var(--border-soft);
+  }
+  
+  /* ============================================================================
+     AUTH PAGES - LOGIN & SIGNUP
+     ============================================================================ */
+  
+  .login__container,
+  .signup__container {
+    padding: 5rem 1rem 2rem;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Hide decorative elements */
+  .auth__objects,
+  .auth__object,
+  .auth__orb,
+  .login__container::before,
+  .login__container::after,
+  .signup__container::before,
+  .signup__container::after {
+    display: none !important;
+  }
+  
+  .login__box,
+  .signup__box {
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem 1.5rem !important;
+    margin: 0;
+    border-radius: 20px;
+    background: var(--card-bg) !important;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-soft);
+  }
+  
+  .login__title,
+  .signup__title {
+    font-size: 1.9rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 0.6rem !important;
+    letter-spacing: -0.5px;
+  }
+  
+  .login__subtitle,
+  .signup__subtitle {
+    font-size: 1rem !important;
+    line-height: 1.5;
+    margin-bottom: 2rem !important;
+    opacity: 0.85;
+  }
+  
+  .login__form,
+  .signup__form {
+    gap: 1.2rem;
+  }
+  
+  .login__field,
+  .signup__field {
+    margin-bottom: 0 !important;
+  }
+  
+  .login__label,
+  .signup__label {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.6rem !important;
+    color: var(--color-text);
+    letter-spacing: 0.2px;
+  }
+  
+  /* Password wrapper positioning */
+  .login__password-wrapper,
+  .signup__password-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .login__input,
+  .signup__input,
+  .login__select,
+  .signup__select {
+    width: 100%;
+    padding: 0.95rem 1.2rem !important;
+    font-size: 16px !important;
+    min-height: 52px !important;
+    border-radius: 12px !important;
+    background: var(--input-bg) !important;
+    border: 1.5px solid var(--border-soft) !important;
+    color: var(--color-text);
+    transition: all 0.25s ease;
+  }
+  
+  /* Password input - extra padding for toggle button */
+  .login__password-wrapper .login__input,
+  .signup__password-wrapper .signup__input {
+    padding-right: 3rem !important;
+  }
+  
+  .login__input:focus,
+  .signup__input:focus,
+  .login__select:focus,
+  .signup__select:focus {
+    border-color: var(--primary-accent) !important;
+    background: var(--input-bg) !important;
+    box-shadow: 0 0 0 3px var(--color-bg-secondary);
+  }
+  
+  /* Password Toggle Button - Mobile Optimized */
+  .login__password-toggle,
+  .signup__password-toggle {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    right: 0.15rem !important;
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    opacity: 0.8 !important;
+    transition: all 0.2s ease !important;
+    border-radius: 8px !important;
+  }
+  
+  .login__password-toggle:active,
+  .signup__password-toggle:active {
+    opacity: 1 !important;
+    transform: translateY(-50%) scale(0.95) !important;
+    background: rgba(0, 168, 168, 0.1) !important;
+    border-radius: 8px !important;
+  }
+  
+  .login__password-toggle span,
+  .signup__password-toggle span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .login__button,
+  .signup__button {
+    width: 100%;
+    padding: 1.1rem 1.5rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    min-height: 54px !important;
+    border-radius: 14px !important;
+    background: var(--primary-accent) !important;
+    box-shadow: 0 6px 20px rgba(49, 156, 181, 0.35);
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+  
+  .login__button:active,
+  .signup__button:active {
+    transform: scale(0.98);
+    box-shadow: 0 3px 12px rgba(49, 156, 181, 0.3);
+  }
+  
+  .login__footer,
+  .signup__footer {
+    font-size: 0.95rem !important;
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+  
+  .login__footer a,
+  .signup__footer a {
+    font-weight: 600;
+    color: var(--primary-accent);
+  }
+  
+  /* ============================================================================
+     DASHBOARD - MOBILE APP LAYOUT
+     ============================================================================ */
+  
+  .dashboard {
+    padding: 1rem 0 6rem !important;
+    background: var(--color-bg) !important;
+  }
+  
+  /* Hide decorative objects */
+  .dashboard__objects,
+  .dashboard__object {
+    display: none !important;
+  }
+  
+  .dashboard__header {
+    padding: 1.5rem var(--mobile-padding);
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--color-surface);
+    border-radius: 0 0 24px 24px;
+  }
+  
+  .dashboard__title {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 0.4rem !important;
+    letter-spacing: -0.5px;
+  }
+  
+  .dashboard__subtitle {
+    font-size: 0.95rem !important;
+    opacity: 0.8;
+    line-height: 1.5;
+  }
+  
+  .dashboard__buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 0 var(--mobile-padding);
+    margin-bottom: 1.5rem;
+  }
+  
+  .dashboard__button,
+  .btn,
+  button:not(.navbar__mobile-toggle):not(.navbar__theme-toggle):not(.navbar__link) {
+    width: 100%;
+    padding: 1rem 1.5rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    min-height: 52px !important;
+    border-radius: 14px !important;
+    background: var(--primary-accent) !important;
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(49, 156, 181, 0.3);
+    transition: all 0.25s ease;
+  }
+  
+  .dashboard__button:active,
+  .btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(49, 156, 181, 0.25);
+  }
+  
+  /* ============================================================================
+     CARDS - MOBILE OPTIMIZED
+     ============================================================================ */
+  
+  .dashboard__grid,
+  .stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 var(--mobile-padding);
+  }
+  
+  .dashboard__card,
+  .stats-card,
+  .card {
+    padding: 1.5rem !important;
+    border-radius: 18px !important;
+    background: var(--card-bg) !important;
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--border-soft) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .dashboard__card-title,
+  .stats-card h3,
+  .card-title {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 1rem !important;
+    color: var(--color-text);
+    letter-spacing: -0.3px;
+  }
+  
+  .dashboard__card-content {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  /* Stats Card Special Styling */
+  .stats-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  
+  .stats-value {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    color: var(--primary-accent);
+    line-height: 1;
+    margin: 0.5rem 0;
+  }
+  
+  .stats-label {
+    font-size: 0.95rem;
+    opacity: 0.85;
+    font-weight: 500;
+  }
+  
+  /* ============================================================================
+     TABLES - MOBILE SCROLLABLE
+     ============================================================================ */
+  
+  .table-container,
+  .table-wrapper {
+    margin: 1rem var(--mobile-padding);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    width: 100%;
+    min-width: 600px;
+    font-size: 0.9rem;
+    border-collapse: collapse;
+  }
+  
+  table thead {
+    background: var(--color-bg-secondary);
+  }
+  
+  table th {
+    padding: 1rem 0.8rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  
+  table td {
+    padding: 1rem 0.8rem !important;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  
+  table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  
+  /* Sticky first column */
+  table th:first-child,
+  table td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--card-bg);
+    z-index: 10;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* ============================================================================
+     FORMS - MOBILE OPTIMIZED
+     ============================================================================ */
+  
+  .form-container {
+    padding: 0 var(--mobile-padding);
+  }
+  
+  .form-group {
+    margin-bottom: 1.3rem;
+  }
+  
+  label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: var(--color-text);
+    letter-spacing: 0.2px;
+  }
+  
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.95rem 1.2rem !important;
+    font-size: 16px !important;
+    min-height: 52px !important;
+    border-radius: 12px !important;
+    background: var(--input-bg) !important;
+    border: 1.5px solid var(--border-soft) !important;
+    color: var(--color-text);
+    transition: all 0.25s ease;
+  }
+  
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--primary-accent) !important;
+    background: var(--input-bg) !important;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-bg-secondary);
+  }
+  
+  textarea {
+    min-height: 120px !important;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  
+  /* ============================================================================
+     MODALS - MOBILE FULL SCREEN
+     ============================================================================ */
+  
+  .modal {
+    padding: 0 !important;
+  }
+  
+  .modal-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 1.5rem !important;
+    border-radius: 0 !important;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  
+  .modal-title {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+  }
+  
+  .modal-close {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-secondary);
+    border: none;
+    font-size: 1.5rem;
+  }
+  
+  /* ============================================================================
+     QR CODE - MOBILE CENTERED
+     ============================================================================ */
+  
+  .qr-container {
+    padding: 2rem var(--mobile-padding) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+  .qr-code,
+  .qr-code-wrapper {
+    width: 100% !important;
+    max-width: 300px !important;
+    height: auto !important;
+    aspect-ratio: 1;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  .qr-code canvas,
+  .qr-code svg {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  /* ============================================================================
+     PROFILE PAGE
+     ============================================================================ */
+  
+  .profile-container {
+    padding: 1rem var(--mobile-padding) 6rem;
+  }
+  
+  .profile-card {
+    padding: 1.5rem !important;
+    border-radius: 18px !important;
+    margin-bottom: 1.5rem;
+  }
+  
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  
+  .profile-avatar {
+    width: 110px !important;
+    height: 110px !important;
+    border-radius: 50%;
+    border: 4px solid var(--primary-accent);
+    box-shadow: 0 6px 24px rgba(49, 156, 181, 0.3);
+  }
+  
+  .profile-name {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    margin: 0;
+  }
+  
+  .profile-role {
+    font-size: 1rem;
+    opacity: 0.8;
+    text-transform: capitalize;
+  }
+  
+  .profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  
+  .profile-field-label {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  
+  .profile-field-value {
+    font-size: 1.05rem;
+    font-weight: 500;
+  }
+  
+  /* ============================================================================
+     FOOTER - MOBILE
+     ============================================================================ */
+  
+  .footer {
+    padding: 2rem var(--mobile-padding) 1.5rem !important;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-soft);
+  }
+  
+  .footer__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    text-align: center;
+  }
+  
+  .footer__text {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+  
+  .footer__links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  
+  .footer__link {
+    font-size: 0.95rem;
+    color: var(--primary-accent);
+    font-weight: 500;
+  }
+  
+  /* ============================================================================
+     BADGE & STATUS INDICATORS
+     ============================================================================ */
+  
+  .badge {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  .badge-success {
+    background: rgba(34, 197, 94, 0.25);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+  }
+  
+  .badge-warning {
+    background: rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.4);
+  }
+  
+  .badge-danger {
+    background: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+  }
+  
+  .badge-info {
+    background: var(--color-bg-secondary);
+    color: var(--primary-accent);
+    border: 1px solid var(--border-soft);
+  }
+  
+  /* ============================================================================
+     UTILITY CLASSES
+     ============================================================================ */
+  
+  /* Spacing utilities */
+  .mt-mobile { margin-top: var(--mobile-spacing) !important; }
+  .mb-mobile { margin-bottom: var(--mobile-spacing) !important; }
+  .mx-mobile { margin-left: var(--mobile-spacing) !important; margin-right: var(--mobile-spacing) !important; }
+  .my-mobile { margin-top: var(--mobile-spacing) !important; margin-bottom: var(--mobile-spacing) !important; }
+  
+  .pt-mobile { padding-top: var(--mobile-spacing) !important; }
+  .pb-mobile { padding-bottom: var(--mobile-spacing) !important; }
+  .px-mobile { padding-left: var(--mobile-spacing) !important; padding-right: var(--mobile-spacing) !important; }
+  .py-mobile { padding-top: var(--mobile-spacing) !important; padding-bottom: var(--mobile-spacing) !important; }
+  
+  /* Text utilities */
+  .text-center-mobile { text-align: center !important; }
+  .text-left-mobile { text-align: left !important; }
+  .text-large-mobile { font-size: var(--mobile-font-large) !important; }
+  .text-small-mobile { font-size: var(--mobile-font-small) !important; }
+  
+  /* Display utilities */
+  .flex-column-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .w-full-mobile { width: 100% !important; }
+  .h-full-mobile { height: 100% !important; }
+  
+  /* Visibility */
+  .hide-mobile { display: none !important; }
+  .show-mobile { display: block !important; }
+  
+  /* Safe area for notched phones */
+  @supports (padding: max(0px)) {
+    body {
+      padding-top: max(0px, env(safe-area-inset-top));
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+    
+    .navbar {
+      padding-top: max(0px, env(safe-area-inset-top));
+    }
+  }
+}
+
+/* ============================================================================
+   SMALL MOBILE DEVICES (< 380px)
+   ============================================================================ */
+
+@media screen and (max-width: 380px) {
+  :root {
+    --mobile-padding: 0.8rem;
+    --mobile-font-base: 15px;
+  }
+  
+  .navbar__brand-title {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+  
+  .dashboard__title {
+    font-size: 1.5rem !important;
+  }
+  
+  .login__title,
+  .signup__title {
+    font-size: 1.6rem !important;
+  }
+  
+  table {
+    min-width: 500px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ============================================================================
+   LANDSCAPE MODE ON MOBILE
+   ============================================================================ */
+
+@media screen and (max-width: 896px) and (orientation: landscape) {
+  .navbar__nav {
+    padding: 4rem 1.5rem 2rem;
+  }
+  
+  .login__container,
+  .signup__container {
+    padding: 5rem 2rem 2rem;
+  }
+  
+  .dashboard {
+    padding: 1rem 2rem 2rem !important;
+  }
+}
+
+/* ============================================================================
+   LIGHT THEME ADJUSTMENTS FOR MOBILE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  [data-theme="light"] .navbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  [data-theme="light"] .login__box,
+  [data-theme="light"] .signup__box {
+    background: var(--card-bg) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-soft);
+  }
+  
+  [data-theme="light"] .login__title,
+  [data-theme="light"] .signup__title {
+    color: var(--color-text);
+  }
+  
+  [data-theme="light"] .login__subtitle,
+  [data-theme="light"] .signup__subtitle {
+    color: var(--color-text-secondary);
+    opacity: 1;
+  }
+  
+  [data-theme="light"] .login__label,
+  [data-theme="light"] .signup__label {
+    color: var(--color-text);
+  }
+  
+  [data-theme="light"] .login__input,
+  [data-theme="light"] .signup__input,
+  [data-theme="light"] .login__select,
+  [data-theme="light"] .signup__select {
+    background: var(--input-bg) !important;
+    border: 1.5px solid var(--border-soft) !important;
+    color: var(--color-text) !important;
+  }
+  
+  [data-theme="light"] .login__input::placeholder,
+  [data-theme="light"] .signup__input::placeholder,
+  [data-theme="light"] .login__select::placeholder,
+  [data-theme="light"] .signup__select::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.6;
+  }
+  
+  [data-theme="light"] .login__password-toggle,
+  [data-theme="light"] .signup__password-toggle {
+    opacity: 0.8 !important;
+    background: transparent !important;
+  }
+  
+  [data-theme="light"] .login__password-toggle:hover,
+  [data-theme="light"] .signup__password-toggle:hover {
+    opacity: 0.9 !important;
+  }
+  
+  [data-theme="light"] .login__password-toggle:active,
+  [data-theme="light"] .signup__password-toggle:active {
+    opacity: 1 !important;
+    background: rgba(94, 142, 160, 0.1) !important;
+  }
+  
+  [data-theme="light"] .login__button,
+  [data-theme="light"] .signup__button {
+    background: var(--primary-accent) !important;
+    color: var(--text-light) !important;
+    box-shadow: 0 4px 12px rgba(94, 142, 160, 0.25);
+  }
+  
+  [data-theme="light"] .login__button:active,
+  [data-theme="light"] .signup__button:active {
+    box-shadow: 0 2px 8px rgba(94, 142, 160, 0.2);
+  }
+  
+  [data-theme="light"] .login__link,
+  [data-theme="light"] .signup__link,
+  [data-theme="light"] .login__forgot-password {
+    color: var(--primary-accent);
+  }
+  
+  [data-theme="light"] .navbar__mobile-toggle {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-soft);
+  }
+  
+  [data-theme="light"] .navbar__brand-title {
+    color: var(--color-text);
+  }
+  
+  [data-theme="light"] .navbar__brand-icon {
+    color: var(--primary-accent);
+  }
+  
+  [data-theme="light"] .navbar__link {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-soft);
+    color: var(--color-text);
+  }
+  
+  [data-theme="light"] .navbar__link--active {
+    background: var(--primary-accent);
+    color: var(--text-light);
+  }
+  
+  [data-theme="light"] .dashboard__card,
+  [data-theme="light"] .stats-card,
+  [data-theme="light"] .card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-soft) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}

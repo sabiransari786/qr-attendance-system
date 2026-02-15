@@ -98,6 +98,11 @@ html, body {
 
 body {
   font-family: var(--font-primary);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-bg);
@@ -106,6 +111,21 @@ body {
   letter-spacing: 0.3px;
   line-height: 1.6;
   position: relative;
+  min-height: 100vh;
+}
+
+/* Mobile touch improvements */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: rgba(49, 156, 181, 0.2);
+  }
+  
+  button,
+  a {
+    touch-action: manipulation; /* Prevent zoom on double tap */
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 #root {

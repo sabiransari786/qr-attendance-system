@@ -21,7 +21,7 @@ function Unauthorized() {
   /**
    * Check if user is authenticated by looking for auth token
    */
-  const isAuthenticated = !!localStorage.getItem("authToken");
+  const isAuthenticated = !!sessionStorage.getItem("authToken");
 
   /**
    * Handle redirect based on authentication status

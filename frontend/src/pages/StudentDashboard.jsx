@@ -25,7 +25,7 @@ function StudentDashboard() {
     if (!user?.id) return;
     
     try {
-      const token = localStorage.getItem("authToken");
+      const token = sessionStorage.getItem("authToken");
       const response = await fetch(`${API_BASE_URL}/attendance/student/${user.id}`, {
         headers: {
           "Authorization": `Bearer ${token}`
@@ -240,26 +240,6 @@ function StudentDashboard() {
             >
               <span className="student-dashboard__hero-button-icon">📱</span>
               <span>Open Scanner</span>
-            </button>
-          </div>
-        </section>
-
-        {/* Quick Actions Card */}
-        <section className="dashboard__card student-dashboard__card">
-          <h2 className="dashboard__card-title">Quick Actions</h2>
-          <div className="student-dashboard__actions">
-            <button
-              className="student-dashboard__action student-dashboard__action--primary"
-              onClick={() => navigate("/student-profile")}
-            >
-              My Profile
-            </button>
-
-            <button
-              className="student-dashboard__action student-dashboard__action--ghost"
-              onClick={() => navigate("/attendance-history")}
-            >
-              View History
             </button>
           </div>
         </section>

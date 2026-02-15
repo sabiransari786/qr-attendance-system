@@ -46,6 +46,17 @@ const {
 // Protected routes ke liye authentication check karne ke liye
 const authMiddleware = require('../../middleware/auth.middleware');
 
+// Admin-only access guard
+const requireAdmin = (req, res, next) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Admin privileges required.'
+    });
+  }
+  return next();
+};
+
 // Try to import multer - if not available, create a fallback
 let upload;
 try {
@@ -206,6 +217,186 @@ router.get('/students', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch students'
+    });
+  }
+});
+
+/**
+ * GET /admin/users - Admin user management list
+ * Query params: search, role, status (active/inactive)
+ */
+router.get('/admin/users', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { pool } = require('../../config/database');
+    const { search, role, status } = req.query;
+
+    let where = 'WHERE 1=1';
+    const params = [];
+
+    if (role && role !== 'all') {
+      where += ' AND role = ?';
+      params.push(role);
+    }
+
+    if (status === 'active') {
+      where += ' AND is_active = 1';
+    } else if (status === 'inactive') {
+      where += ' AND is_active = 0';
+    }
+
+    if (search && search.trim()) {
+      const like = `%${search.trim()}%`;
+      where += ' AND (name LIKE ? OR email LIKE ? OR department LIKE ?)';
+      params.push(like, like, like);
+    }
+
+    const [users] = await pool.query(
+      `SELECT id, name, email, role, is_active, department
+       FROM users
+       ${where}
+       ORDER BY created_at DESC`,
+      params
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch users.'
+    });
+  }
+});
+
+/**
+ * PATCH /admin/users/:id/role - Update user role
+ */
+router.patch('/admin/users/:id/role', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { pool } = require('../../config/database');
+    const { id } = req.params;
+    const { role } = req.body;
+    const allowedRoles = ['student', 'faculty', 'admin'];
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role provided.'
+      });
+    }
+
+    if (Number(id) === Number(req.user?.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot change your own role.'
+      });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE users SET role = ? WHERE id = ?',
+      [role, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Role updated successfully.'
+    });
+  } catch (error) {
+    console.error('Error updating role:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update role.'
+    });
+  }
+});
+
+/**
+ * PATCH /admin/users/:id/status - Activate/Deactivate user
+ */
+router.patch('/admin/users/:id/status', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { pool } = require('../../config/database');
+    const { id } = req.params;
+    const { is_active } = req.body;
+
+    if (Number(id) === Number(req.user?.id) && is_active === false) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot deactivate your own account.'
+      });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE users SET is_active = ? WHERE id = ?',
+      [is_active ? 1 : 0, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Status updated successfully.'
+    });
+  } catch (error) {
+    console.error('Error updating status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update status.'
+    });
+  }
+});
+
+/**
+ * DELETE /admin/users/:id - Delete user
+ */
+router.delete('/admin/users/:id', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { pool } = require('../../config/database');
+    const { id } = req.params;
+
+    if (Number(id) === Number(req.user?.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account.'
+      });
+    }
+
+    const [result] = await pool.query(
+      'DELETE FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'User deleted successfully.'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete user.'
     });
   }
 });

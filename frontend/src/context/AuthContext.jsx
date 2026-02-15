@@ -14,20 +14,24 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize auth from localStorage on mount
+  // Initialize auth from sessionStorage on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem("authToken");
+    // Clean up old localStorage tokens (migration from localStorage to sessionStorage)
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    
+    const storedToken = sessionStorage.getItem("authToken");
     if (storedToken) {
       setToken(storedToken);
-      const storedUser = localStorage.getItem("user");
+      const storedUser = sessionStorage.getItem("user");
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
           setUser(userData);
           setIsAuthenticated(true);
         } catch (err) {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("user");
+          sessionStorage.removeItem("authToken");
+          sessionStorage.removeItem("user");
         }
       }
     }
@@ -39,8 +43,8 @@ export function AuthProvider({ children }) {
     setToken(authToken);
     setIsAuthenticated(true);
     setError(null);
-    localStorage.setItem("authToken", authToken);
-    localStorage.setItem("user", JSON.stringify(userData));
+    sessionStorage.setItem("authToken", authToken);
+    sessionStorage.setItem("user", JSON.stringify(userData));
   }, []);
 
   const logout = useCallback(() => {
@@ -48,8 +52,8 @@ export function AuthProvider({ children }) {
     setToken(null);
     setIsAuthenticated(false);
     setError(null);
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("user");
   }, []);
 
   const setAuthError = useCallback((errorMsg) => {

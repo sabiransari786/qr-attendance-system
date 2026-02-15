@@ -1,5 +1,25 @@
 /* Auth Pages - Responsive Theme for Login & Signup */
 
+/* ========== SHARED CARD STYLES ========== */
+.login__card,
+.signup__card,
+.login__box,
+.signup__box {
+  background: var(--card-bg);
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+  box-shadow: 
+    0 20px 60px rgba(2, 12, 16, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 3.5rem 3rem;
+  max-width: 480px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ========== LOGIN PAGE STYLES ========== */
 
 /* Login Container */
@@ -807,86 +827,7 @@
 }
 
 /* ========== RESPONSIVE DESIGN ========== */
-
-@media (max-width: 768px) {
-  .login__container,
-  .signup__container {
-    padding: 1.5rem 1rem;
-  }
-
-  .login__card,
-  .signup__card {
-    padding: 2rem 1.5rem;
-  }
-
-  .login__title,
-  .signup__title {
-    font-size: 1.5rem;
-  }
-
-  .login__subtitle,
-  .signup__subtitle {
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .login__container,
-  .signup__container {
-    padding: 1rem;
-  }
-
-  .login__card,
-  .signup__card {
-    padding: 1.5rem 1.25rem;
-  }
-
-  .login__title,
-  .signup__title {
-    font-size: 1.3rem;
-  }
-
-  .login__subtitle,
-  .signup__subtitle {
-    font-size: 0.85rem;
-  }
-
-  .login__form,
-  .signup__form {
-    gap: 1rem;
-  }
-
-  .login__label,
-  .signup__label {
-    font-size: 0.85rem;
-  }
-
-  .login__input,
-  .signup__input {
-    padding: 0.65rem 0.875rem;
-    font-size: 0.9rem;
-  }
-
-  .login__button,
-  .signup__button {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-  }
-
-  .login__message,
-  .signup__message {
-    font-size: 0.85rem;
-  }
-
-  .login__link-text,
-  .signup__footer-text {
-    font-size: 0.85rem;
-  }
-
-  .signup__buttons {
-    gap: 0.5rem;
-  }
-}
+/* Mobile styles now handled by mobile-app-ui.css for better consistency */
 
 /* Light Theme Overrides */
 [data-theme="light"] .login__input,
