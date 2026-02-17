@@ -181,15 +181,22 @@
     justify-content: center;
   }
   
-  /* Hide decorative elements */
-  .auth__objects,
+  /* Show decorative elements with lighter intensity on mobile */
+  .auth__objects {
+    display: block;
+    opacity: 0.45;
+  }
   .auth__object,
-  .auth__orb,
+  .auth__orb {
+    display: block;
+    opacity: 0.45;
+  }
   .login__container::before,
   .login__container::after,
   .signup__container::before,
   .signup__container::after {
-    display: none !important;
+    display: block;
+    opacity: 0.25;
   }
   
   .login__box,
@@ -356,10 +363,14 @@
     background: var(--color-bg) !important;
   }
   
-  /* Hide decorative objects */
-  .dashboard__objects,
+  /* Show decorative objects with lighter intensity on mobile */
+  .dashboard__objects {
+    display: block;
+    opacity: 0.4;
+  }
   .dashboard__object {
-    display: none !important;
+    display: block;
+    opacity: 0.4;
   }
   
   .dashboard__header {

@@ -79,7 +79,7 @@
   transform-style: preserve-3d;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: auth-object-float 10s ease-in-out infinite;
+  animation: auth-object-float 2.5s linear infinite;
 }
 
 .auth__object--sphere {
@@ -89,7 +89,7 @@
   left: 8%;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 12s;
+  animation-duration: 3s;
 }
 
 .auth__object--ring {
@@ -100,7 +100,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 13s;
+  animation-duration: 3.2s;
 }
 
 .auth__object--cube {
@@ -111,7 +111,7 @@
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
   transform: rotate(18deg);
-  animation-duration: 11s;
+  animation-duration: 2.6s;
 }
 
 [data-theme="light"] .auth__object {
@@ -133,10 +133,10 @@
 @keyframes auth-object-float {
   0%,
   100% {
-    transform: translateY(0) translateZ(0) rotate(0deg);
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
   50% {
-    transform: translateY(-18px) translateZ(30px) rotate(6deg);
+    transform: translate3d(60px, -90px, 160px) rotate(32deg);
   }
 }
 
@@ -146,7 +146,7 @@
   border-radius: 50%;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: auth-orb-float 10s ease-in-out infinite;
+  animation: auth-orb-float 2.5s linear infinite;
 }
 
 .auth__orb--one {
@@ -155,7 +155,7 @@
   top: 12%;
   left: 8%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 12s;
+  animation-duration: 3s;
 }
 
 .auth__orb--two {
@@ -165,7 +165,7 @@
   right: 10%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 13s;
+  animation-duration: 3.2s;
 }
 
 .auth__orb--three {
@@ -174,7 +174,7 @@
   top: 32%;
   right: 18%;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
-  animation-duration: 11s;
+  animation-duration: 2.6s;
 }
 
 [data-theme="light"] .auth__orb {
@@ -196,10 +196,10 @@
 @keyframes auth-orb-float {
   0%,
   100% {
-    transform: translateY(0) translateZ(0) rotate(0deg);
+    transform: translate3d(0, 0, 0) rotate(0deg);
   }
   50% {
-    transform: translateY(-18px) translateZ(30px) rotate(6deg);
+    transform: translate3d(60px, -90px, 160px) rotate(32deg);
   }
 }
 

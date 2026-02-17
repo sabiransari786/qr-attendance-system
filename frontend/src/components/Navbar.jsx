@@ -81,8 +81,8 @@ function Navbar() {
     } else if (user?.role === "faculty") {
       navigate("/faculty-profile");
     } else if (user?.role === "admin") {
-      // Admin profile - can redirect to admin settings or dashboard
-      navigate("/admin-dashboard");
+      // Admin profile - redirect to admin profile page
+      navigate("/admin-profile");
     }
   };
 

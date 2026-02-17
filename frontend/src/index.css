@@ -41,6 +41,15 @@
   --color-lighter-gray: #F3F4F6;
   --color-dark-gray: #1F2937;
   --color-border-gray: #E5E7EB;
+  --student-card-1: linear-gradient(135deg, #1f9bb8 0%, #2aa5a8 100%);
+  --student-card-2: linear-gradient(135deg, #14b8a6 0%, #319cb5 100%);
+  --student-card-3: linear-gradient(135deg, #2bb3d3 0%, #4fbad4 100%);
+  --student-card-4: linear-gradient(135deg, #1b8aa5 0%, #2aa5a8 100%);
+  --student-card-text: #ffffff;
+  --student-card-subtext: rgba(255, 255, 255, 0.9);
+  --student-card-action-bg: rgba(255, 255, 255, 0.22);
+  --student-card-action-border: rgba(255, 255, 255, 0.45);
+  --student-card-action-text: #ffffff;
 
   /* Typography */
   --font-primary: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
@@ -81,6 +90,15 @@
   --color-lighter-gray: #F1F6F9;
   --color-dark-gray: #2F3B40;
   --color-border-gray: #DEE7EC;
+  --student-card-1: linear-gradient(135deg, #b9dbe5 0%, #8fbac7 100%);
+  --student-card-2: linear-gradient(135deg, #cfe7ee 0%, #a3c8d4 100%);
+  --student-card-3: linear-gradient(135deg, #d9eef2 0%, #b6d6e0 100%);
+  --student-card-4: linear-gradient(135deg, #c2e0e8 0%, #9cc6d3 100%);
+  --student-card-text: #0f172a;
+  --student-card-subtext: #1f2a30;
+  --student-card-action-bg: rgba(15, 23, 42, 0.08);
+  --student-card-action-border: rgba(15, 23, 42, 0.2);
+  --student-card-action-text: #0f172a;
 }
 
 * {
@@ -145,5 +163,10 @@ body.disable-transitions * {
   transition: none !important;
 }
 
-/* Import Responsive Styles */
-@import './styles/responsive.css';
+/* Disable all animations/transitions globally */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}

@@ -1,9 +1,56 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 import "../styles/enhanced-dashboard.css";
+import "../styles/enhanced-student-dashboard.css";
+
+// Color Theme System
+const COLOR_THEME = {
+  primary: {
+    light: '#667eea',
+    dark: '#764ba2',
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    name: 'Purple'
+  },
+  success: {
+    light: '#10b981',
+    dark: '#059669',
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    name: 'Emerald'
+  },
+  warning: {
+    light: '#f59e0b',
+    dark: '#d97706',
+    gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    name: 'Amber'
+  },
+  danger: {
+    light: '#ef4444',
+    dark: '#dc2626',
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    name: 'Red'
+  },
+  info: {
+    light: '#4facfe',
+    dark: '#00f2fe',
+    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    name: 'Cyan'
+  },
+  secondary: {
+    light: '#f093fb',
+    dark: '#f5576c',
+    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    name: 'Pink'
+  },
+  accent: {
+    light: '#6366f1',
+    dark: '#4f46e5',
+    gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+    name: 'Indigo'
+  }
+};
 
 function StudentDashboardEnhanced() {
   const navigate = useNavigate();
@@ -15,6 +62,15 @@ function StudentDashboardEnhanced() {
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [theme, setTheme] = useState('light');
+
+  // Anime.js refs
+  const heroGridRef = useRef(null);
+  const statsGridRef = useRef(null);
+  const notificationsRef = useRef(null);
+  const sessionsRef = useRef(null);
+  const subjectsGridRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -22,10 +78,31 @@ function StudentDashboardEnhanced() {
   }, []);
 
   useEffect(() => {
+    // Detect theme from HTML element
+    const htmlElement = document.documentElement;
+    const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
+    setTheme(currentTheme);
+
+    // Listen for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme') {
+          const newTheme = htmlElement.getAttribute('data-theme') || 'light';
+          setTheme(newTheme);
+        }
+      });
+    });
+
+    observer.observe(htmlElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (user?.id) {
       fetchDashboardData();
     }
   }, [user]);
+
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -155,6 +232,8 @@ function StudentDashboardEnhanced() {
     });
   };
 
+  // Theme-aware card styles
+
   const getAttendanceColor = (percentage) => {
     if (percentage >= 85) return '#10b981';
     if (percentage >= 75) return '#f59e0b';
@@ -169,20 +248,15 @@ function StudentDashboardEnhanced() {
 
   const handleScanQR = () => navigate("/scan-qr");
   const handleViewHistory = () => navigate("/attendance-history");
-  const handleViewProfile = () => navigate("/student-profile");
-  const handleLogout = () => {
-    authContext?.logout();
-    navigate("/login");
-  };
+
+  // Animations removed to avoid runtime errors and reduce motion.
 
   if (loading) {
     return (
       <div className="dashboard">
-        <div style={{
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          minHeight: '60vh', fontSize: '1.2rem', color: 'var(--color-text-secondary)'
-        }}>
-          ⏳ Loading your dashboard...
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p className="loading-text">⏳ Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -196,228 +270,203 @@ function StudentDashboardEnhanced() {
         <span className="dashboard__object dashboard__object--diamond" />
       </div>
 
-      <header className="dashboard__header">
-        <div>
-          <h1 className="dashboard__title">🎓 Student Dashboard</h1>
-          <p className="dashboard__subtitle">
-            Welcome back, <strong>{user?.name}</strong>! {formatDate(currentTime)} • {formatTime(currentTime)}
-          </p>
-        </div>
-        <div className="dashboard__buttons">
-          <button
-            className="dashboard__button dashboard__button--primary"
-            onClick={handleViewProfile}
-          >
-            👤 My Profile
-          </button>
-          <button
-            className="dashboard__button dashboard__button--secondary"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
+      <header className="dashboard__header enhanced-header">
+        <div className="header-content">
+          <div className="header-text">
+            <h1 className="dashboard__title slide-in-down">🎓 Student Dashboard</h1>
+            <p className="dashboard__subtitle fade-in">
+              Welcome back, <strong>{user?.name}</strong>! {formatDate(currentTime)} • {formatTime(currentTime)}
+            </p>
+          </div>
         </div>
       </header>
 
       <main className="dashboard__content">
-        {/* Quick Action Cards */}
-        <section className="dashboard__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+        {/* Quick Action Cards - Hero Section */}
+        <section 
+          ref={heroGridRef}
+          className="dashboard__grid hero-grid" 
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+        >
           {/* Today's Status Card */}
-          <section className="dashboard__card" style={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📅</div>
-            <h2 className="dashboard__card-title" style={{ color: 'white' }}>Today's Status</h2>
-            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '1rem 0' }}>
-              {todayStatus?.marked || 0}
-            </div>
-            <p className="dashboard__card-text" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <section 
+            className="dashboard__card premium-card card-gradient-1 card-hover"
+            onMouseEnter={() => setHoveredCard(1)}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{ 
+              transform: hoveredCard === 1 ? 'translateY(-8px)' : 'translateY(0)'
+            }}
+          >
+            <div className="card-header-icon">📅</div>
+            <h2 className="dashboard__card-title">Today's Status</h2>
+            <div className="card-value">{todayStatus?.marked || 0}</div>
+            <p className="dashboard__card-text status-badge">
               {todayStatus?.status === 'present' ? '✓ Attendance Marked' : 
                todayStatus?.status === 'late' ? '⏰ Marked Late' : 
                '⏳ Not Marked Yet'}
             </p>
           </section>
 
-          {/* Overall Attendance Card */}
-          <section className="dashboard__card" style={{ 
-            background: `linear-gradient(135deg, ${getAttendanceColor(attendanceStats?.overall || 0)} 0%, ${getAttendanceColor(attendanceStats?.overall || 0)}dd 100%)`,
-            color: 'white'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📊</div>
-            <h2 className="dashboard__card-title" style={{ color: 'white' }}>Overall Attendance</h2>
-            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '1rem 0' }}>
-              {attendanceStats?.overall || 0}%
-            </div>
-            <p className="dashboard__card-text" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          {/* Overall Attendance Card - Red Theme */}
+          <section 
+            className="dashboard__card premium-card card-gradient-2 card-hover"
+            onMouseEnter={() => setHoveredCard(2)}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{ 
+              transform: hoveredCard === 2 ? 'translateY(-8px)' : 'translateY(0)',
+              boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            <div className="card-header-icon">📊</div>
+            <h2 className="dashboard__card-title">Overall Attendance</h2>
+            <div className="card-value-large">{attendanceStats?.overall || 0}%</div>
+            <p className="dashboard__card-text percentage-text">
               {attendanceStats?.present || 0}/{attendanceStats?.total || 0} Classes • {getAttendanceStatus(attendanceStats?.overall || 0)}
             </p>
           </section>
 
-          {/* Scan QR Card */}
+          {/* Scan QR Card - Pink Theme */}
           <section 
-            className="dashboard__card dashboard__card--clickable"
+            className="dashboard__card premium-card card-gradient-3 card-clickable card-hover"
             onClick={handleScanQR}
-            style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: 'white' }}
+            onMouseEnter={() => setHoveredCard(3)}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{ 
+              cursor: 'pointer', 
+              transform: hoveredCard === 3 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
+              boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
+            }}
           >
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📷</div>
-            <h2 className="dashboard__card-title" style={{ color: 'white' }}>Scan QR Code</h2>
-            <p className="dashboard__card-text" style={{ color: 'rgba(255,255,255,0.9)', marginTop: '1rem' }}>
-              Mark your attendance by scanning QR code
-            </p>
-            <button className="dashboard__card-action" style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.2)', border: '1px solid white' }}>
+            <div className="card-header-icon">📷</div>
+            <h2 className="dashboard__card-title">Scan QR Code</h2>
+            <p className="dashboard__card-text">Mark your attendance instantly</p>
+            <button className="dashboard__card-action btn-action-glow">
               Start Scanning →
             </button>
           </section>
 
-          {/* View History Card */}
+          {/* View History Card - Cyan Theme */}
           <section 
-            className="dashboard__card dashboard__card--clickable"
+            className="dashboard__card premium-card card-gradient-4 card-clickable card-hover"
             onClick={handleViewHistory}
-            style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}
+            onMouseEnter={() => setHoveredCard(4)}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{ 
+              cursor: 'pointer', 
+              transform: hoveredCard === 4 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
+              boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
+            }}
           >
-            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📜</div>
-            <h2 className="dashboard__card-title" style={{ color: 'white' }}>Attendance History</h2>
-            <p className="dashboard__card-text" style={{ color: 'rgba(255,255,255,0.9)', marginTop: '1rem' }}>
-              View complete attendance records
-            </p>
-            <button className="dashboard__card-action" style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.2)', border: '1px solid white' }}>
+            <div className="card-header-icon">📜</div>
+            <h2 className="dashboard__card-title">Attendance History</h2>
+            <p className="dashboard__card-text">Review your complete records</p>
+            <button className="dashboard__card-action btn-action-glow">
               View History →
             </button>
           </section>
         </section>
 
-        {/* Statistics Row */}
-        <section className="dashboard__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginTop: '2rem' }}>
-          <div className="dashboard__card" style={{ background: '#10b981', color: 'white', padding: '1.5rem' }}>
-            <div style={{ fontSize: '2rem' }}>✅</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{attendanceStats?.present || 0}</div>
-            <div style={{ opacity: 0.9 }}>Present</div>
-          </div>
-          <div className="dashboard__card" style={{ background: '#f59e0b', color: 'white', padding: '1.5rem' }}>
-            <div style={{ fontSize: '2rem' }}>⏰</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{attendanceStats?.late || 0}</div>
-            <div style={{ opacity: 0.9 }}>Late</div>
-          </div>
-          <div className="dashboard__card" style={{ background: '#ef4444', color: 'white', padding: '1.5rem' }}>
-            <div style={{ fontSize: '2rem' }}>❌</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{attendanceStats?.absent || 0}</div>
-            <div style={{ opacity: 0.9 }}>Absent</div>
-          </div>
-          <div className="dashboard__card" style={{ background: '#6366f1', color: 'white', padding: '1.5rem' }}>
-            <div style={{ fontSize: '2rem' }}>📚</div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{attendanceStats?.subjects?.length || 0}</div>
-            <div style={{ opacity: 0.9 }}>Subjects</div>
-          </div>
+        {/* Statistics Row - Counters */}
+        <section 
+          ref={statsGridRef}
+          className="statistics-grid" 
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginTop: '2rem', gap: '1rem' }}
+        >
+          <StatCounter icon="✅" count={attendanceStats?.present || 0} label="Present" color="var(--student-card-2)" theme={theme} />
+          <StatCounter icon="⏰" count={attendanceStats?.late || 0} label="Late" color="var(--student-card-3)" theme={theme} />
+          <StatCounter icon="❌" count={attendanceStats?.absent || 0} label="Absent" color="var(--student-card-4)" theme={theme} />
+          <StatCounter icon="📚" count={attendanceStats?.subjects?.length || 0} label="Subjects" color="var(--student-card-1)" theme={theme} />
         </section>
 
         {/* Notifications & Upcoming Sessions */}
-        <section className="dashboard__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginTop: '2rem' }}>
+        <section className="dashboard__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginTop: '2rem', gap: '1.5rem' }}>
           {/* Notifications Card */}
-          <section className="dashboard__card">
-            <h2 className="dashboard__card-title">🔔 Notifications</h2>
-            <div style={{ marginTop: '1rem' }}>
+          <section className="dashboard__card content-card notifications-card">
+            <div className="card-title-header">
+              <h2 className="dashboard__card-title">🔔 Notifications</h2>
+              <span className="notification-badge">{notifications.length}</span>
+            </div>
+            <div 
+              ref={notificationsRef}
+              className="notifications-list" 
+              style={{ marginTop: '1rem' }}
+            >
               {notifications.length > 0 ? (
-                notifications.map(notif => (
-                  <div key={notif.id} style={{
-                    padding: '0.75rem',
-                    background: notif.type === 'warning' ? '#fef3c7' : '#d1fae5',
-                    borderRadius: '8px',
-                    marginBottom: '0.75rem',
-                    borderLeft: `4px solid ${notif.type === 'warning' ? '#f59e0b' : '#10b981'}`
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
-                      <span style={{ fontSize: '1.5rem' }}>{notif.icon}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{notif.title}</div>
-                        <div style={{ fontSize: '0.875rem', color: '#666' }}>{notif.message}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>{notif.time}</div>
-                      </div>
+                notifications.map((notif, idx) => (
+                  <div 
+                    key={notif.id} 
+                    className={`notification-item notification-${notif.type}`}
+                  >
+                    <div className="notification-icon">{notif.icon}</div>
+                    <div className="notification-content">
+                      <div className="notification-title">{notif.title}</div>
+                      <div className="notification-message">{notif.message}</div>
+                      <div className="notification-time">{notif.time}</div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
-                  No new notifications
-                </p>
+                <div className="empty-state">
+                  <span style={{ fontSize: '3rem' }}>📭</span>
+                  <p>No new notifications</p>
+                </div>
               )}
             </div>
           </section>
 
           {/* Upcoming Sessions Card */}
-          <section className="dashboard__card">
-            <h2 className="dashboard__card-title">📅 Upcoming Sessions</h2>
-            <div style={{ marginTop: '1rem' }}>
+          <section className="dashboard__card content-card sessions-card">
+            <div className="card-title-header">
+              <h2 className="dashboard__card-title">📅 Upcoming Sessions</h2>
+              <span className="session-badge">{upcomingSessions.length}</span>
+            </div>
+            <div 
+              ref={sessionsRef}
+              className="sessions-list" 
+              style={{ marginTop: '1rem' }}
+            >
               {upcomingSessions.length > 0 ? (
-                upcomingSessions.map(session => (
-                  <div key={session.id} style={{
-                    padding: '1rem',
-                    background: '#f3f4f6',
-                    borderRadius: '8px',
-                    marginBottom: '0.75rem',
-                    borderLeft: '4px solid #667eea'
-                  }}>
-                    <div style={{ fontWeight: '600', marginBottom: '0.5rem', color: '#667eea' }}>
-                      {session.subject}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                      🕒 {session.time} • 📍 {session.room}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                      👨‍🏫 {session.faculty}
+                upcomingSessions.map((session, idx) => (
+                  <div 
+                    key={session.id} 
+                    className="session-item"
+                  >
+                    <div className="session-time">{session.time}</div>
+                    <div className="session-details">
+                      <div className="session-subject">{session.subject}</div>
+                      <div className="session-room">📍 {session.room}</div>
+                      <div className="session-faculty">👨‍🏫 {session.faculty}</div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
-                  No upcoming sessions today
-                </p>
+                <div className="empty-state">
+                  <span style={{ fontSize: '3rem' }}>📭</span>
+                  <p>No upcoming sessions today</p>
+                </div>
               )}
             </div>
           </section>
         </section>
 
         {/* Subject-wise Attendance */}
-        <section className="dashboard__card" style={{ marginTop: '2rem' }}>
-          <h2 className="dashboard__card-title">📚 Subject-wise Attendance</h2>
-          <div className="dashboard__grid" style={{ 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-            gap: '1rem',
-            marginTop: '1rem'
-          }}>
+        <section className="dashboard__card content-card subjects-card" style={{ marginTop: '2rem' }}>
+          <div className="card-title-header">
+            <h2 className="dashboard__card-title">📚 Subject-wise Attendance</h2>
+            <span className="subject-badge">{attendanceStats?.subjects?.length || 0}</span>
+          </div>
+          <div 
+            ref={subjectsGridRef}
+            className="dashboard__grid" 
+            style={{ 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+              gap: '1rem',
+              marginTop: '1rem'
+            }}
+          >
             {attendanceStats?.subjects && attendanceStats.subjects.length > 0 ? (
               attendanceStats.subjects.map((subject, idx) => (
-                <div key={idx} style={{
-                  padding: '1rem',
-                  background: subject.percentage < 75 ? '#fee2e2' : '#d1fae5',
-                  borderRadius: '8px',
-                  border: `2px solid ${subject.percentage < 75 ? '#ef4444' : '#10b981'}`
-                }}>
-                  <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>{subject.name}</div>
-                  <div style={{ 
-                    fontSize: '2rem', 
-                    fontWeight: 'bold',
-                    color: subject.percentage < 75 ? '#ef4444' : '#10b981',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {subject.percentage}%
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>
-                    {subject.present}/{subject.total} Classes Present
-                  </div>
-                  {subject.percentage < 75 && (
-                    <div style={{ 
-                      marginTop: '0.5rem',
-                      padding: '0.5rem',
-                      background: '#fef3c7',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      color: '#92400e'
-                    }}>
-                      ⚠️ Below minimum required
-                    </div>
-                  )}
-                </div>
+                <SubjectCard key={idx} subject={subject} index={idx} theme={theme} />
               ))
             ) : (
               <p style={{ gridColumn: '1/-1', textAlign: 'center', color: '#666', padding: '2rem' }}>
@@ -428,16 +477,83 @@ function StudentDashboardEnhanced() {
         </section>
 
         {/* Quick Tips */}
-        <section className="dashboard__card" style={{ marginTop: '2rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-          <h2 className="dashboard__card-title" style={{ color: 'white' }}>💡 Quick Tips</h2>
-          <ul style={{ marginTop: '1rem', paddingLeft: '1.5rem', lineHeight: '1.8' }}>
-            <li>Maintain at least 75% attendance in each subject</li>
-            <li>Scan QR code within the class time</li>
-            <li>Check your attendance regularly</li>
-            <li>Contact faculty if any discrepancy found</li>
+        <section className="dashboard__card content-card tips-card" style={{ marginTop: '2rem', background: 'var(--student-card-1)', color: 'var(--student-card-text)', boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
+          <h2 className="dashboard__card-title" style={{ color: 'var(--student-card-text)' }}>💡 Quick Tips</h2>
+          <ul className="tips-list" style={{ marginTop: '1rem' }}>
+            <li><span className="tip-dot"></span>Maintain at least 75% attendance in each subject</li>
+            <li><span className="tip-dot"></span>Scan QR code within the class time</li>
+            <li><span className="tip-dot"></span>Check your attendance regularly</li>
+            <li><span className="tip-dot"></span>Contact faculty if any discrepancy found</li>
           </ul>
         </section>
       </main>
+    </div>
+  );
+}
+
+// Sub-component for Statistics Counter
+function StatCounter({ icon, count, label, color, theme = 'light' }) {
+  return (
+    <div 
+      className="stat-counter"
+      style={{
+        background: color,
+        color: 'white',
+        padding: '1.5rem',
+        borderRadius: '12px',
+        textAlign: 'center',
+        animation: 'fadeInUp 0.6s ease-out both',
+        boxShadow: theme === 'dark' ? '0 8px 20px rgba(49, 156, 181, 0.35)' : '0 8px 20px rgba(0, 0, 0, 0.1)'
+      }}
+    >
+      <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{icon}</div>
+      <div style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{count}</div>
+      <div style={{ opacity: 0.95, fontSize: '0.9rem' }}>{label}</div>
+    </div>
+  );
+}
+
+// Sub-component for Subject Card
+function SubjectCard({ subject, index, theme = 'light' }) {
+  const [hovered, setHovered] = useState(false);
+  
+  return (
+    <div 
+      className="subject-card"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '1.5rem',
+        background: theme === 'dark' 
+          ? (subject.percentage < 75 ? '#7f1d1d' : '#064e3b')
+          : (subject.percentage < 75 ? '#fee2e2' : '#d1fae5'),
+        borderRadius: '12px',
+        border: `2px solid ${subject.percentage < 75 ? COLOR_THEME.danger.light : COLOR_THEME.success.light}`,
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        transition: 'transform 0.3s ease'
+      }}
+    >
+      <div style={{ fontWeight: '600', marginBottom: '0.75rem', fontSize: '1.1rem', color: theme === 'dark' ? '#f3f4f6' : '#1f2937' }}>
+        {subject.name}
+      </div>
+      <div className="percentage-ring">
+        <div style={{ 
+          fontSize: '2.5rem', 
+          fontWeight: 'bold',
+          color: subject.percentage < 75 ? COLOR_THEME.danger.light : COLOR_THEME.success.light,
+          marginBottom: '0.5rem'
+        }}>
+          {subject.percentage}%
+        </div>
+      </div>
+      <div style={{ fontSize: '0.875rem', color: theme === 'dark' ? '#d1d5db' : '#666', marginBottom: '0.75rem' }}>
+        {subject.present}/{subject.total} Classes Present
+      </div>
+      {subject.percentage < 75 && (
+        <div className="warning-badge" style={{ background: theme === 'dark' ? '#78350f' : '#fef3c7', color: theme === 'dark' ? '#fed7aa' : '#92400e' }}>
+          ⚠️ Below minimum required
+        </div>
+      )}
     </div>
   );
 }

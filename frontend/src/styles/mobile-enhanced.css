@@ -159,7 +159,8 @@
   .auth__objects,
   .auth__object,
   .auth__orb {
-    display: none !important; /* Better mobile performance */
+    display: block;
+    opacity: 0.45;
   }
   
   .login__footer,
@@ -184,7 +185,8 @@
   
   .dashboard__objects,
   .dashboard__object {
-    display: none !important; /* Better mobile performance */
+    display: block;
+    opacity: 0.4;
   }
   
   .dashboard__header {

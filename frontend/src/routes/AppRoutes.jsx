@@ -14,6 +14,7 @@ import FacultySessions from "../pages/FacultySessions";
 import FacultyAttendanceReports from "../pages/FacultyAttendanceReports";
 import FacultySuspiciousActivity from "../pages/FacultySuspiciousActivity";
 import AdminDashboard from "../pages/AdminDashboard";
+import AdminProfile from "../pages/AdminProfile";
 import NotFound from "../pages/NotFound";
 import Unauthorized from "../pages/Unauthorized";
 import FacultyQRGeneration from "../pages/FacultyQRGeneration";
@@ -147,6 +148,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["admin"]}>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin-profile"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminProfile />
           </ProtectedRoute>
         }
       />
