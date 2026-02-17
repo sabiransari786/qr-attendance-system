@@ -440,6 +440,29 @@ const register = async (userData) => {
         if (role && !validRoles.includes(role)) {
             throw new ValidationError(`Invalid role. Valid roles are: ${validRoles.join(', ')}`);
         }
+        
+        // =====================================================================
+        // ADMIN APPROVAL CHECK - User ko approve hona chahiye
+        // =====================================================================
+        // Jab user signup karega, admin ne phele us user ko approve karna zaroori hai
+        // Email aur contact number match karna zaroori hai approved_users se
+        // Sirf registered se pehle users ki check karenke (is_registered = FALSE)
+        
+        const approvedUser = await getApprovedUser(normalizedEmail, normalizedContact);
+        
+        if (!approvedUser) {
+            throw new ValidationError(
+                'User approval not found. Please contact the administrator to get your email and contact number approved before registration.'
+            );
+        }
+        
+        // Approved user ke role se match karna chahiye (optional - extra security)
+        // Agar admin student ki tarah approve kiya but faculty signup karna chahte hain
+        if (approvedUser.role && userRole !== approvedUser.role) {
+            throw new ValidationError(
+                `Your account is approved as a ${approvedUser.role}. You cannot register with a different role.`
+            );
+        }
 
         // Student ID validation - student role ke liye zaroori
         if (userRole === ROLE.STUDENT && !studentId) {
@@ -524,6 +547,19 @@ const register = async (userData) => {
         
         // Inserted user ka ID mil gaya
         const userId = result.insertId;
+        
+        // =====================================================================
+        // Mark Approved User as Registered
+        // =====================================================================
+        // Jab user successfully signup kar jaye, approved_users record ko update karo
+        // is_registered = TRUE aur registered_user_id = userId
+        
+        try {
+            await markApprovedUserAsRegistered(approvedUser.id, userId);
+        } catch (markError) {
+            // Agar approved user update fail ho toh warning de do, but user create ho gaya hai
+            console.warn('⚠️ Warning: Could not mark approved user as registered:', markError.message);
+        }
         
         // ---------------------------------------------------------------------
         // STEP 5: Fetch Created User Data
@@ -779,12 +815,241 @@ const getProfilePhoto = async (userId) => {
     }
 };
 
+// =============================================================================
+// APPROVED USERS MANAGEMENT SERVICE FUNCTIONS
+// =============================================================================
+
+/**
+ * Check if user is approved for registration
+ * Admin ne phele se user ko approve kiya hona chahiye
+ * Email aur contact number match karna zaroori hai
+ * 
+ * @param {string} email - User email
+ * @param {string} contactNumber - User phone number
+ * @returns {Promise<Object>} Approved user data or null
+ */
+const getApprovedUser = async (email, contactNumber) => {
+    try {
+        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedContact = contactNumber.trim();
+        
+        const [approvedUsers] = await pool.query(
+            `SELECT * FROM approved_users 
+             WHERE LOWER(email) = LOWER(?) AND contact_number = ? AND is_registered = FALSE`,
+            [normalizedEmail, normalizedContact]
+        );
+        
+        return approvedUsers && approvedUsers.length > 0 ? approvedUsers[0] : null;
+    } catch (error) {
+        throw new Error(`Error checking approved users: ${error.message}`);
+    }
+};
+
+/**
+ * Mark approved user as registered after signup
+ * Jab user successfully signup kar jaye, approved_users record ko update karo
+ * 
+ * @param {number} approvedUserId - ID from approved_users table
+ * @param {number} registeredUserId - ID from users table
+ * @returns {Promise<void>}
+ */
+const markApprovedUserAsRegistered = async (approvedUserId, registeredUserId) => {
+    try {
+        await pool.query(
+            `UPDATE approved_users 
+             SET is_registered = TRUE, registered_user_id = ?, updated_at = NOW()
+             WHERE id = ?`,
+            [registeredUserId, approvedUserId]
+        );
+    } catch (error) {
+        throw new Error(`Error marking user as registered: ${error.message}`);
+    }
+};
+
+/**
+ * Get all approved users (Admin function)
+ * Admin approved users ki list dekh sakte hain
+ * 
+ * @param {Object} filters - Search filters (role, is_registered, search)
+ * @returns {Promise<Array>} List of approved users
+ */
+const getAllApprovedUsers = async (filters = {}) => {
+    try {
+        const { role, isRegistered, search } = filters;
+        
+        let query = 'SELECT * FROM approved_users WHERE 1=1';
+        const params = [];
+        
+        if (role && role !== 'all') {
+            query += ' AND role = ?';
+            params.push(role);
+        }
+        
+        if (typeof isRegistered === 'boolean') {
+            query += ' AND is_registered = ?';
+            params.push(isRegistered);
+        }
+        
+        if (search && search.trim()) {
+            const like = `%${search.trim()}%`;
+            query += ' AND (name LIKE ? OR email LIKE ? OR contact_number LIKE ?)';
+            params.push(like, like, like);
+        }
+        
+        query += ' ORDER BY created_at DESC';
+        
+        const [approvedUsers] = await pool.query(query, params);
+        return approvedUsers || [];
+    } catch (error) {
+        throw new Error(`Error fetching approved users: ${error.message}`);
+    }
+};
+
+/**
+ * Add new approved user (Admin function)
+ * Admin naya user approve karta hai signup se pehle
+ * Email aur contact number must match karna hoga signup mein
+ * 
+ * @param {Object} userData - User data to approve
+ * @returns {Promise<Object>} Created approved user
+ */
+const addApprovedUser = async (userData) => {
+    try {
+        const { name, email, contactNumber, role, studentId, teacherId, department, semester, section } = userData;
+        
+        // Validation
+        if (!name || !email || !contactNumber) {
+            throw new ValidationError('Name, email, and contact number are required.');
+        }
+        
+        if (!['student', 'faculty'].includes(role)) {
+            throw new ValidationError('Role must be either student or faculty.');
+        }
+        
+        // Validate contact number
+        if (!/^\d{10}$|^\+\d{1,3}\d{9,}$/.test(contactNumber.trim())) {
+            throw new ValidationError('Invalid contact number. Please enter a valid 10-digit number.');
+        }
+        
+        // Normalize data
+        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedName = name.trim();
+        const normalizedContact = contactNumber.trim();
+        const normalizedStudentId = studentId ? studentId.trim().toUpperCase() : null;
+        const normalizedTeacherId = teacherId ? teacherId.trim().toUpperCase() : null;
+        
+        // Role-specific validation
+        if (role === 'student' && !studentId) {
+            throw new ValidationError('Student ID is required for student role.');
+        }
+        
+        if (role === 'faculty' && !teacherId) {
+            throw new ValidationError('Teacher ID is required for faculty role.');
+        }
+        
+        // Check if email already approved
+        const [existingEmail] = await pool.query(
+            `SELECT id FROM approved_users WHERE LOWER(email) = LOWER(?)`,
+            [normalizedEmail]
+        );
+        
+        if (existingEmail && existingEmail.length > 0) {
+            throw new ValidationError('This email is already approved.');
+        }
+        
+        // Check if contact number already approved
+        const [existingContact] = await pool.query(
+            `SELECT id FROM approved_users WHERE contact_number = ?`,
+            [normalizedContact]
+        );
+        
+        if (existingContact && existingContact.length > 0) {
+            throw new ValidationError('This contact number is already approved.');
+        }
+        
+        // Insert approved user
+        const [result] = await pool.query(
+            `INSERT INTO approved_users 
+             (name, email, contact_number, role, student_id, teacher_id, department, semester, section, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [
+                normalizedName,
+                normalizedEmail,
+                normalizedContact,
+                role,
+                normalizedStudentId,
+                normalizedTeacherId,
+                department || null,
+                semester || null,
+                section || null
+            ]
+        );
+        
+        // Fetch and return created approved user
+        const [approvedUsers] = await pool.query(
+            `SELECT * FROM approved_users WHERE id = ?`,
+            [result.insertId]
+        );
+        
+        return approvedUsers[0];
+    } catch (error) {
+        if (error.name && error.statusCode) {
+            throw error;
+        }
+        throw new Error(`Failed to add approved user: ${error.message}`);
+    }
+};
+
+/**
+ * Delete approved user (Admin function)
+ * Admin ne galti se approve kiya ya cancel karna hai to delete kar sakte hain
+ * Sirf un users ko delete karo jinhe signup nahi kiya (is_registered = FALSE)
+ * 
+ * @param {number} approvedUserId - ID from approved_users table
+ * @returns {Promise<Object>} Deletion status
+ */
+const deleteApprovedUser = async (approvedUserId) => {
+    try {
+        // Check if user hasn't registered yet
+        const [approvedUsers] = await pool.query(
+            `SELECT is_registered FROM approved_users WHERE id = ?`,
+            [approvedUserId]
+        );
+        
+        if (approvedUsers.length === 0) {
+            throw new ValidationError('Approved user not found.');
+        }
+        
+        if (approvedUsers[0].is_registered) {
+            throw new ValidationError('Cannot delete user who has already registered.');
+        }
+        
+        // Delete the approved user record
+        await pool.query(
+            `DELETE FROM approved_users WHERE id = ?`,
+            [approvedUserId]
+        );
+        
+        return { success: true, message: 'Approved user deleted successfully.' };
+    } catch (error) {
+        if (error.name && error.statusCode) {
+            throw error;
+        }
+        throw new Error(`Failed to delete approved user: ${error.message}`);
+    }
+};
+
 module.exports = {
     login,
     register,
     updateProfile,
     getUserById,
     uploadProfilePhoto,
-    getProfilePhoto
+    getProfilePhoto,
+    getApprovedUser,
+    markApprovedUserAsRegistered,
+    getAllApprovedUsers,
+    addApprovedUser,
+    deleteApprovedUser
 };
 

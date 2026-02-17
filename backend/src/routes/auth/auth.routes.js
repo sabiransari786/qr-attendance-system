@@ -44,6 +44,9 @@ const {
 
 const { getActivityLogs } = require('../../controllers/activity-log.controller');
 
+// Auth Service import kar rahe hain - Approval system functions ke liye
+const authService = require('../../services/auth.service');
+
 // Authentication middleware import kar rahe hain
 // Protected routes ke liye authentication check karne ke liye
 const authMiddleware = require('../../middleware/auth.middleware');
@@ -455,6 +458,161 @@ router.post('/upload-photo', authMiddleware, upload.single('photo'), uploadProfi
  * Response: Image binary data with appropriate MIME type
  */
 router.get('/photo/:userId', getProfilePhoto);
+
+/**
+ * ============================================================================
+ * APPROVED USERS MANAGEMENT ROUTES (Admin Only)
+ * ============================================================================
+ * 
+ * Jab user pre-approval system active ho to admin isse use karega
+ * Admin users ko phele approve karega, phir woh users signup kar sakte hain
+ */
+
+/**
+ * GET /api/auth/admin/approved-users
+ * List all approved users with filters
+ * 
+ * Query Params:
+ * - role: 'student' | 'faculty' | 'all' (default: 'all')
+ * - isRegistered: true | false (default: all)
+ * - search: Search by name/email/contact
+ * 
+ * Response: Array of approved users
+ */
+router.get('/admin/approved-users', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { role, isRegistered, search } = req.query;
+    
+    const filters = {
+      role: role || 'all',
+      isRegistered: isRegistered === 'true' ? true : isRegistered === 'false' ? false : null,
+      search: search?.trim() || ''
+    };
+    
+    const approvedUsers = await authService.getAllApprovedUsers(filters);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Approved users retrieved successfully',
+      data: approvedUsers
+    });
+  } catch (error) {
+    console.error('Error fetching approved users:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch approved users',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/auth/admin/approved-users
+ * Add new approved user (Admin approves user before signup)
+ * 
+ * Request Body:
+ * {
+ *   "name": "John Doe",
+ *   "email": "john@example.com",
+ *   "contactNumber": "9876543210",
+ *   "role": "student",          (required: 'student' or 'faculty')
+ *   "studentId": "STU001",       (required if role='student')
+ *   "teacherId": "TEACH001",     (required if role='faculty')
+ *   "department": "CSE",         (optional)
+ *   "semester": 4,               (optional)
+ *   "section": "A"               (optional)
+ * }
+ * 
+ * Response: Created approved user object
+ */
+router.post('/admin/approved-users', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const userData = req.body;
+    
+    const createdApprovedUser = await authService.addApprovedUser(userData);
+    
+    req.activityLogContext = {
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      action: 'ADMIN_APPROVE_USER',
+      entityType: 'approvedUser',
+      entityId: String(createdApprovedUser.id)
+    };
+    
+    return res.status(201).json({
+      success: true,
+      message: 'User approved successfully. They can now register.',
+      data: createdApprovedUser
+    });
+  } catch (error) {
+    console.error('Error adding approved user:', error);
+    
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to add approved user',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/auth/admin/approved-users/:id
+ * Delete approved user (only if not registered yet)
+ * 
+ * Params:
+ * - id: Approved user ID
+ * 
+ * Response: Success message
+ */
+router.delete('/admin/approved-users/:id', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid approved user ID'
+      });
+    }
+    
+    const result = await authService.deleteApprovedUser(Number(id));
+    
+    req.activityLogContext = {
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      action: 'ADMIN_DELETE_APPROVED_USER',
+      entityType: 'approvedUser',
+      entityId: id
+    };
+    
+    return res.status(200).json({
+      success: true,
+      message: result.message
+    });
+  } catch (error) {
+    console.error('Error deleting approved user:', error);
+    
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete approved user',
+      error: error.message
+    });
+  }
+});
 
 /**
  * Router ko export kar rahe hain - app.js mein use hoga

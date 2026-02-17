@@ -22,6 +22,7 @@ import StudentProfile from "../pages/StudentProfile";
 import ScanQREnhanced from "../pages/ScanQREnhanced";
 import AttendanceHistory from "../pages/AttendanceHistory";
 import Notifications from "../pages/Notifications";
+import AdminUserApprovalPage from "../pages/AdminUserApprovalPage";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -156,6 +157,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["admin"]}>
             <AdminProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/approvals"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminUserApprovalPage />
           </ProtectedRoute>
         }
       />

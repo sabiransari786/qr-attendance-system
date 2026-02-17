@@ -387,6 +387,15 @@ function AdminDashboard() {
           </button>
           <button
             type="button"
+            className="admin-dashboard__action"
+            onClick={() => {
+              navigate('/admin/approvals');
+            }}
+          >
+            Approve Users
+          </button>
+          <button
+            type="button"
             className={`admin-dashboard__action ${showLogs ? "admin-dashboard__action--active" : ""}`}
             onClick={() => {
               setShowLogs(!showLogs);
@@ -443,6 +452,19 @@ function AdminDashboard() {
             <span className="dashboard__card-action">Manage users</span>
           </article>
 
+          <article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => {
+              navigate('/admin/approvals');
+            }}
+          >
+            <h2 className="dashboard__card-title">User Approvals</h2>
+            <p className="dashboard__card-text">
+              Pre-approve users before they register. Verify email, phone, and role.
+            </p>
+            <span className="dashboard__card-action">Manage approvals</span>
+          </article>
+
           <article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted">
             <h2 className="dashboard__card-title">Departments & Courses</h2>
             <p className="dashboard__card-text">
@@ -465,6 +487,7 @@ function AdminDashboard() {
               setShowLogs(true);
               setShowUsers(false);
               setShowStudents(false);
+              setShowApprovals(false);
             }}
           >
             <h2 className="dashboard__card-title">Activity Logs</h2>
