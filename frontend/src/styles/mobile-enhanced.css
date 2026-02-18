@@ -302,18 +302,23 @@
     padding: 0.9rem 1.5rem !important;
     font-size: 1rem !important;
     min-height: 48px;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
+    border: 1.5px solid rgba(49, 156, 181, 0.4) !important;
+    background: rgba(49, 156, 181, 0.15) !important;
+    backdrop-filter: blur(12px) !important;
+    box-shadow: 0 8px 32px rgba(49, 156, 181, 0.2) !important;
+    color: #ccf5fe !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
-  .btn-group {
-    flex-direction: column;
-    width: 100%;
-    gap: 0.8rem;
-  }
-  
-  .btn-group button {
-    width: 100%;
+  button:hover,
+  .btn:hover,
+  .action-btn:hover {
+    background: rgba(49, 156, 181, 0.25) !important;
+    border-color: rgba(49, 156, 181, 0.7) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 40px rgba(49, 156, 181, 0.3) !important;
   }
   
   /* ==================== CARDS ==================== */

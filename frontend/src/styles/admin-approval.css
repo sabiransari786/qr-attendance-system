@@ -78,21 +78,24 @@
 
 .admin-approval-panel__btn {
   padding: 10px 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
+  background: rgba(49, 156, 181, 0.12);
   color: white;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.19);
 }
 
 .admin-approval-panel__btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(49, 156, 181, 0.25);
+  border-color: rgba(49, 156, 181, 0.7);
   transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.3);
 }
 
 .admin-approval-panel__btn:disabled {
@@ -101,15 +104,19 @@
 }
 
 .admin-approval-panel__btn--primary {
-  background: linear-gradient(135deg, #00d4ff 0%, #00b8d4 100%);
-  border-color: transparent;
-  color: #000;
+  background: rgba(0, 212, 255, 0.2);
+  border: 1.5px solid rgba(0, 212, 255, 0.5);
+  color: #ccf5fe;
   font-weight: 700;
+  box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
+  backdrop-filter: blur(12px);
 }
 
 .admin-approval-panel__btn--primary:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+  background: rgba(0, 212, 255, 0.35);
+  border-color: rgba(0, 212, 255, 0.8);
+  box-shadow: 0 12px 40px rgba(0, 212, 255, 0.4);
 }
 
 /* Form */
@@ -326,19 +333,24 @@
 /* Delete Button */
 .admin-approval-panel__delete-btn {
   padding: 6px 12px;
-  border: 1px solid #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  border: 1.5px solid rgba(255, 107, 107, 0.5);
+  background: rgba(255, 107, 107, 0.15);
   color: #ff6b6b;
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.85rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.15);
 }
 
 .admin-approval-panel__delete-btn:hover:not(:disabled) {
-  background: #ff6b6b;
-  color: white;
+  background: rgba(255, 107, 107, 0.3);
+  color: #ff9999;
+  border-color: rgba(255, 107, 107, 0.8);
+  box-shadow: 0 12px 40px rgba(255, 107, 107, 0.25);
+  transform: translateY(-2px);
 }
 
 .admin-approval-panel__delete-btn:disabled {

@@ -1,9 +1,11 @@
 import { useMemo, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from 'framer-motion';
 import { login } from "../services/api";
 import { ROLE_ROUTES, API_BASE_URL } from "../utils/constants";
 import { AuthContext } from "../context/AuthContext";
 import LoginSuccessModal from "../components/LoginSuccessModal";
+import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from '../animations/animationConfig';
 import "../styles/auth.css";
 
 /**
@@ -138,7 +140,7 @@ function Login() {
   };
 
   return (
-    <div className="login__container">
+    <motion.div className="login__container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
       <div className="auth__objects" aria-hidden="true">
         <span className="auth__object auth__object--sphere" />
         <span className="auth__object auth__object--ring" />
@@ -152,23 +154,31 @@ function Login() {
         />
       )}
 
-      <section className="login__card login__box" aria-labelledby="login-title">
+      <motion.section
+        className="login__card login__box"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        aria-labelledby="login-title"
+      >
         {/* Card Header */}
-        <header className="login__header">
-          <h1 id="login-title" className="login__title">Login</h1>
-          <p className="login__subtitle">
+        <motion.header className="login__header" variants={staggerContainer} initial="hidden" animate="visible">
+          <motion.h1 id="login-title" className="login__title" variants={fadeInUp}>
+            Login
+          </motion.h1>
+          <motion.p className="login__subtitle" variants={fadeInUp}>
             Sign in with your institution credentials to access the QR-Based Attendance System.
-          </p>
-        </header>
+          </motion.p>
+        </motion.header>
 
         {/* Login Form */}
-        <form className="login__form" onSubmit={handleSubmit} noValidate>
+        <motion.form className="login__form" onSubmit={handleSubmit} noValidate>
           {/* Email Field */}
-          <div className="login__form-group">
+          <motion.div className="login__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}>
             <label className="login__label" htmlFor="email">
               Email Address
             </label>
-            <input
+            <motion.input
               id="email"
               name="email"
               type="email"
@@ -179,11 +189,12 @@ function Login() {
               autoComplete="email"
               disabled={isLoading}
               required
+              whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
             />
-          </div>
+          </motion.div>
 
           {/* Password Field */}
-          <div className="login__form-group">
+          <motion.div className="login__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22, duration: 0.4 }}>
             <div className="login__password-header">
               <label className="login__label" htmlFor="password">
                 Password
@@ -193,7 +204,7 @@ function Login() {
               </Link>
             </div>
             <div className="login__password-wrapper">
-              <input
+              <motion.input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -204,55 +215,73 @@ function Login() {
                 autoComplete="current-password"
                 disabled={isLoading}
                 required
+                whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
               />
-              <button
+              <motion.button
                 type="button"
                 className="login__password-toggle"
                 onClick={handleTogglePassword}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex="-1"
+                whileHover={{ scale: 1.15, transition: { type: 'spring', stiffness: 400, damping: 20 } }}
+                whileTap={{ scale: 0.9 }}
               >
                 <span style={{ fontSize: '22px' }}>
                   {showPassword ? '😊' : '🫣'}
                 </span>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Error Message */}
           {errorMessage && (
-            <p className="login__message login__message--error" role="alert">
+            <motion.p
+              className="login__message login__message--error"
+              role="alert"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               {errorMessage}
-            </p>
+            </motion.p>
           )}
 
           {/* Loading Message */}
           {isLoading && (
-            <p className="login__message login__message--loading" role="status">
+            <motion.p
+              className="login__message login__message--loading"
+              role="status"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: [0, 1], y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               Authenticating... Please wait.
-            </p>
+            </motion.p>
           )}
 
           {/* Submit Button */}
-          <button
+          <motion.button
             className="login__button"
             type="submit"
             disabled={isLoading}
             aria-busy={isLoading}
+            variants={buttonHover}
+            whileHover={!isLoading ? "hover" : ""}
+            whileTap={!isLoading ? buttonTap : {}}
           >
             {isLoading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+          </motion.button>
+        </motion.form>
 
         {/* Helper Links */}
-        <div className="login__links">
+        <motion.div className="login__links" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.4 }}>
           <p className="login__link-text">
             New student?{" "}
             <Link to="/signup" className="login__link">
               Sign up
             </Link>
           </p>
-        </div>
+        </motion.div>
         
         {/* Debug Info - Only show on network access */}
         {window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && (
@@ -268,8 +297,8 @@ function Login() {
             📡 Backend: {API_BASE_URL}
           </div>
         )}
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
 

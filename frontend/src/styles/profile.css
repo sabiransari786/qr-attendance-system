@@ -47,7 +47,7 @@
   transform-style: preserve-3d;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: profile-object-float 2.5s linear infinite;
+  animation: profile-object-float 6s linear infinite;
 }
 
 .profile__object--sphere {
@@ -57,7 +57,7 @@
   left: 8%;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 3s;
+  animation-duration: 7s;
 }
 
 .profile__object--ring {
@@ -68,7 +68,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 3.2s;
+  animation-duration: 7.5s;
 }
 
 .profile__object--cube {
@@ -79,7 +79,7 @@
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
   transform: rotate(18deg);
-  animation-duration: 2.6s;
+  animation-duration: 6s;
 }
 
 [data-theme="light"] .profile__object {
@@ -441,20 +441,24 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4fffd8, #7b7bff);
-  border: 2px solid #041820;
+  background: rgba(79, 255, 216, 0.2);
+  border: 1.5px solid rgba(79, 255, 216, 0.6);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
+  color: #4fffd8;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 0 15px rgba(79, 255, 216, 0.3);
+  box-shadow: 0 8px 32px rgba(79, 255, 216, 0.25);
+  backdrop-filter: blur(12px);
 }
 
 .photo-upload-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 25px rgba(79, 255, 216, 0.5);
+  background: rgba(79, 255, 216, 0.35);
+  border-color: rgba(79, 255, 216, 0.8);
+  box-shadow: 0 12px 40px rgba(79, 255, 216, 0.4);
 }
 
 .photo-upload-btn:active {
@@ -581,21 +585,24 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(255, 107, 107, 0.2);
+  border: 1.5px solid rgba(255, 107, 107, 0.6);
+  color: #ffb3b3;
   font-size: 1.2rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(238, 90, 111, 0.4);
+  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.2);
+  backdrop-filter: blur(12px);
 }
 
 .close-btn:hover {
   transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 6px 20px rgba(238, 90, 111, 0.6);
+  background: rgba(255, 107, 107, 0.35);
+  border-color: rgba(255, 107, 107, 0.8);
+  box-shadow: 0 12px 40px rgba(255, 107, 107, 0.3);
 }
 
 /* Photo Editor Modal */
@@ -733,19 +740,22 @@
 .position-controls button {
   width: 45px;
   height: 45px;
-  border-radius: 8px;
-  background: rgba(79, 255, 216, 0.1);
-  border: 1px solid rgba(79, 255, 216, 0.3);
-  color: var(--color-white);
+  border-radius: 12px;
+  background: rgba(79, 255, 216, 0.15);
+  border: 1.5px solid rgba(79, 255, 216, 0.4);
+  color: #ccf5fe;
   font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(79, 255, 216, 0.15);
 }
 
 .position-controls button:hover {
-  background: rgba(79, 255, 216, 0.2);
+  background: rgba(79, 255, 216, 0.25);
+  border-color: rgba(79, 255, 216, 0.7);
   transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(79, 255, 216, 0.3);
+  box-shadow: 0 12px 40px rgba(79, 255, 216, 0.25);
 }
 
 .position-controls button:active {
@@ -910,59 +920,83 @@
   padding: 0.9rem 2rem;
   font-size: 1rem;
   font-weight: 600;
-  border: none;
-  border-radius: 10px;
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   gap: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(49, 156, 181, 0.15);
+  color: #ccf5fe;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.2);
+}
+
+.profile-actions button:hover {
+  background: rgba(49, 156, 181, 0.25);
+  border-color: rgba(49, 156, 181, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.3);
 }
 
 .action-btn {
   padding: 0.9rem 2rem;
   font-size: 1rem;
   font-weight: 600;
-  border: none;
-  border-radius: 10px;
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
+  backdrop-filter: blur(12px);
+  background: rgba(49, 156, 181, 0.15);
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.2);
 }
 
 .action-btn--primary {
-  background: linear-gradient(135deg, #319CB5, #14B8A6);
-  color: var(--color-white);
+  background: rgba(49, 156, 181, 0.25);
+  border: 1.5px solid rgba(49, 156, 181, 0.6);
+  color: #ccf5fe;
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.25);
 }
 
 .action-btn--primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(49, 156, 181, 0.3);
+  background: rgba(49, 156, 181, 0.35);
+  border-color: rgba(49, 156, 181, 0.8);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.35);
 }
 
 .action-btn--success {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: var(--color-white);
+  background: rgba(16, 185, 129, 0.2);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+  color: #d1fae5;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
 }
 
 .action-btn--success:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.3);
 }
 
 .action-btn--secondary {
-  background: rgba(49, 156, 181, 0.15);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--color-text);
-  border: 1px solid rgba(49, 156, 181, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
 }
 
 .action-btn--secondary:hover {
-  background: rgba(49, 156, 181, 0.25);
-  border-color: rgba(49, 156, 181, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(49, 156, 181, 0.6);
   transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.2);
 }
 
 /* Info Cards Section */

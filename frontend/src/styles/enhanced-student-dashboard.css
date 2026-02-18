@@ -66,11 +66,17 @@
 
 .btn-hover-lift {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1.5px solid rgba(49, 156, 181, 0.4) !important;
+  background: rgba(49, 156, 181, 0.15) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.2) !important;
 }
 
 .btn-hover-lift:hover {
   transform: translateY(-3px) !important;
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3) !important;
+  background: rgba(49, 156, 181, 0.25) !important;
+  border-color: rgba(49, 156, 181, 0.7) !important;
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.3) !important;
 }
 
 /* ===== Animations ===== */
@@ -370,17 +376,19 @@
 }
 
 .btn-action-glow {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border: 2px solid rgba(255, 255, 255, 0.5) !important;
-  color: white !important;
+  background: rgba(49, 156, 181, 0.15) !important;
+  border: 1.5px solid rgba(49, 156, 181, 0.4) !important;
+  color: #ccf5fe !important;
   padding: 0.75rem 1.5rem !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
   margin-top: auto;
   font-weight: 600 !important;
   cursor: pointer !important;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.2) !important;
 }
 
 .btn-action-glow::before {
@@ -390,7 +398,7 @@
   left: 50%;
   width: 0;
   height: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(49, 156, 181, 0.3) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
@@ -402,8 +410,9 @@
 }
 
 .btn-action-glow:hover {
-  background: rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
+  background: rgba(49, 156, 181, 0.25) !important;
+  border-color: rgba(49, 156, 181, 0.7) !important;
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.35) !important;
   transform: translateY(-3px) scale(1.05) !important;
 }
 

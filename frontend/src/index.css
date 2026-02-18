@@ -162,11 +162,3 @@ body.disable-transitions,
 body.disable-transitions * {
   transition: none !important;
 }
-
-/* Disable all animations/transitions globally */
-*,
-*::before,
-*::after {
-  animation: none !important;
-  transition: none !important;
-}

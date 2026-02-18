@@ -51,7 +51,7 @@
   transform-style: preserve-3d;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: qr-object-float 2.5s linear infinite;
+  animation: qr-object-float 6s linear infinite;
 }
 
 .qr__object--sphere {
@@ -61,7 +61,7 @@
   left: 8%;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 3s;
+  animation-duration: 7s;
 }
 
 .qr__object--ring {
@@ -72,7 +72,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 3.2s;
+  animation-duration: 7.5s;
 }
 
 .qr__object--cube {
@@ -82,7 +82,7 @@
   right: 18%;
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
-  animation-duration: 2.6s;
+  animation-duration: 6s;
 }
 
 [data-theme="light"] .qr__object {
@@ -216,40 +216,49 @@
 
 .btn {
   padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-block;
   text-align: center;
+  background: rgba(49, 156, 181, 0.1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.19);
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-accent) 0%, var(--color-primary) 100%);
-  color: white;
+  background: rgba(49, 156, 181, 0.2);
+  color: #ccf5fe;
+  border: 1.5px solid rgba(49, 156, 181, 0.6);
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.25);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(49, 156, 181, 0.35);
+  background: rgba(49, 156, 181, 0.35);
+  border-color: rgba(49, 156, 181, 0.8);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.4);
 }
 
 .btn-secondary {
-  background: var(--color-bg-secondary);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--color-text);
-  border: 1px solid var(--color-border);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--color-surface);
-  border-color: var(--primary-accent);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(49, 156, 181, 0.6);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.2);
 }
 
 .btn-large {

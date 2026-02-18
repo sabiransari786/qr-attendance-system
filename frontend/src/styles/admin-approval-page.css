@@ -279,35 +279,45 @@
 .admin-approval-form__submit,
 .admin-approval-form__cancel {
   padding: 14px 28px;
-  border: none;
-  border-radius: 8px;
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
+  border-radius: 12px;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  backdrop-filter: blur(12px);
 }
 
 .admin-approval-form__submit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgba(102, 126, 234, 0.2);
+  color: #b3c1ff;
   flex: 1;
+  border: 1.5px solid rgba(102, 126, 234, 0.5);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
 }
 
 .admin-approval-form__submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  background: rgba(102, 126, 234, 0.35);
+  border-color: rgba(102, 126, 234, 0.8);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.3);
 }
 
 .admin-approval-form__cancel {
-  background: #f0f0f0;
-  color: #333;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
   flex: 0.5;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
 }
 
 .admin-approval-form__cancel:hover {
-  background: #e0e0e0;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(49, 156, 181, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.2);
 }
 
 /* Filters */

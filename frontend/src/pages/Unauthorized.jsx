@@ -1,5 +1,13 @@
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import "../styles/unauthorized.css";
+import {
+  fadeInUp,
+  fadeInDown,
+  staggerContainer,
+  buttonHover,
+  buttonTap,
+} from "../animations/animationConfig";
 
 /**
  * Unauthorized Component
@@ -37,30 +45,41 @@ function Unauthorized() {
   };
 
   return (
-    <div className="unauthorized__container">
+    <motion.div
+      className="unauthorized__container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="unauthorized__objects" aria-hidden="true">
         <span className="unauthorized__object unauthorized__object--sphere" />
         <span className="unauthorized__object unauthorized__object--ring" />
         <span className="unauthorized__object unauthorized__object--cube" />
       </div>
       {/* Start of card */}
-      <section className="unauthorized__card" aria-labelledby="unauthorized-title">
+      <motion.section
+        className="unauthorized__card"
+        aria-labelledby="unauthorized-title"
+        initial={{ opacity: 0, scale: 0.9, y: 30, filter: 'blur(6px)' }}
+        animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+        transition={{ type: 'spring', stiffness: 180, damping: 22, delay: 0.08 }}
+      >
         {/* Message Section */}
-        <header className="unauthorized__header">
-          <h1 id="unauthorized-title" className="unauthorized__title">
+        <motion.header className="unauthorized__header" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
+          <motion.h1 id="unauthorized-title" className="unauthorized__title" initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}>
             Access Denied
-          </h1>
-          <p className="unauthorized__message">
+          </motion.h1>
+          <motion.p className="unauthorized__message" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.3 }}>
             You do not have permission to access this page.
-          </p>
-          <p className="unauthorized__description">
+          </motion.p>
+          <motion.p className="unauthorized__description" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.38 }}>
             If you believe this is an error, please contact your administrator or sign in with a different account.
-          </p>
-        </header>
+          </motion.p>
+        </motion.header>
 
         {/* Action Button */}
-        <footer className="unauthorized__footer">
-          <button
+        <motion.footer className="unauthorized__footer" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.45 }}>
+          <motion.button
             className="unauthorized__button"
             type="button"
             onClick={handleRedirect}
@@ -69,12 +88,15 @@ function Unauthorized() {
                 ? "Go to home page"
                 : "Go to login page"
             }
+            variants={buttonHover}
+            whileHover="hover"
+            whileTap={buttonTap}
           >
             {isAuthenticated ? "Go to Dashboard" : "Go to Login"}
-          </button>
-        </footer>
-      </section>
-    </div>
+          </motion.button>
+        </motion.footer>
+      </motion.section>
+    </motion.div>
   );
 }
 

@@ -79,7 +79,7 @@
   transform-style: preserve-3d;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: auth-object-float 2.5s linear infinite;
+  animation: auth-object-float 6s linear infinite;
 }
 
 .auth__object--sphere {
@@ -89,7 +89,7 @@
   left: 8%;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 3s;
+  animation-duration: 7s;
 }
 
 .auth__object--ring {
@@ -100,7 +100,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 3.2s;
+  animation-duration: 7.5s;
 }
 
 .auth__object--cube {
@@ -111,7 +111,7 @@
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
   transform: rotate(18deg);
-  animation-duration: 2.6s;
+  animation-duration: 6s;
 }
 
 [data-theme="light"] .auth__object {
@@ -146,7 +146,7 @@
   border-radius: 50%;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: auth-orb-float 2.5s linear infinite;
+  animation: auth-orb-float 6s linear infinite;
 }
 
 .auth__orb--one {
@@ -155,7 +155,7 @@
   top: 12%;
   left: 8%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 3s;
+  animation-duration: 7s;
 }
 
 .auth__orb--two {
@@ -165,7 +165,7 @@
   right: 10%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 3.2s;
+  animation-duration: 7.5s;
 }
 
 .auth__orb--three {
@@ -174,7 +174,7 @@
   top: 32%;
   right: 18%;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
-  animation-duration: 2.6s;
+  animation-duration: 6s;
 }
 
 [data-theme="light"] .auth__orb {
@@ -383,21 +383,24 @@
   padding: 1rem 1.5rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--primary-accent) 0%, #2aa5a8 100%);
-  border: none;
-  border-radius: 10px;
+  color: #ccf5fe;
+  background: rgba(49, 156, 181, 0.2);
+  border: 1.5px solid rgba(49, 156, 181, 0.6);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: 0.4px;
   margin-top: 1rem;
-  box-shadow: 0 8px 20px rgba(49, 156, 181, 0.3);
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.25);
   text-decoration: none;
+  backdrop-filter: blur(12px);
 }
 
 .login__button:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(49, 156, 181, 0.4);
+  background: rgba(49, 156, 181, 0.35);
+  border-color: rgba(49, 156, 181, 0.8);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.4);
 }
 
 .login__button:active:not(:disabled) {
@@ -405,10 +408,10 @@
 }
 
 .login__button:disabled {
-  background: rgba(49, 156, 181, 0.4);
+  background: rgba(49, 156, 181, 0.15);
   color: var(--text-muted);
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
   box-shadow: none;
 }
 
@@ -463,21 +466,23 @@
 
 /* Secondary Button */
 .login__button--secondary {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   color: var(--primary-accent);
-  border: 1.5px solid var(--primary-accent);
-  box-shadow: none;
+  border: 1.5px solid rgba(49, 156, 181, 0.5);
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.15);
   margin-top: 0.75rem;
+  backdrop-filter: blur(12px);
 }
 
 .login__button--secondary:hover:not(:disabled) {
-  background: rgba(49, 156, 181, 0.1);
-  box-shadow: 0 4px 12px rgba(49, 156, 181, 0.2);
+  background: rgba(49, 156, 181, 0.15);
+  border-color: rgba(49, 156, 181, 0.7);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.25);
 }
 
 .login__button--secondary:disabled {
-  background: transparent;
-  border-color: rgba(49, 156, 181, 0.4);
+  background: rgba(49, 156, 181, 0.08);
+  border-color: rgba(49, 156, 181, 0.3);
   color: var(--text-muted);
 }
 
@@ -738,53 +743,53 @@
   padding: 0.95rem 1.5rem;
   font-size: 1rem;
   font-weight: 600;
-  border: none;
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: 0.3px;
-  border-radius: 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.19);
 }
 
 .signup__button--primary {
-  color: var(--color-white);
-  background: var(--color-black);
-  box-shadow: none;
-  border: 2px solid var(--color-black);
+  color: #ccf5fe;
+  background: rgba(49, 156, 181, 0.2);
+  border: 1.5px solid rgba(49, 156, 181, 0.6);
+  box-shadow: 0 8px 32px rgba(49, 156, 181, 0.25);
 }
 
 .signup__button--primary:hover:not(:disabled) {
-  background-color: var(--color-dark-gray);
-  border-color: var(--color-dark-gray);
-  box-shadow: none;
-  transform: none;
+  background: rgba(49, 156, 181, 0.35);
+  border-color: rgba(49, 156, 181, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.4);
 }
 
 .signup__button--primary:active:not(:disabled) {
-  transform: none;
+  transform: translateY(0);
 }
 
 .signup__button--secondary {
-  color: var(--color-black);
-  background: var(--color-white);
-  border: 2px solid var(--color-black);
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
 }
 
 .signup__button--secondary:hover:not(:disabled) {
-  background-color: var(--color-lighter-gray);
-  border-color: var(--color-black);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(49, 156, 181, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.2);
 }
 
 .signup__button--secondary:active:not(:disabled) {
-  background-color: var(--color-lighter-gray);
-  transform: scale(0.98);
-}
-
-.signup__button--secondary:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(0);
 }
 
 .signup__button:disabled {
-  background: rgba(49, 156, 181, 0.2);
+  background: rgba(49, 156, 181, 0.15);
   color: var(--text-muted);
   cursor: not-allowed;
   opacity: 0.5;

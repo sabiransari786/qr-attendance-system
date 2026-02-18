@@ -1,7 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
 import "../styles/profile.css";
+import {
+  fadeInUp,
+  fadeInDown,
+  staggerContainer,
+  buttonHover,
+  buttonTap,
+  cardHover,
+  scaleIn,
+} from "../animations/animationConfig";
 
 function StudentProfile() {
   const navigate = useNavigate();
@@ -390,42 +400,79 @@ function StudentProfile() {
   }
 
   return (
-    <div className="profile-container">
+    <motion.div
+      className="profile-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="profile__objects" aria-hidden="true">
         <span className="profile__object profile__object--sphere" />
         <span className="profile__object profile__object--ring" />
         <span className="profile__object profile__object--cube" />
       </div>
-      <header className="dashboard__header">
+      <motion.header
+        className="dashboard__header"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div>
-          <h1 className="dashboard__title">Student Profile</h1>
-          <p className="dashboard__subtitle">View and edit your profile information</p>
+          <h1 className="dashboard__title">
+            Student Profile
+          </h1>
+          <p className="dashboard__subtitle">
+            View and edit your profile information
+          </p>
         </div>
-        <button
+        <motion.button
           className="dashboard__button dashboard__button--secondary"
           onClick={() => navigate("/student-dashboard")}
+          variants={buttonHover}
+          whileHover="hover"
+          whileTap={buttonTap}
         >
           ← Back to Dashboard
-        </button>
-      </header>
+        </motion.button>
+      </motion.header>
 
-      <main className="profile-card" style={{position:'relative', zIndex:1}}>
+      <motion.main
+        className="profile-card"
+        style={{ position: "relative", zIndex: 1 }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+      >
         {/* Message Display */}
         {message.text && (
-          <div className={`message-box ${message.type}`}>
+          <motion.div
+            className={`message-box ${message.type}`}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+          >
             {message.text}
-          </div>
+          </motion.div>
         )}
 
         {/* Profile Card */}
-        <section className="profile-card">
-          <div className="profile-header">
-            <div className="profile-avatar-container">
-              <div 
-                className="profile-avatar" 
+        <motion.section
+          className="profile-card"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+          whileHover={{ y: -8, boxShadow: '0 20px 56px rgba(49, 156, 181, 0.2)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}
+        >
+          <motion.div className="profile-header" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25, duration: 0.4 }}>
+            <motion.div className="profile-avatar-container" variants={scaleIn}>
+              <motion.div
+                className="profile-avatar"
                 onClick={handlePhotoClick}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: "pointer" }}
                 title={photoPreview ? "Click to view/edit photo" : "Click to upload photo"}
+                whileHover={{ scale: 1.08, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
+                whileTap={{ scale: 0.94 }}
               >
                 {photoPreview ? (
                   <img 
@@ -438,7 +485,7 @@ function StudentProfile() {
                     {profileData.name.charAt(0).toUpperCase()}
                   </span>
                 )}
-              </div>
+              </motion.div>
               <input 
                 type="file" 
                 ref={fileInputRef}
@@ -449,32 +496,55 @@ function StudentProfile() {
               
               {/* Photo Menu */}
               {showPhotoMenu && photoPreview && (
-                <div className="photo-menu">
-                  <button className="photo-menu-item" onClick={handleViewPhoto}>
+                <motion.div
+                  className="photo-menu"
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                >
+                  <motion.button
+                    className="photo-menu-item"
+                    onClick={handleViewPhoto}
+                    whileHover={{ scale: 1.06, x: 4, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     👁️ View Photo
-                  </button>
-                  <button className="photo-menu-item" onClick={handleEditPhoto}>
+                  </motion.button>
+                  <motion.button
+                    className="photo-menu-item"
+                    onClick={handleEditPhoto}
+                    whileHover={{ scale: 1.06, x: 4, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     ✏️ Change Photo
-                  </button>
-                  <button className="photo-menu-item photo-menu-item--danger" onClick={handleRemovePhoto}>
+                  </motion.button>
+                  <motion.button
+                    className="photo-menu-item photo-menu-item--danger"
+                    onClick={handleRemovePhoto}
+                    whileHover={{ scale: 1.06, x: 4, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     🗑️ Remove Photo
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               )}
-              
-              <button
+
+              <motion.button
                 className="photo-upload-btn"
                 onClick={() => fileInputRef.current?.click()}
                 title="Upload profile photo"
+              whileHover={{ scale: 1.15, transition: { type: 'spring', stiffness: 400, damping: 18 } }}
+              whileTap={{ scale: 0.88 }}
               >
                 📷
-              </button>
-            </div>
-            <div className="profile-title">
-              <h2>{profileData.name}</h2>
-              <p>{profileData.email}</p>
-            </div>
-          </div>
+              </motion.button>
+            </motion.div>
+            <motion.div className="profile-title" variants={fadeInUp}>
+              <motion.h2 variants={fadeInUp}>{profileData.name}</motion.h2>
+              <motion.p variants={fadeInUp}>{profileData.email}</motion.p>
+            </motion.div>
+          </motion.div>
 
           {/* Photo Editor Modal */}
           {showPhotoEditor && tempPhoto && (
@@ -550,35 +620,48 @@ function StudentProfile() {
 
           {/* Photo Upload Section */}
           {profilePhoto && !showPhotoEditor && (
-            <div className="photo-upload-section">
-              <p className="photo-upload-hint">Photo adjusted. Ready to upload: {profilePhoto.name}</p>
-              <button
+            <motion.div
+              className="photo-upload-section"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <motion.p className="photo-upload-hint" variants={fadeInUp}>
+                Photo adjusted. Ready to upload: {profilePhoto.name}
+              </motion.p>
+              <motion.button
                 className="action-btn action-btn--primary"
                 onClick={handleUploadPhoto}
                 disabled={uploading}
+                whileHover={{ scale: 1.05, boxShadow: '0 8px 24px rgba(49, 156, 181, 0.3)', transition: { type: 'spring', stiffness: 350, damping: 20 } }}
+                whileTap={{ scale: 0.95 }}
               >
                 {uploading ? "⏳ Uploading..." : "✓ Upload Photo"}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           )}
 
-          <div className="profile-body">
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
+          <motion.div className="profile-body" variants={fadeInUp} initial="hidden" animate="visible">
+            <motion.div className="form-grid" variants={staggerContainer} initial="hidden" animate="visible">
+              <motion.div className="form-group" variants={fadeInUp}>
+                <motion.label className="form-label" variants={fadeInUp}>
+                  Full Name
+                </motion.label>
                 {editing ? (
-                  <input
+                  <motion.input
                     type="text"
                     name="name"
                     className="form-input"
                     value={editedData.name}
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
+                    whileFocus={{ boxShadow: "0 0 0 3px rgba(49, 156, 181, 0.3)", transition: { duration: 0.2 } }}
                   />
                 ) : (
-                  <p className="form-value">{profileData.name || "Not provided"}</p>
+                  <motion.p className="form-value" variants={fadeInUp}>
+                    {profileData.name || "Not provided"}
+                  </motion.p>
                 )}
-              </div>
+              </motion.div>
 
               <div className="form-group">
                 <label className="form-label">Student ID</label>
@@ -672,44 +755,55 @@ function StudentProfile() {
                   <p className="form-value">{profileData.section || "Not specified"}</p>
                 )}
               </div>
-            </div>
+            </motion.div>
 
-            <div className="profile-actions">
+            <motion.div className="profile-actions" variants={fadeInUp} initial="hidden" animate="visible">
               {editing ? (
-                <>
-                  <button 
+                <motion.div variants={staggerContainer} initial="hidden" animate="visible">
+                  <motion.button
                     className="action-btn action-btn--success"
                     onClick={handleSave}
+                    variants={buttonHover}
+                    whileHover="hover"
+                    whileTap={buttonTap}
                   >
                     ✓ Save Changes
-                  </button>
-                  <button 
+                  </motion.button>
+                  <motion.button
                     className="action-btn action-btn--secondary"
                     onClick={handleCancel}
+                    variants={buttonHover}
+                    whileHover="hover"
+                    whileTap={buttonTap}
                   >
                     Cancel
-                  </button>
-                </>
+                  </motion.button>
+                </motion.div>
               ) : (
-                <button 
+                <motion.button
                   className="action-btn action-btn--primary"
                   onClick={handleEdit}
+                  variants={buttonHover}
+                  whileHover="hover"
+                  whileTap={buttonTap}
                 >
                   ✏️ Edit Profile
-                </button>
+                </motion.button>
               )}
-            </div>
-          </div>
-        </section>
+            </motion.div>
+          </motion.div>
+        </motion.section>
 
         {/* Additional Info */}
-        <section className="info-cards">
-          <div className="info-card">
-            <h3 className="info-title">Account Information</h3>
-            <div className="info-item">
+        <motion.section className="info-cards" variants={staggerContainer} initial="hidden" animate="visible">
+          <motion.div className="info-card" variants={fadeInUp} whileHover={{ y: -6, scale: 1.01, boxShadow: '0 16px 40px rgba(49, 156, 181, 0.2)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}>
+            <motion.h3 className="info-title" variants={fadeInUp}>
+              Account Information
+            </motion.h3>
+            <motion.div className="info-item" variants={fadeInUp}>
               <span className="info-label">Role:</span>
               <span className="info-value">Student</span>
-            </div>
+            </motion.div>
             <div className="info-item">
               <span className="info-label">Account Status:</span>
               <span className="info-value status-active">Active</span>
@@ -718,7 +812,7 @@ function StudentProfile() {
               <span className="info-label">Member Since:</span>
               <span className="info-value">January 2024</span>
             </div>
-          </div>
+          </motion.div>
 
           <div className="info-card">
             <h3 className="info-title">Quick Links</h3>
@@ -737,9 +831,9 @@ function StudentProfile() {
               </button>
             </div>
           </div>
-        </section>
-      </main>
-    </div>
+        </motion.section>
+      </motion.main>
+    </motion.div>
   );
 }
 

@@ -1,10 +1,19 @@
 import { useContext, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 import "../styles/enhanced-dashboard.css";
 import "../styles/enhanced-student-dashboard.css";
+import {
+  fadeInUp,
+  fadeInDown,
+  staggerContainer,
+  scaleIn,
+  buttonHover,
+  buttonTap,
+} from "../animations/animationConfig";
 
 // Color Theme System
 const COLOR_THEME = {
@@ -263,39 +272,53 @@ function StudentDashboardEnhanced() {
   }
 
   return (
-    <div className="dashboard">
+    <motion.div 
+      className="dashboard"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="dashboard__objects" aria-hidden="true">
         <span className="dashboard__object dashboard__object--sphere" />
         <span className="dashboard__object dashboard__object--torus" />
         <span className="dashboard__object dashboard__object--diamond" />
       </div>
 
-      <header className="dashboard__header enhanced-header">
+      <motion.header className="dashboard__header enhanced-header"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="header-content">
           <div className="header-text">
-            <h1 className="dashboard__title slide-in-down">🎓 Student Dashboard</h1>
+            <h1 id="dashboard-title" className="dashboard__title slide-in-down">🎓 Student Dashboard</h1>
             <p className="dashboard__subtitle fade-in">
               Welcome back, <strong>{user?.name}</strong>! {formatDate(currentTime)} • {formatTime(currentTime)}
             </p>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       <main className="dashboard__content">
         {/* Quick Action Cards - Hero Section */}
-        <section 
+        <motion.section 
           ref={heroGridRef}
           className="dashboard__grid hero-grid" 
           style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
         >
           {/* Today's Status Card */}
-          <section 
+          <motion.section 
             className="dashboard__card premium-card card-gradient-1 card-hover"
             onMouseEnter={() => setHoveredCard(1)}
             onMouseLeave={() => setHoveredCard(null)}
             style={{ 
               transform: hoveredCard === 1 ? 'translateY(-8px)' : 'translateY(0)'
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -10, scale: 1.02, boxShadow: '0 24px 64px rgba(49, 156, 181, 0.25)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}
           >
             <div className="card-header-icon">📅</div>
             <h2 className="dashboard__card-title">Today's Status</h2>
@@ -305,10 +328,10 @@ function StudentDashboardEnhanced() {
                todayStatus?.status === 'late' ? '⏰ Marked Late' : 
                '⏳ Not Marked Yet'}
             </p>
-          </section>
+          </motion.section>
 
           {/* Overall Attendance Card - Red Theme */}
-          <section 
+          <motion.section 
             className="dashboard__card premium-card card-gradient-2 card-hover"
             onMouseEnter={() => setHoveredCard(2)}
             onMouseLeave={() => setHoveredCard(null)}
@@ -316,6 +339,8 @@ function StudentDashboardEnhanced() {
               transform: hoveredCard === 2 ? 'translateY(-8px)' : 'translateY(0)',
               boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -10, scale: 1.02, boxShadow: '0 24px 64px rgba(49, 156, 181, 0.25)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}
           >
             <div className="card-header-icon">📊</div>
             <h2 className="dashboard__card-title">Overall Attendance</h2>
@@ -323,10 +348,10 @@ function StudentDashboardEnhanced() {
             <p className="dashboard__card-text percentage-text">
               {attendanceStats?.present || 0}/{attendanceStats?.total || 0} Classes • {getAttendanceStatus(attendanceStats?.overall || 0)}
             </p>
-          </section>
+          </motion.section>
 
           {/* Scan QR Card - Pink Theme */}
-          <section 
+          <motion.section 
             className="dashboard__card premium-card card-gradient-3 card-clickable card-hover"
             onClick={handleScanQR}
             onMouseEnter={() => setHoveredCard(3)}
@@ -336,6 +361,9 @@ function StudentDashboardEnhanced() {
               transform: hoveredCard === 3 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
               boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -10, scale: 1.03, transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
           >
             <div className="card-header-icon">📷</div>
             <h2 className="dashboard__card-title">Scan QR Code</h2>
@@ -343,10 +371,10 @@ function StudentDashboardEnhanced() {
             <button className="dashboard__card-action btn-action-glow">
               Start Scanning →
             </button>
-          </section>
+          </motion.section>
 
           {/* View History Card - Cyan Theme */}
-          <section 
+          <motion.section 
             className="dashboard__card premium-card card-gradient-4 card-clickable card-hover"
             onClick={handleViewHistory}
             onMouseEnter={() => setHoveredCard(4)}
@@ -356,6 +384,9 @@ function StudentDashboardEnhanced() {
               transform: hoveredCard === 4 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
               boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -10, scale: 1.03, transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
           >
             <div className="card-header-icon">📜</div>
             <h2 className="dashboard__card-title">Attendance History</h2>
@@ -363,25 +394,36 @@ function StudentDashboardEnhanced() {
             <button className="dashboard__card-action btn-action-glow">
               View History →
             </button>
-          </section>
-        </section>
+          </motion.section>
+        </motion.section>
 
         {/* Statistics Row - Counters */}
-        <section 
+        <motion.section 
           ref={statsGridRef}
           className="statistics-grid" 
           style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginTop: '2rem', gap: '1rem' }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         >
           <StatCounter icon="✅" count={attendanceStats?.present || 0} label="Present" color="var(--student-card-2)" theme={theme} />
           <StatCounter icon="⏰" count={attendanceStats?.late || 0} label="Late" color="var(--student-card-3)" theme={theme} />
           <StatCounter icon="❌" count={attendanceStats?.absent || 0} label="Absent" color="var(--student-card-4)" theme={theme} />
           <StatCounter icon="📚" count={attendanceStats?.subjects?.length || 0} label="Subjects" color="var(--student-card-1)" theme={theme} />
-        </section>
+        </motion.section>
 
         {/* Notifications & Upcoming Sessions */}
-        <section className="dashboard__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginTop: '2rem', gap: '1.5rem' }}>
+        <motion.section
+          className="dashboard__grid"
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginTop: '2rem', gap: '1.5rem' }}
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
+        >
           {/* Notifications Card */}
-          <section className="dashboard__card content-card notifications-card">
+          <motion.section className="dashboard__card content-card notifications-card" variants={fadeInUp} whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.18)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}>
             <div className="card-title-header">
               <h2 className="dashboard__card-title">🔔 Notifications</h2>
               <span className="notification-badge">{notifications.length}</span>
@@ -393,9 +435,12 @@ function StudentDashboardEnhanced() {
             >
               {notifications.length > 0 ? (
                 notifications.map((notif, idx) => (
-                  <div 
+                  <motion.div 
                     key={notif.id} 
                     className={`notification-item notification-${notif.type}`}
+                    initial={{ opacity: 0, x: -16, filter: 'blur(2px)' }}
+                    animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                    transition={{ delay: idx * 0.06, type: 'spring', stiffness: 260, damping: 24 }}
                   >
                     <div className="notification-icon">{notif.icon}</div>
                     <div className="notification-content">
@@ -403,7 +448,7 @@ function StudentDashboardEnhanced() {
                       <div className="notification-message">{notif.message}</div>
                       <div className="notification-time">{notif.time}</div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               ) : (
                 <div className="empty-state">
@@ -412,10 +457,10 @@ function StudentDashboardEnhanced() {
                 </div>
               )}
             </div>
-          </section>
+          </motion.section>
 
           {/* Upcoming Sessions Card */}
-          <section className="dashboard__card content-card sessions-card">
+          <motion.section className="dashboard__card content-card sessions-card" variants={fadeInUp} whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.18)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}>
             <div className="card-title-header">
               <h2 className="dashboard__card-title">📅 Upcoming Sessions</h2>
               <span className="session-badge">{upcomingSessions.length}</span>
@@ -427,9 +472,12 @@ function StudentDashboardEnhanced() {
             >
               {upcomingSessions.length > 0 ? (
                 upcomingSessions.map((session, idx) => (
-                  <div 
+                  <motion.div 
                     key={session.id} 
                     className="session-item"
+                    initial={{ opacity: 0, y: 14, filter: 'blur(2px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    transition={{ delay: idx * 0.06, type: 'spring', stiffness: 260, damping: 24 }}
                   >
                     <div className="session-time">{session.time}</div>
                     <div className="session-details">
@@ -437,7 +485,7 @@ function StudentDashboardEnhanced() {
                       <div className="session-room">📍 {session.room}</div>
                       <div className="session-faculty">👨‍🏫 {session.faculty}</div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               ) : (
                 <div className="empty-state">
@@ -446,11 +494,19 @@ function StudentDashboardEnhanced() {
                 </div>
               )}
             </div>
-          </section>
-        </section>
+          </motion.section>
+        </motion.section>
 
         {/* Subject-wise Attendance */}
-        <section className="dashboard__card content-card subjects-card" style={{ marginTop: '2rem' }}>
+        <motion.section
+          className="dashboard__card content-card subjects-card"
+          style={{ marginTop: '2rem' }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.18)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}
+        >
           <div className="card-title-header">
             <h2 className="dashboard__card-title">📚 Subject-wise Attendance</h2>
             <span className="subject-badge">{attendanceStats?.subjects?.length || 0}</span>
@@ -474,10 +530,18 @@ function StudentDashboardEnhanced() {
               </p>
             )}
           </div>
-        </section>
+        </motion.section>
 
         {/* Quick Tips */}
-        <section className="dashboard__card content-card tips-card" style={{ marginTop: '2rem', background: 'var(--student-card-1)', color: 'var(--student-card-text)', boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)' }}>
+        <motion.section
+          className="dashboard__card content-card tips-card"
+          style={{ marginTop: '2rem', background: 'var(--student-card-1)', color: 'var(--student-card-text)', boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)' }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.2)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}
+        >
           <h2 className="dashboard__card-title" style={{ color: 'var(--student-card-text)' }}>💡 Quick Tips</h2>
           <ul className="tips-list" style={{ marginTop: '1rem' }}>
             <li><span className="tip-dot"></span>Maintain at least 75% attendance in each subject</li>
@@ -485,9 +549,9 @@ function StudentDashboardEnhanced() {
             <li><span className="tip-dot"></span>Check your attendance regularly</li>
             <li><span className="tip-dot"></span>Contact faculty if any discrepancy found</li>
           </ul>
-        </section>
+        </motion.section>
       </main>
-    </div>
+    </motion.div>
   );
 }
 

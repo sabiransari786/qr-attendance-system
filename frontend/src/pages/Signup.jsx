@@ -1,9 +1,16 @@
 import { useMemo, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { registerStudent } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import Toast from "../components/Toast";
 import "../styles/auth.css";
+import {
+  fadeInUp,
+  staggerContainer,
+  buttonHover,
+  buttonTap,
+} from "../animations/animationConfig";
 
 /**
  * Signup Component
@@ -159,7 +166,12 @@ function Signup() {
   };
 
   return (
-    <div className="signup__container">
+    <motion.div
+      className="signup__container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="auth__objects" aria-hidden="true">
         <span className="auth__object auth__object--sphere" />
         <span className="auth__object auth__object--ring" />
@@ -175,23 +187,36 @@ function Signup() {
         />
       )}
 
-      <section className="signup__card signup__box" aria-labelledby="signup-title">
+      <motion.section
+        className="signup__card signup__box"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        aria-labelledby="signup-title"
+      >
         {/* Card Header */}
-        <header className="signup__header">
-          <h1 id="signup-title" className="signup__title">Sign Up</h1>
-          <p className="signup__subtitle">
+        <motion.header
+          className="signup__header"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.h1 id="signup-title" className="signup__title" variants={fadeInUp}>
+            Sign Up
+          </motion.h1>
+          <motion.p className="signup__subtitle" variants={fadeInUp}>
             Create a student account to access the QR-Based Attendance System.
-          </p>
-        </header>
+          </motion.p>
+        </motion.header>
 
         {/* Registration Form */}
-        <form className="signup__form" onSubmit={handleSubmit} noValidate>
+        <motion.form className="signup__form" onSubmit={handleSubmit} noValidate>
           {/* Full Name Field */}
-          <div className="signup__form-group">
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
             <label className="signup__label" htmlFor="fullName">
               Full Name
             </label>
-            <input
+            <motion.input
               id="fullName"
               name="fullName"
               type="text"
@@ -202,15 +227,16 @@ function Signup() {
               autoComplete="name"
               disabled={isSubmitting}
               required
+              whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
             />
-          </div>
+          </motion.div>
 
           {/* Email Field */}
-          <div className="signup__form-group">
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.19, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
             <label className="signup__label" htmlFor="email">
               Email Address
             </label>
-            <input
+            <motion.input
               id="email"
               name="email"
               type="email"
@@ -221,15 +247,16 @@ function Signup() {
               autoComplete="email"
               disabled={isSubmitting}
               required
+              whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
             />
-          </div>
+          </motion.div>
 
           {/* Roll Number Field */}
-          <div className="signup__form-group">
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
             <label className="signup__label" htmlFor="rollNumber">
               Roll Number / Student ID
             </label>
-            <input
+            <motion.input
               id="rollNumber"
               name="rollNumber"
               type="text"
@@ -240,15 +267,16 @@ function Signup() {
               autoComplete="off"
               disabled={isSubmitting}
               required
+              whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
             />
-          </div>
+          </motion.div>
 
           {/* Contact Number Field */}
-          <div className="signup__form-group">
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.33, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
             <label className="signup__label" htmlFor="contactNumber">
               Contact Number
             </label>
-            <input
+            <motion.input
               id="contactNumber"
               name="contactNumber"
               type="tel"
@@ -259,16 +287,17 @@ function Signup() {
               autoComplete="tel"
               disabled={isSubmitting}
               required
+              whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
             />
-          </div>
+          </motion.div>
 
           {/* Password Field */}
-          <div className="signup__form-group">
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
             <label className="signup__label" htmlFor="password">
               Password
             </label>
             <div className="signup__password-wrapper">
-              <input
+              <motion.input
                 id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
@@ -279,28 +308,31 @@ function Signup() {
                 autoComplete="new-password"
                 disabled={isSubmitting}
                 required
+                whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
               />
-              <button
+              <motion.button
                 type="button"
                 className="signup__password-toggle"
                 onClick={handleTogglePassword}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex="-1"
+                whileHover={{ scale: 1.15, transition: { type: 'spring', stiffness: 400, damping: 20 } }}
+                whileTap={{ scale: 0.9 }}
               >
                 <span style={{ fontSize: '22px' }}>
                   {showPassword ? '😊' : '🫣'}
                 </span>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Confirm Password Field */}
-          <div className="signup__form-group">
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.47, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
             <label className="signup__label" htmlFor="confirmPassword">
               Confirm Password
             </label>
             <div className="signup__password-wrapper">
-              <input
+              <motion.input
                 id="confirmPassword"
                 name="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
@@ -311,52 +343,81 @@ function Signup() {
                 autoComplete="new-password"
                 disabled={isSubmitting}
                 required
+                whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
               />
-              <button
+              <motion.button
                 type="button"
                 className="signup__password-toggle"
                 onClick={handleToggleConfirmPassword}
                 aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 tabIndex="-1"
+                whileHover={{ scale: 1.15, transition: { type: 'spring', stiffness: 400, damping: 20 } }}
+                whileTap={{ scale: 0.9 }}
               >
                 <span style={{ fontSize: '22px' }}>
                   {showConfirmPassword ? '😊' : '🫣'}
                 </span>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Error Message */}
           {errorMessage && (
-            <p className="signup__message signup__message--error" role="alert">
+            <motion.p 
+              className="signup__message signup__message--error" 
+              role="alert"
+            initial={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
               {errorMessage}
-            </p>
+            </motion.p>
           )}
 
           {/* Action Buttons */}
-          <div className="signup__buttons">
-            <button
+          <motion.div 
+            className="signup__buttons"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.52, duration: 0.4 }}
+          >
+            <motion.button
               className="signup__button signup__button--primary"
               type="submit"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
+              variants={buttonHover}
+              whileHover={!isSubmitting ? "hover" : ""}
+              whileTap={!isSubmitting ? buttonTap : {}}
             >
               {isSubmitting ? "Registering..." : "Register"}
-            </button>
-          </div>
-        </form>
+            </motion.button>
+          </motion.div>
+        </motion.form>
 
         {/* Already have an account link */}
-        <div className="signup__footer">
+        <motion.div 
+          className="signup__footer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.58, duration: 0.4 }}
+        >
           <p className="signup__footer-text">
             Already have an account?{" "}
-            <Link to="/login" className="signup__link">
-              Login here
-            </Link>
+            <motion.div
+              style={{ display: 'inline' }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link to="/login" className="signup__link">
+                Login here
+              </Link>
+            </motion.div>
           </p>
-        </div>
-      </section>
-    </div>
+        </motion.div>
+      </motion.section>
+    </motion.div>
   );
 }
 
