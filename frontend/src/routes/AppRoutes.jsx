@@ -23,6 +23,11 @@ import ScanQREnhanced from "../pages/ScanQREnhanced";
 import AttendanceHistory from "../pages/AttendanceHistory";
 import Notifications from "../pages/Notifications";
 import AdminUserApprovalPage from "../pages/AdminUserApprovalPage";
+import AdminStudentDirectory from "../pages/AdminStudentDirectory";
+import AdminUserAccess from "../pages/AdminUserAccess";
+import AdminActivityLogs from "../pages/AdminActivityLogs";
+import AdminDepartments from "../pages/AdminDepartments";
+import AdminSystemReports from "../pages/AdminSystemReports";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -165,6 +170,46 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["admin"]}>
             <AdminUserApprovalPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/students"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminStudentDirectory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminUserAccess />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/activity-logs"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminActivityLogs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/departments"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminDepartments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminSystemReports />
           </ProtectedRoute>
         }
       />

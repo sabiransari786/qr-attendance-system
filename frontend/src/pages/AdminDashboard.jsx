@@ -386,60 +386,22 @@ function AdminDashboard() {
         </motion.section>
 
         <section className="admin-dashboard__actions" aria-label="Admin quick actions">
-          <button
-            type="button"
-            className={`admin-dashboard__action ${showStudents ? "admin-dashboard__action--active" : ""}`}
-            onClick={() => {
-              setShowStudents(!showStudents);
-              setShowUsers(false);
-              setShowLogs(false);
-            }}
-          >
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/students')}>
             View Students
           </button>
-          <button
-            type="button"
-            className={`admin-dashboard__action ${showUsers ? "admin-dashboard__action--active" : ""}`}
-            onClick={() => {
-              setShowUsers(!showUsers);
-              setShowStudents(false);
-              setShowLogs(false);
-            }}
-          >
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/users')}>
             Manage Users
           </button>
-          <button
-            type="button"
-            className="admin-dashboard__action"
-            onClick={() => {
-              navigate('/admin/approvals');
-            }}
-          >
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/approvals')}>
             Approve Users
           </button>
-          <button
-            type="button"
-            className={`admin-dashboard__action ${showLogs ? "admin-dashboard__action--active" : ""}`}
-            onClick={() => {
-              setShowLogs(!showLogs);
-              setShowUsers(false);
-              setShowStudents(false);
-            }}
-          >
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/activity-logs')}>
             Activity Logs
           </button>
-          <button
-            type="button"
-            className="admin-dashboard__action admin-dashboard__action--disabled"
-            disabled
-          >
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/departments')}>
             Departments
           </button>
-          <button
-            type="button"
-            className="admin-dashboard__action admin-dashboard__action--disabled"
-            disabled
-          >
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/reports')}>
             Reports
           </button>
         </section>
@@ -452,11 +414,7 @@ function AdminDashboard() {
         >
           <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
-            onClick={() => {
-              setShowStudents(!showStudents);
-              setShowUsers(false);
-              setShowLogs(false);
-            }}
+            onClick={() => navigate('/admin/students')}
             variants={fadeInUp}
             whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
             whileTap={{ scale: 0.97 }}
@@ -470,11 +428,7 @@ function AdminDashboard() {
 
           <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
-            onClick={() => {
-              setShowUsers(true);
-              setShowStudents(false);
-              setShowLogs(false);
-            }}
+            onClick={() => navigate('/admin/users')}
             variants={fadeInUp}
             whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
             whileTap={{ scale: 0.97 }}
@@ -502,30 +456,37 @@ function AdminDashboard() {
             <span className="dashboard__card-action">Manage approvals</span>
           </motion.article>
 
-          <motion.article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted" variants={fadeInUp}>
+          <motion.article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => navigate('/admin/departments')}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
+          >
             <h2 className="dashboard__card-title">Departments & Courses</h2>
             <p className="dashboard__card-text">
               Configure departments, courses, and timetable assignments.
             </p>
-            <span className="dashboard__card-action">Coming soon</span>
-          </motion.article>
-
-          <motion.article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted" variants={fadeInUp}>
-            <h2 className="dashboard__card-title">System Reports</h2>
-            <p className="dashboard__card-text">
-              Track attendance trends, health metrics, and audit logs.
-            </p>
-            <span className="dashboard__card-action">Coming soon</span>
+            <span className="dashboard__card-action">View departments</span>
           </motion.article>
 
           <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
-            onClick={() => {
-              setShowLogs(true);
-              setShowUsers(false);
-              setShowStudents(false);
-              setShowApprovals(false);
-            }}
+            onClick={() => navigate('/admin/reports')}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <h2 className="dashboard__card-title">System Reports</h2>
+            <p className="dashboard__card-text">
+              Track attendance trends, health metrics, and audit logs.
+            </p>
+            <span className="dashboard__card-action">View reports</span>
+          </motion.article>
+
+          <motion.article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => navigate('/admin/activity-logs')}
             variants={fadeInUp}
             whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
             whileTap={{ scale: 0.97 }}

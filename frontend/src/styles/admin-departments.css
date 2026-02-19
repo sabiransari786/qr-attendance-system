@@ -1,0 +1,461 @@
+/* ═══════════════════════════════════════════════════════════════════
+   admin-departments.css — Premium CSS for Departments & Courses page
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Toast ── */
+.dept-toast {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.5rem;
+  z-index: 9999;
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  border: 1px solid transparent;
+  pointer-events: none;
+}
+.dept-toast--success {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #34d399;
+}
+.dept-toast--error {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #f87171;
+}
+
+/* ── Modal overlay ── */
+.dept-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* ── Modal container ── */
+.dept-modal {
+  background: var(--color-surface, #0d2a34);
+  border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  border-radius: 18px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(49, 156, 181, 0.12);
+}
+.dept-modal::-webkit-scrollbar { width: 5px; }
+.dept-modal::-webkit-scrollbar-track { background: transparent; }
+.dept-modal::-webkit-scrollbar-thumb { background: var(--color-border, rgba(255,255,255,0.12)); border-radius: 4px; }
+
+.dept-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.35rem 0.85rem;
+  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  position: sticky;
+  top: 0;
+  background: var(--color-surface, #0d2a34);
+  z-index: 1;
+  border-radius: 18px 18px 0 0;
+}
+.dept-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text, #e1f5f9);
+  margin: 0;
+}
+.dept-modal__close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary, #7fa8b5);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  line-height: 1;
+  transition: background 0.2s, color 0.2s;
+}
+.dept-modal__close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+.dept-modal__body {
+  padding: 1.25rem 1.35rem 1.5rem;
+}
+
+/* ── Form elements ── */
+.dept-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.dept-form label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #7fa8b5);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dept-form-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.dept-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  border-radius: 10px;
+  color: var(--color-text, #e1f5f9);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.dept-input:focus {
+  border-color: var(--color-primary, #319cb5);
+  box-shadow: 0 0 0 3px rgba(49, 156, 181, 0.18);
+}
+.dept-input[type="color"] {
+  padding: 0.2rem 0.4rem;
+  height: 2.4rem;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.dept-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  border-radius: 10px;
+  color: var(--color-text, #e1f5f9);
+  font-size: 0.875rem;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.dept-textarea:focus {
+  border-color: var(--color-primary, #319cb5);
+  box-shadow: 0 0 0 3px rgba(49, 156, 181, 0.18);
+}
+.dept-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding-top: 0.35rem;
+}
+
+/* ── Tabs ── */
+.dept-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid var(--color-border, rgba(255,255,255,0.08));
+  padding-bottom: 0;
+}
+.dept-tab {
+  padding: 0.6rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #7fa8b5);
+  transition: color 0.2s, border-color 0.2s;
+  border-radius: 0;
+}
+.dept-tab:hover {
+  color: var(--color-text, #e1f5f9);
+}
+.dept-tab--active {
+  color: var(--tab-color, #319cb5) !important;
+  border-bottom-color: var(--tab-color, #319cb5) !important;
+}
+
+/* ── Faculty grid ── */
+.dept-faculty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  padding: 0.25rem;
+}
+.dept-faculty-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-radius: 14px;
+  padding: 1.1rem;
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  position: relative;
+}
+.dept-faculty-card:hover {
+  border-color: rgba(49, 156, 181, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.dept-faculty-card__avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.dept-faculty-card__info {
+  flex: 1;
+  min-width: 0;
+}
+.dept-faculty-card__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text, #e1f5f9);
+  margin: 0 0 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dept-faculty-card__desig {
+  font-size: 0.73rem;
+  color: var(--color-text-secondary, #7fa8b5);
+  margin: 0 0 0.5rem;
+  font-style: italic;
+}
+.dept-faculty-card__meta {
+  font-size: 0.73rem;
+  color: var(--color-text-secondary, #7fa8b5);
+  margin: 0 0 0.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dept-faculty-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+/* ── Timetable ── */
+.dept-timetable-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, rgba(255,255,255,0.08));
+}
+.dept-timetable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  font-size: 0.78rem;
+}
+.dept-tt-corner {
+  padding: 0.65rem 1rem;
+  background: rgba(49, 156, 181, 0.1);
+  color: var(--color-text-secondary, #7fa8b5);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  white-space: nowrap;
+}
+.dept-tt-slot-head {
+  padding: 0.65rem 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-secondary, #7fa8b5);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  border-left: 1px solid var(--color-border, rgba(255,255,255,0.06));
+  white-space: nowrap;
+}
+.dept-tt-row {
+  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.05));
+}
+.dept-tt-row:last-child {
+  border-bottom: none;
+}
+.dept-tt-day {
+  padding: 0.65rem 1rem;
+  color: var(--color-text, #e1f5f9);
+  font-weight: 700;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-right: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  white-space: nowrap;
+}
+.dept-tt-cell {
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
+  text-align: center;
+  background: transparent;
+  border-left: 1px solid var(--color-border, rgba(255,255,255,0.04));
+  min-width: 110px;
+  transition: background 0.2s;
+}
+.dept-tt-cell--filled {
+  background: rgba(49, 156, 181, 0.09);
+  border-left-color: rgba(49, 156, 181, 0.2);
+}
+.dept-tt-cell--filled:hover {
+  background: rgba(49, 156, 181, 0.16);
+}
+.dept-tt-code {
+  display: block;
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: #319cb5;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  letter-spacing: 0.04em;
+}
+.dept-tt-name {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--color-text, #e1f5f9);
+  margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.dept-tt-fac {
+  display: block;
+  font-size: 0.63rem;
+  color: var(--color-text-secondary, #7fa8b5);
+  margin-top: 0.08rem;
+}
+
+/* ── Card action buttons ── */
+.dept-icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.28rem 0.45rem;
+  line-height: 1;
+  transition: background 0.2s, transform 0.15s;
+  color: var(--color-text-secondary, #7fa8b5);
+}
+.dept-icon-btn:hover {
+  background: rgba(49, 156, 181, 0.18);
+  transform: scale(1.1);
+}
+.dept-icon-btn--del:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.dept-view-btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.55rem;
+  border-radius: 9px;
+  border: 1px solid var(--dept-color, #319cb5);
+  background: transparent;
+  color: var(--dept-color, #319cb5);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.02em;
+}
+.dept-view-btn:hover {
+  background: var(--dept-color, #319cb5);
+  color: #fff;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--dept-color, #319cb5) 40%, transparent);
+}
+
+/* ── Attendance bar inside table ── */
+.dept-card-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Light mode overrides ── */
+[data-theme="light"] .dept-modal {
+  background: #f0f8fa;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .dept-modal__head {
+  background: #f0f8fa;
+}
+[data-theme="light"] .dept-modal__close:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+[data-theme="light"] .dept-input,
+[data-theme="light"] .dept-textarea {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #1a2c36;
+}
+[data-theme="light"] .dept-faculty-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .dept-faculty-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .dept-tt-cell--filled {
+  background: rgba(49, 156, 181, 0.12);
+}
+[data-theme="light"] .dept-icon-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #4a7a8a;
+}
+[data-theme="light"] .dept-icon-btn:hover {
+  background: rgba(49, 156, 181, 0.15);
+}
+[data-theme="light"] .dept-tab {
+  color: #4a7a8a;
+}
+[data-theme="light"] .dept-modal-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .dept-form-row2 {
+    grid-template-columns: 1fr;
+  }
+  .dept-faculty-grid {
+    grid-template-columns: 1fr;
+  }
+  .dept-faculty-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dept-faculty-card__actions {
+    flex-direction: row;
+  }
+  .dept-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+}
