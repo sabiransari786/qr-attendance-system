@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { registerStudent } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import Toast from "../components/Toast";
+import { DEPARTMENTS, SEMESTERS, SECTIONS } from "../config/dummyData";
 import "../styles/auth.css";
 import {
   fadeInUp,
@@ -39,6 +40,9 @@ function Signup() {
     email: "",
     rollNumber: "",
     contactNumber: "",
+    department: "",
+    semester: "",
+    section: "",
     password: "",
     confirmPassword: "",
   });
@@ -130,6 +134,9 @@ function Signup() {
         email: formValues.email.trim(),
         student_id: formValues.rollNumber.trim(),
         contact_number: formValues.contactNumber.trim(),
+        department: formValues.department || undefined,
+        semester: formValues.semester || undefined,
+        section: formValues.section || undefined,
         password: formValues.password,
         role: "student",
       };
@@ -147,6 +154,9 @@ function Signup() {
         email: "",
         rollNumber: "",
         contactNumber: "",
+        department: "",
+        semester: "",
+        section: "",
         password: "",
         confirmPassword: "",
       });
@@ -289,6 +299,69 @@ function Signup() {
               required
               whileFocus={{ boxShadow: '0 0 0 3px rgba(49, 156, 181, 0.3)', transition: { duration: 0.2 } }}
             />
+          </motion.div>
+
+          {/* Department, Semester, Section Row */}
+          <motion.div className="signup__form-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
+            <label className="signup__label" htmlFor="department">
+              Department
+            </label>
+            <select
+              id="department"
+              name="department"
+              className="signup__input"
+              value={formValues.department}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              style={{ cursor: 'pointer' }}
+            >
+              <option value="">-- Select Department --</option>
+              {DEPARTMENTS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </motion.div>
+
+          <motion.div
+            style={{ display: 'flex', gap: '1rem' }}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.38, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="signup__form-group" style={{ flex: 1 }}>
+              <label className="signup__label" htmlFor="semester">Semester</label>
+              <select
+                id="semester"
+                name="semester"
+                className="signup__input"
+                value={formValues.semester}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                style={{ cursor: 'pointer' }}
+              >
+                <option value="">-- Semester --</option>
+                {SEMESTERS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="signup__form-group" style={{ flex: 1 }}>
+              <label className="signup__label" htmlFor="section">Section</label>
+              <select
+                id="section"
+                name="section"
+                className="signup__input"
+                value={formValues.section}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                style={{ cursor: 'pointer' }}
+              >
+                <option value="">-- Section --</option>
+                {SECTIONS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
           </motion.div>
 
           {/* Password Field */}

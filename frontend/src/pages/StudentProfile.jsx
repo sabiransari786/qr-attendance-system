@@ -703,14 +703,17 @@ function StudentProfile() {
               <div className="form-group">
                 <label className="form-label">Department</label>
                 {editing ? (
-                  <input
-                    type="text"
+                  <select
                     name="department"
                     className="form-input"
                     value={editedData.department}
                     onChange={handleInputChange}
-                    placeholder="e.g., Computer Science"
-                  />
+                  >
+                    <option value="">-- Select Department --</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 ) : (
                   <p className="form-value">{profileData.department || "Not specified"}</p>
                 )}

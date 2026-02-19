@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
+import { fadeInUp, staggerContainer } from "../animations/animationConfig";
+import { DEPARTMENTS } from "../config/dummyData";
 import "../styles/profile.css";
 
 function AdminProfile() {
@@ -386,24 +389,36 @@ function AdminProfile() {
   }
 
   return (
-    <div className="profile-container">
+    <motion.div
+      className="profile-container"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="profile__objects" aria-hidden="true">
         <span className="profile__object profile__object--sphere" />
         <span className="profile__object profile__object--ring" />
         <span className="profile__object profile__object--cube" />
       </div>
-      <header className="dashboard__header">
+      <motion.header
+        className="dashboard__header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div>
           <h1 className="dashboard__title">Admin Profile</h1>
           <p className="dashboard__subtitle">View and edit your profile information</p>
         </div>
-        <button
+        <motion.button
           className="dashboard__button dashboard__button--secondary"
           onClick={() => navigate("/admin-dashboard")}
+          whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
+          whileTap={{ scale: 0.96 }}
         >
           ← Back to Dashboard
-        </button>
-      </header>
+        </motion.button>
+      </motion.header>
 
       <main className="profile-card" style={{position:'relative', zIndex:1}}>
         {/* Message Display */}
@@ -616,14 +631,17 @@ function AdminProfile() {
               <div className="form-group">
                 <label className="form-label">Department</label>
                 {editing ? (
-                  <input
-                    type="text"
+                  <select
                     name="department"
                     className="form-input"
                     value={editedData.department}
                     onChange={handleInputChange}
-                    placeholder="e.g., Administration"
-                  />
+                  >
+                    <option value="">-- Select Department --</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 ) : (
                   <p className="form-value">{profileData.department || "Not specified"}</p>
                 )}
@@ -718,7 +736,7 @@ function AdminProfile() {
           </div>
         </section>
       </main>
-    </div>
+    </motion.div>
   );
 }
 

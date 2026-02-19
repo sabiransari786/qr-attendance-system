@@ -30,7 +30,7 @@
   transform-style: preserve-3d;
   filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
   opacity: 0.85;
-  animation: unauthorized-object-float 6s linear infinite;
+  animation: unauthorized-object-float 14s linear infinite;
 }
 
 .unauthorized__object--sphere {
@@ -40,7 +40,7 @@
   left: 8%;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
-  animation-duration: 7s;
+  animation-duration: 16s;
 }
 
 .unauthorized__object--ring {
@@ -51,7 +51,7 @@
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
   box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
-  animation-duration: 7.5s;
+  animation-duration: 18s;
 }
 
 .unauthorized__object--cube {
@@ -62,7 +62,7 @@
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
   transform: rotate(18deg);
-  animation-duration: 6s;
+  animation-duration: 14s;
 }
 
 [data-theme="light"] .unauthorized__object {
@@ -87,7 +87,7 @@
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
   50% {
-    transform: translate3d(60px, -90px, 160px) rotate(32deg);
+    transform: translate3d(30px, -45px, 80px) rotate(16deg);
   }
 }
 

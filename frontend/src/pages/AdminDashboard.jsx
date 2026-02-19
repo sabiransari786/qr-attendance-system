@@ -1,7 +1,9 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
+import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from "../animations/animationConfig";
 import "../styles/dashboard.css";
 
 function AdminDashboard() {
@@ -336,31 +338,52 @@ function AdminDashboard() {
   });
 
   return (
-    <div className="dashboard">
+    <motion.div
+      className="dashboard"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="dashboard__objects" aria-hidden="true">
         <span className="dashboard__object dashboard__object--sphere" />
         <span className="dashboard__object dashboard__object--torus" />
         <span className="dashboard__object dashboard__object--diamond" />
       </div>
-      <header className="dashboard__header">
+      <motion.header
+        className="dashboard__header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div>
           <h1 className="dashboard__title">Admin Dashboard</h1>
           <p className="dashboard__subtitle">
             Welcome, {user?.name}! Oversee platform access, departments, and system-level reporting.
           </p>
         </div>
-      </header>
+      </motion.header>
 
       <main className="admin-dashboard" aria-label="Admin overview">
-        <section className="admin-dashboard__stats" aria-label="Admin highlights">
-          {stats.map((stat) => (
-            <div key={stat.label} className="admin-dashboard__stat">
+        <motion.section
+          className="admin-dashboard__stats"
+          aria-label="Admin highlights"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              className="admin-dashboard__stat"
+              variants={fadeInUp}
+              whileHover={{ y: -6, scale: 1.03, transition: { type: 'spring', stiffness: 300, damping: 24 } }}
+            >
               <p className="admin-dashboard__stat-label">{stat.label}</p>
               <div className="admin-dashboard__stat-value">{stat.value}</div>
               <span className="admin-dashboard__stat-note">{stat.note}</span>
-            </div>
+            </motion.div>
           ))}
-        </section>
+        </motion.section>
 
         <section className="admin-dashboard__actions" aria-label="Admin quick actions">
           <button
@@ -421,67 +444,81 @@ function AdminDashboard() {
           </button>
         </section>
 
-        <section className="admin-dashboard__cards">
-          <article
+        <motion.section
+          className="admin-dashboard__cards"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
             onClick={() => {
               setShowStudents(!showStudents);
               setShowUsers(false);
               setShowLogs(false);
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
           >
             <h2 className="dashboard__card-title">Student Directory</h2>
             <p className="dashboard__card-text">
               Review every registered student and manage their access status.
             </p>
             <span className="dashboard__card-action">View students</span>
-          </article>
+          </motion.article>
 
-          <article
+          <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
             onClick={() => {
               setShowUsers(true);
               setShowStudents(false);
               setShowLogs(false);
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
           >
             <h2 className="dashboard__card-title">User Access</h2>
             <p className="dashboard__card-text">
               Control roles, permissions, and account status in one place.
             </p>
             <span className="dashboard__card-action">Manage users</span>
-          </article>
+          </motion.article>
 
-          <article
+          <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
             onClick={() => {
               navigate('/admin/approvals');
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
           >
             <h2 className="dashboard__card-title">User Approvals</h2>
             <p className="dashboard__card-text">
               Pre-approve users before they register. Verify email, phone, and role.
             </p>
             <span className="dashboard__card-action">Manage approvals</span>
-          </article>
+          </motion.article>
 
-          <article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted">
+          <motion.article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted" variants={fadeInUp}>
             <h2 className="dashboard__card-title">Departments & Courses</h2>
             <p className="dashboard__card-text">
               Configure departments, courses, and timetable assignments.
             </p>
             <span className="dashboard__card-action">Coming soon</span>
-          </article>
+          </motion.article>
 
-          <article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted">
+          <motion.article className="dashboard__card admin-dashboard__card admin-dashboard__card--muted" variants={fadeInUp}>
             <h2 className="dashboard__card-title">System Reports</h2>
             <p className="dashboard__card-text">
               Track attendance trends, health metrics, and audit logs.
             </p>
             <span className="dashboard__card-action">Coming soon</span>
-          </article>
+          </motion.article>
 
-          <article
+          <motion.article
             className="dashboard__card dashboard__card--clickable admin-dashboard__card"
             onClick={() => {
               setShowLogs(true);
@@ -489,14 +526,17 @@ function AdminDashboard() {
               setShowStudents(false);
               setShowApprovals(false);
             }}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
           >
             <h2 className="dashboard__card-title">Activity Logs</h2>
             <p className="dashboard__card-text">
               Monitor authentication, attendance, and admin actions in real time.
             </p>
             <span className="dashboard__card-action">View activity</span>
-          </article>
-        </section>
+          </motion.article>
+        </motion.section>
 
         {showStudents && (
           <section className="admin-dashboard__students" aria-label="Student list">
@@ -826,7 +866,7 @@ function AdminDashboard() {
           </section>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 }
 

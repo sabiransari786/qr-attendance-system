@@ -1,7 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
+import { fadeInUp, staggerContainer } from '../animations/animationConfig';
 import '../styles/dashboard.css';
 
 function FacultySuspiciousActivity() {
@@ -126,25 +128,37 @@ function FacultySuspiciousActivity() {
     });
 
   return (
-    <div className="dashboard">
+    <motion.div
+      className="dashboard"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="dashboard__objects" aria-hidden="true">
         <span className="dashboard__object dashboard__object--sphere" />
         <span className="dashboard__object dashboard__object--torus" />
         <span className="dashboard__object dashboard__object--diamond" />
       </div>
 
-      <header className="dashboard__header">
+      <motion.header
+        className="dashboard__header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div>
           <h1 className="dashboard__title">🚨 Suspicious Activity Log</h1>
           <p className="dashboard__subtitle">Review and manage flagged attendance attempts</p>
         </div>
-        <button
+        <motion.button
           className="dashboard__button dashboard__button--secondary"
           onClick={handleBack}
+          whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
+          whileTap={{ scale: 0.96 }}
         >
           ← Back
-        </button>
-      </header>
+        </motion.button>
+      </motion.header>
 
       <main>
         {loading && (
@@ -451,7 +465,7 @@ function FacultySuspiciousActivity() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

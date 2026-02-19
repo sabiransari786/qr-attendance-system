@@ -1,6 +1,8 @@
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
+import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import "../styles/profile.css";
 
 /**
@@ -17,7 +19,12 @@ function TeacherProfile() {
   };
 
   return (
-    <div className="profile-container">
+    <motion.div
+      className="profile-container"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="profile__objects" aria-hidden="true">
         <span className="profile__object profile__object--sphere" />
         <span className="profile__object profile__object--ring" />
@@ -98,7 +105,7 @@ function TeacherProfile() {
           </section>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

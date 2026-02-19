@@ -11,9 +11,11 @@
 
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import { QRCodeCanvas } from 'qrcode.react';
 import { API_BASE_URL } from '../utils/constants';
+import { fadeInUp, staggerContainer } from '../animations/animationConfig';
 import '../styles/qr-generation.css';
 
 function FacultyQRGeneration() {
@@ -320,14 +322,31 @@ function FacultyQRGeneration() {
   // =========================================================================
 
   return (
-    <div className="qr-generation-container">
+    <motion.div
+      className="qr-generation-container"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="qr__objects" aria-hidden="true">
         <span className="qr__object qr__object--sphere" />
         <span className="qr__object qr__object--ring" />
         <span className="qr__object qr__object--cube" />
       </div>
-      <div className="qr-generation-wrapper">
-        <h1 className="qr-generation-title">QR Code Generation for Attendance</h1>
+      <motion.div
+        className="qr-generation-wrapper"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35, delay: 0.1 }}
+      >
+        <motion.h1
+          className="qr-generation-title"
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+        >
+          QR Code Generation for Attendance
+        </motion.h1>
         
         {/* Configuration Panel */}
         {showConfig && (
@@ -525,8 +544,8 @@ function FacultyQRGeneration() {
             </button>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

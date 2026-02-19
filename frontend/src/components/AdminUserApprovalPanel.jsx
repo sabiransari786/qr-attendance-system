@@ -333,14 +333,30 @@ function AdminUserApprovalPanel({ isOpen, onClose }) {
 
             <div className="admin-approval-form__group">
               <label htmlFor="department">Department</label>
-              <input
-                type="text"
+              <select
                 id="department"
                 name="department"
                 value={formData.department}
                 onChange={handleFormChange}
-                placeholder="Computer Science"
-              />
+              >
+                <option value="">-- Select Department --</option>
+                {[
+                  "Computer Science & Engineering",
+                  "Information Technology",
+                  "Electronics & Communication Engineering",
+                  "Electrical Engineering",
+                  "Mechanical Engineering",
+                  "Civil Engineering",
+                  "Chemical Engineering",
+                  "Biotechnology",
+                  "Mathematics & Computing",
+                  "Physics",
+                  "Administration",
+                  "Other",
+                ].map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
             </div>
           </div>
 

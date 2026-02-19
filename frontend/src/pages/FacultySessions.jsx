@@ -1,7 +1,10 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
+import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from '../animations/animationConfig';
+import { COURSES } from '../config/dummyData';
 import '../styles/dashboard.css';
 
 function FacultySessions() {
@@ -219,24 +222,36 @@ function FacultySessions() {
   };
 
   return (
-    <div className="dashboard">
+    <motion.div
+      className="dashboard"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="dashboard__objects" aria-hidden="true">
         <span className="dashboard__object dashboard__object--sphere" />
         <span className="dashboard__object dashboard__object--torus" />
         <span className="dashboard__object dashboard__object--diamond" />
       </div>
-      <header className="dashboard__header">
+      <motion.header
+        className="dashboard__header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div>
           <h1 className="dashboard__title">📚 My Class Sessions</h1>
           <p className="dashboard__subtitle">Manage and monitor all your active class sessions</p>
         </div>
-        <button
+        <motion.button
           className="dashboard__button dashboard__button--secondary"
           onClick={handleBack}
+          whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
+          whileTap={{ scale: 0.96 }}
         >
           ← Back
-        </button>
-      </header>
+        </motion.button>
+      </motion.header>
 
       <main>
         {loading && (
@@ -272,17 +287,29 @@ function FacultySessions() {
         )}
 
         {!loading && !error && sessions.length > 0 && (
-          <div className="dashboard__grid">
-            <div className="dashboard__card dashboard__card--clickable" onClick={handleOpenCreate} role="button" tabIndex={0} onKeyPress={(e) => e.key === 'Enter' && handleOpenCreate()} style={{ cursor: 'pointer', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <motion.div
+            className="dashboard__grid"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div className="dashboard__card dashboard__card--clickable" onClick={handleOpenCreate} role="button" tabIndex={0} onKeyPress={(e) => e.key === 'Enter' && handleOpenCreate()} style={{ cursor: 'pointer', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+              variants={fadeInUp}
+              whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+              whileTap={{ scale: 0.97 }}
+            >
               <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}>➕</div>
               <h3 className="dashboard__card-title">Add New Session</h3>
               <p className="dashboard__card-text">Create a new class session with subject, location, and time.</p>
               <button className="dashboard__card-action" style={{ marginTop: '1.2rem' }}>
                 Create Session →
               </button>
-            </div>
+            </motion.div>
             {sessions.map((session) => (
-              <div key={session.id} className="dashboard__card">
+              <motion.div key={session.id} className="dashboard__card"
+                variants={fadeInUp}
+                whileHover={{ y: -6, boxShadow: '0 16px 40px rgba(49,156,181,0.18)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}
+              >
                 <div style={{ flex: 1 }}>
                   <h3 style={{ 
                     margin: '0 0 0.75rem 0', 
@@ -356,9 +383,9 @@ function FacultySessions() {
                     🗑️ Delete
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </main>
 
@@ -384,14 +411,19 @@ function FacultySessions() {
             <h2 style={{ margin: '0 0 1rem 0' }}>Create New Session</h2>
             <form onSubmit={handleCreateSession}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input
-                  type="text"
+                <select
                   className="form-input"
-                  placeholder="Subject"
                   value={newSession.subject}
                   onChange={(e) => setNewSession((prev) => ({ ...prev, subject: e.target.value }))}
                   required
-                />
+                >
+                  <option value="">-- Select Subject --</option>
+                  {COURSES.map((c) => (
+                    <option key={c.code} value={`${c.name} (${c.code})`}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   className="form-input"
@@ -456,14 +488,19 @@ function FacultySessions() {
             <h2 style={{ margin: '0 0 1rem 0' }}>Edit Session</h2>
             <form onSubmit={handleEditSession}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input
-                  type="text"
+                <select
                   className="form-input"
-                  placeholder="Subject"
                   value={editSession.subject}
                   onChange={(e) => setEditSession((prev) => ({ ...prev, subject: e.target.value }))}
                   required
-                />
+                >
+                  <option value="">-- Select Subject --</option>
+                  {COURSES.map((c) => (
+                    <option key={c.code} value={`${c.name} (${c.code})`}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   className="form-input"
@@ -556,7 +593,7 @@ function FacultySessions() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

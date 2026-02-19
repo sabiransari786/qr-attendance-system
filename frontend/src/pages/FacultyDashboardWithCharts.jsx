@@ -1,8 +1,10 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
 import { logout } from "../services/api";
 import { API_BASE_URL } from "../utils/constants";
+import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from "../animations/animationConfig";
 import { 
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
@@ -137,8 +139,18 @@ function FacultyDashboardWithCharts() {
   };
 
   return (
-    <div className="dashboard">
-      <header className="dashboard__header">
+    <motion.div
+      className="dashboard"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <motion.header
+        className="dashboard__header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div>
           <h1 className="dashboard__title">👨‍🏫 Faculty Dashboard</h1>
           <p className="dashboard__subtitle">
@@ -146,22 +158,26 @@ function FacultyDashboardWithCharts() {
           </p>
         </div>
         <div className="dashboard__buttons">
-          <button
+          <motion.button
             className="dashboard__button dashboard__button--primary"
             type="button"
             onClick={handleViewProfile}
+            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
+            whileTap={{ scale: 0.96 }}
           >
             👤 My Profile
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             className="dashboard__button dashboard__button--secondary"
             type="button"
             onClick={handleLogout}
+            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
+            whileTap={{ scale: 0.96 }}
           >
             Logout
-          </button>
+          </motion.button>
         </div>
-      </header>
+      </motion.header>
 
       <main className="dashboard__content">
         {loading ? (
@@ -170,14 +186,23 @@ function FacultyDashboardWithCharts() {
           </div>
         ) : (
           <>
-            <section className="dashboard__grid" aria-label="Faculty overview">
-              <section
+            <motion.section
+              className="dashboard__grid"
+              aria-label="Faculty overview"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.section
                 className="dashboard__card dashboard__card--clickable"
                 onClick={handleGenerateQR}
                 role="button"
                 tabIndex={0}
                 onKeyPress={(e) => e.key === 'Enter' && handleGenerateQR()}
                 style={{ cursor: 'pointer' }}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+                whileTap={{ scale: 0.97 }}
               >
                 <div style={{
                   fontSize: '2.5rem',
@@ -193,15 +218,18 @@ function FacultyDashboardWithCharts() {
                 <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
                   Generate QR Code →
                 </button>
-              </section>
+              </motion.section>
 
-              <section
+              <motion.section
                 className="dashboard__card dashboard__card--clickable"
                 onClick={handleViewSessions}
                 role="button"
                 tabIndex={0}
                 onKeyPress={(e) => e.key === 'Enter' && handleViewSessions()}
                 style={{ cursor: 'pointer' }}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+                whileTap={{ scale: 0.97 }}
               >
                 <div style={{
                   fontSize: '2.5rem',
@@ -239,15 +267,18 @@ function FacultyDashboardWithCharts() {
                 <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
                   View Sessions →
                 </button>
-              </section>
+              </motion.section>
 
-              <section
+              <motion.section
                 className="dashboard__card dashboard__card--clickable"
                 onClick={handleViewReports}
                 role="button"
                 tabIndex={0}
                 onKeyPress={(e) => e.key === 'Enter' && handleViewReports()}
                 style={{ cursor: 'pointer' }}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+                whileTap={{ scale: 0.97 }}
               >
                 <div style={{
                   fontSize: '2.5rem',
@@ -273,15 +304,18 @@ function FacultyDashboardWithCharts() {
                 <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
                   View Reports →
                 </button>
-              </section>
+              </motion.section>
 
-              <section
+              <motion.section
                 className="dashboard__card dashboard__card--clickable"
                 onClick={handleViewSuspiciousActivity}
                 role="button"
                 tabIndex={0}
                 onKeyPress={(e) => e.key === 'Enter' && handleViewSuspiciousActivity()}
                 style={{ cursor: 'pointer' }}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+                whileTap={{ scale: 0.97 }}
               >
                 <div style={{
                   fontSize: '2.5rem',
@@ -297,8 +331,8 @@ function FacultyDashboardWithCharts() {
                 <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
                   View Activity →
                 </button>
-              </section>
-            </section>
+              </motion.section>
+            </motion.section>
 
             {/* Statistics Cards */}
             <section className="dashboard__stats-grid">
@@ -466,7 +500,7 @@ function FacultyDashboardWithCharts() {
           </>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,8 +1,11 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import Toast from "../components/Toast";
+import { fadeInUp, staggerContainer } from "../animations/animationConfig";
+import { DEPARTMENTS } from "../config/dummyData";
 import "../styles/admin-approval-page.css";
 
 function AdminUserApprovalPage() {
@@ -195,23 +198,35 @@ function AdminUserApprovalPage() {
   });
 
   return (
-    <div className="admin-approval-page">
+    <motion.div
+      className="admin-approval-page"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="admin-approval-page__objects" aria-hidden="true">
         <span className="admin-approval-page__object admin-approval-page__object--1" />
         <span className="admin-approval-page__object admin-approval-page__object--2" />
         <span className="admin-approval-page__object admin-approval-page__object--3" />
       </div>
 
-      <header className="admin-approval-page__header">
+      <motion.header
+        className="admin-approval-page__header"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="admin-approval-page__header-content">
-          <button
+          <motion.button
             type="button"
             className="admin-approval-page__back-btn"
             onClick={() => navigate("/admin-dashboard")}
             aria-label="Go back to dashboard"
+            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
+            whileTap={{ scale: 0.96 }}
           >
             ← Back
-          </button>
+          </motion.button>
           <div>
             <h1 className="admin-approval-page__title">User Approvals</h1>
             <p className="admin-approval-page__subtitle">
@@ -219,7 +234,7 @@ function AdminUserApprovalPage() {
             </p>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {toast && (
         <Toast
@@ -319,14 +334,17 @@ function AdminUserApprovalPage() {
 
                 <div className="admin-approval-form__group">
                   <label htmlFor="department">Department</label>
-                  <input
-                    type="text"
+                  <select
                     id="department"
                     name="department"
                     value={formData.department}
                     onChange={handleFormChange}
-                    placeholder="Computer Science"
-                  />
+                  >
+                    <option value="">-- Select Department --</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -520,7 +538,7 @@ function AdminUserApprovalPage() {
           </section>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 }
 
