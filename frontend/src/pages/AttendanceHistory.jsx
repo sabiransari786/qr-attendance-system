@@ -44,23 +44,48 @@ function AttendanceHistory() {
 
       if (response.ok) {
         const data = await response.json();
-        const records = data.data || [];
+        const raw = data.data || [];
+        // Normalize API fields to what the component expects
+        const records = raw.map(r => ({
+          id: r.id,
+          subject: r.subject || 'Unknown Subject',
+          date: r.marked_at ? r.marked_at.split('T')[0] : (r.session_start_time ? r.session_start_time.split('T')[0] : '-'),
+          time: r.session_start_time
+            ? new Date(r.session_start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            : '-',
+          status: r.status,
+          markedAt: r.marked_at
+            ? new Date(r.marked_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            : '-',
+          faculty: r.faculty_name || '-',
+          location: r.location || '-',
+        }));
         setAttendanceRecords(records);
         
         // Extract unique subjects
         const uniqueSubjects = [...new Set(records.map(r => r.subject))];
         setSubjects(uniqueSubjects);
       } else {
-        // Use sample data for demonstration
+        // Fallback sample data with realistic Feb 2026 dates
+        const today = new Date().toISOString().split('T')[0];
+        const d = (n) => new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
         const sampleData = [
-          { id: 1, subject: "Data Structures", date: "2024-01-15", time: "09:00 AM", status: "present", markedAt: "09:05 AM" },
-          { id: 2, subject: "Web Development", date: "2024-01-15", time: "11:00 AM", status: "present", markedAt: "11:03 AM" },
-          { id: 3, subject: "Database Management", date: "2024-01-16", time: "10:00 AM", status: "absent", markedAt: "-" },
-          { id: 4, subject: "Operating Systems", date: "2024-01-16", time: "02:00 PM", status: "late", markedAt: "02:12 PM" },
-          { id: 5, subject: "Data Structures", date: "2024-01-17", time: "09:00 AM", status: "present", markedAt: "09:02 AM" }
+          { id: 1,  subject: 'Data Structures',     date: today,  time: '10:00 AM', status: 'present', markedAt: '10:05 AM', faculty: 'Teacher',      location: 'Room 301' },
+          { id: 2,  subject: 'Database Management', date: d(1),   time: '10:00 AM', status: 'present', markedAt: '10:04 AM', faculty: 'Test Faculty', location: 'Room 302' },
+          { id: 3,  subject: 'Algorithm Design',    date: d(1),   time: '02:00 PM', status: 'late',    markedAt: '02:10 PM', faculty: 'Prof. Kumar', location: 'Room 303' },
+          { id: 4,  subject: 'Operating Systems',   date: d(2),   time: '10:00 AM', status: 'present', markedAt: '10:02 AM', faculty: 'Teacher',      location: 'Lab 101' },
+          { id: 5,  subject: 'Data Structures',     date: d(2),   time: '01:00 PM', status: 'present', markedAt: '01:03 PM', faculty: 'Teacher',      location: 'Room 301' },
+          { id: 6,  subject: 'Web Development',     date: d(3),   time: '09:00 AM', status: 'absent',  markedAt: '-',         faculty: 'Teacher',      location: 'Lab 201' },
+          { id: 7,  subject: 'Database Management', date: d(3),   time: '02:00 PM', status: 'present', markedAt: '02:05 PM', faculty: 'Test Faculty', location: 'Room 302' },
+          { id: 8,  subject: 'Operating Systems',   date: d(4),   time: '10:00 AM', status: 'present', markedAt: '10:03 AM', faculty: 'Teacher',      location: 'Lab 101' },
+          { id: 9,  subject: 'Algorithm Design',    date: d(4),   time: '01:00 PM', status: 'present', markedAt: '01:04 PM', faculty: 'Prof. Kumar', location: 'Room 303' },
+          { id: 10, subject: 'Data Structures',     date: d(7),   time: '10:00 AM', status: 'present', markedAt: '10:02 AM', faculty: 'Teacher',      location: 'Room 301' },
+          { id: 11, subject: 'Web Development',     date: d(7),   time: '01:00 PM', status: 'late',    markedAt: '01:12 PM', faculty: 'Teacher',      location: 'Lab 201' },
+          { id: 12, subject: 'Database Management', date: d(8),   time: '10:00 AM', status: 'present', markedAt: '10:01 AM', faculty: 'Test Faculty', location: 'Room 302' },
+          { id: 13, subject: 'Operating Systems',   date: d(8),   time: '02:00 PM', status: 'absent',  markedAt: '-',         faculty: 'Teacher',      location: 'Lab 101' },
         ];
         setAttendanceRecords(sampleData);
-        setSubjects(["Data Structures", "Web Development", "Database Management", "Operating Systems"]);
+        setSubjects(['Data Structures', 'Web Development', 'Database Management', 'Algorithm Design', 'Operating Systems']);
       }
       setLoading(false);
     } catch (error) {
@@ -85,12 +110,12 @@ function AttendanceHistory() {
     // Filter by date range
     if (filters.dateFrom) {
       filtered = filtered.filter(record => 
-        new Date(record.date) >= new Date(filters.dateFrom)
+        record.date && record.date >= filters.dateFrom
       );
     }
     if (filters.dateTo) {
       filtered = filtered.filter(record => 
-        new Date(record.date) <= new Date(filters.dateTo)
+        record.date && record.date <= filters.dateTo
       );
     }
 
@@ -158,7 +183,7 @@ function AttendanceHistory() {
         </div>
         <motion.button
           className="dashboard__button dashboard__button--secondary"
-          onClick={() => navigate("/student/dashboard")}
+          onClick={() => navigate("/student-dashboard")}
           whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
           whileTap={{ scale: 0.96 }}
         >
@@ -287,7 +312,7 @@ function AttendanceHistory() {
                 <tbody>
                   {filteredRecords.map(record => (
                     <tr key={record.id}>
-                      <td>{new Date(record.date).toLocaleDateString()}</td>
+                      <td>{record.date ? new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</td>
                       <td>{record.subject}</td>
                       <td>{record.time}</td>
                       <td>
