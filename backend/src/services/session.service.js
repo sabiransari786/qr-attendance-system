@@ -389,8 +389,8 @@ const createSession = async (facultyId, sessionData) => {
                 status, 
                 start_time, 
                 end_time, 
-                qr_token, 
-                qr_expiry, 
+                qr_code, 
+                qr_expiry_time, 
                 created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
             [
@@ -429,8 +429,8 @@ const createSession = async (facultyId, sessionData) => {
                 s.status,
                 s.start_time,
                 s.end_time,
-                s.qr_token,
-                s.qr_expiry,
+                s.qr_code,
+                s.qr_expiry_time,
                 s.created_at,
                 u.name as faculty_name,
                 u.email as faculty_email
@@ -455,7 +455,7 @@ const createSession = async (facultyId, sessionData) => {
             status: createdSession.status,
             startTime: createdSession.start_time,
             endTime: createdSession.end_time,
-            qrExpiry: createdSession.qr_expiry,
+            qrExpiry: createdSession.qr_expiry_time,
             createdAt: createdSession.created_at,
             faculty: {
                 name: createdSession.faculty_name,
@@ -762,8 +762,8 @@ const getSessionById = async (sessionId) => {
                 s.status,
                 s.start_time,
                 s.end_time,
-                s.qr_expiry,
-                s.qr_token,
+                s.qr_expiry_time,
+                s.qr_code,
                 s.created_at,
                 u.name as faculty_name,
                 u.email as faculty_email
@@ -812,7 +812,7 @@ const getSessionById = async (sessionId) => {
             status: session.status,
             startTime: session.start_time,
             endTime: session.end_time,
-            qrExpiry: session.qr_expiry,
+            qrExpiry: session.qr_expiry_time,
             createdAt: session.created_at,
             faculty: {
                 name: session.faculty_name,
@@ -821,10 +821,10 @@ const getSessionById = async (sessionId) => {
             // QR data - agar session active hai toh QR payload bhi de sakte hain
             // Security: QR token expose nahi karte - sirf expiry time
             qrInfo: {
-                expiryTime: session.qr_expiry ? new Date(session.qr_expiry).getTime() : null,
+                expiryTime: session.qr_expiry_time ? new Date(session.qr_expiry_time).getTime() : null,
                 isValid: session.status === SESSION_STATUS.ACTIVE && 
-                         session.qr_expiry && 
-                         new Date(session.qr_expiry) > new Date()
+                         session.qr_expiry_time && 
+                         new Date(session.qr_expiry_time) > new Date()
             },
             // Attendance statistics
             attendance: {
