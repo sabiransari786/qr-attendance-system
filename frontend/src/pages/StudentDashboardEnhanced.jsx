@@ -558,7 +558,7 @@ function StudentDashboardEnhanced() {
           </div>
         </motion.section>
 
-        {/* Quick Tips */
+        {/* Quick Tips */}
         <motion.section
           className="dashboard__card content-card tips-card"
           style={{ marginTop: '2rem', background: 'var(--student-card-1)', color: 'var(--student-card-text)', boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)' }}
