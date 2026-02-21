@@ -308,7 +308,7 @@ const login = async (email, password) => {
         // Email se user find karo (using LOWER for case-insensitive comparison)
         // Email unique hai - sirf ek user milega (if exists)
         const [users] = await pool.query(
-            `SELECT id, name, email, password, role, created_at
+            `SELECT id, name, email, password, role, is_active, created_at
              FROM users 
              WHERE LOWER(email) = LOWER(?)`,
             [normalizedEmail]
@@ -321,6 +321,13 @@ const login = async (email, password) => {
         }
         
         const user = users[0];
+
+        // is_active check: agar admin ne account deactivate kar diya hai toh login block
+        if (user.is_active === 0 || user.is_active === false) {
+            throw new ValidationError(
+                'Your account has been deactivated. Please contact the administrator.'
+            );
+        }
         
         // ---------------------------------------------------------------------
         // STEP 3: Password Verification

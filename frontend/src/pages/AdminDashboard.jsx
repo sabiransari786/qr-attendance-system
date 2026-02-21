@@ -404,6 +404,9 @@ function AdminDashboard() {
           <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/reports')}>
             Reports
           </button>
+          <button type="button" className="admin-dashboard__action" onClick={() => navigate('/admin/teachers')}>
+            Manage Teachers
+          </button>
         </section>
 
         <motion.section
@@ -496,6 +499,20 @@ function AdminDashboard() {
               Monitor authentication, attendance, and admin actions in real time.
             </p>
             <span className="dashboard__card-action">View activity</span>
+          </motion.article>
+
+          <motion.article
+            className="dashboard__card dashboard__card--clickable admin-dashboard__card"
+            onClick={() => navigate('/admin/teachers')}
+            variants={fadeInUp}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(111,120,255,0.25)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <h2 className="dashboard__card-title">👨‍🏫 Teacher Management</h2>
+            <p className="dashboard__card-text">
+              Create Teacher IDs, activate or deactivate accounts. Only pre-registered teachers can sign up and log in.
+            </p>
+            <span className="dashboard__card-action">Manage teachers</span>
           </motion.article>
         </motion.section>
 

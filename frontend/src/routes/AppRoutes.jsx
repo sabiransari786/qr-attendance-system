@@ -28,6 +28,7 @@ import AdminUserAccess from "../pages/AdminUserAccess";
 import AdminActivityLogs from "../pages/AdminActivityLogs";
 import AdminDepartments from "../pages/AdminDepartments";
 import AdminSystemReports from "../pages/AdminSystemReports";
+import AdminTeacherManagement from "../pages/AdminTeacherManagement";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -210,6 +211,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["admin"]}>
             <AdminSystemReports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/teachers"
+        element={
+          <ProtectedRoute requiredRoles={["admin"]}>
+            <AdminTeacherManagement />
           </ProtectedRoute>
         }
       />
