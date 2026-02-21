@@ -389,7 +389,6 @@ function FacultyQRGeneration() {
                   </div>
                 );
               })()}
-              )}
             </div>
 
             {/* Attendance Points Section */}
