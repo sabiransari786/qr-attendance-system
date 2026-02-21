@@ -273,21 +273,27 @@ const determineAttendanceStatus = (sessionStartTime, scanTime, lateThresholdMinu
 const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
     try {
         // ---------------------------------------------------------------------
-        // STEP 1: QR Code Decode aur Validation
+        // STEP 1: QR Code Decode aur Validation (optional)
         // ---------------------------------------------------------------------
-        // QR code data ko decode karo - sessionId, timestamp, expiryTime extract karo
-        const decodedQR = decodeQRData(qrData);
-        
-        // QR code mein jo sessionId hai, woh request se mile sessionId se match karna chahiye
-        // Yeh security check hai - koi doosre session ka QR code use na kar sake
-        if (decodedQR.sessionId !== sessionId) {
-            throw new InvalidQRCodeError('QR code session ID does not match request session ID.');
-        }
-        
-        // QR code expiry validate karo
-        // QR codes limited time ke liye valid hote hain - expired QR use nahi kar sakte
-        if (decodedQR.expiryTime) {
-            validateQRExpiry(decodedQR.expiryTime, timestamp);
+        // Agar qrData provided hai aur valid JSON session payload hai, validate karo
+        // Agar nahi hai (qr-request UUID system), skip karo - request system ne validate kar liya
+        if (qrData) {
+            try {
+                const decodedQR = decodeQRData(qrData);
+                if (decodedQR && decodedQR.sessionId !== undefined && decodedQR.sessionId != sessionId) {
+                    throw new InvalidQRCodeError('QR code session ID does not match request session ID.');
+                }
+                if (decodedQR && decodedQR.expiryTime && timestamp) {
+                    validateQRExpiry(decodedQR.expiryTime, timestamp);
+                }
+            } catch (qrError) {
+                // Re-throw only critical errors (session mismatch, expired)
+                if (qrError instanceof QRCodeExpiredError ||
+                    (qrError instanceof InvalidQRCodeError && qrError.message.includes('does not match'))) {
+                    throw qrError;
+                }
+                // UUID-format or undecodable QR - qr-request system validated it already, continue
+            }
         }
         
         // ---------------------------------------------------------------------

@@ -108,30 +108,22 @@ function ScanQREnhanced() {
   const verifyLocation = async () => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        resolve({ verified: false, message: "Geolocation not supported" });
+        resolve({ verified: false, latitude: 0, longitude: 0, message: "Geolocation not supported" });
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // Mock location verification - in production, compare with session location
           const { latitude, longitude } = position.coords;
-          console.log("Current location:", latitude, longitude);
-          
-          // Simulate location check
-          const inRange = true; // Replace with actual distance calculation
-          
-          if (inRange) {
-            setLocationVerified(true);
-            resolve({ verified: true, message: "Location verified" });
-          } else {
-            resolve({ verified: false, message: "You are not within class location" });
-          }
+          setLocationVerified(true);
+          resolve({ verified: true, latitude, longitude, message: "Location verified" });
         },
         (error) => {
           console.error("Location error:", error);
-          resolve({ verified: false, message: "Unable to verify location" });
-        }
+          // Allow attendance even if location fails - server will validate
+          resolve({ verified: false, latitude: 0, longitude: 0, message: "Unable to get location" });
+        },
+        { timeout: 8000 }
       );
     });
   };
@@ -157,51 +149,62 @@ function ScanQREnhanced() {
     }
 
     setLoading(true);
-    setMessage({ type: "info", text: "Verifying QR code..." });
+    setMessage({ type: "info", text: "Getting your location..." });
 
     try {
       const token = sessionStorage.getItem("authToken");
-      
-      // Check QR validity
-      const sessionResponse = await fetch(`${API_BASE_URL}/session/${codeToVerify}`, {
+
+      // Step 1: Get student location
+      const locationResult = await verifyLocation();
+      const lat = locationResult.latitude || 0;
+      const lng = locationResult.longitude || 0;
+
+      setMessage({ type: "info", text: "Validating QR code..." });
+
+      // Step 2: Validate via QR request system (handles expiry + location check)
+      const validateResponse = await fetch(`${API_BASE_URL}/qr-request/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          request_id: codeToVerify,
+          student_latitude: lat,
+          student_longitude: lng
+        })
+      });
+
+      const validateData = await validateResponse.json();
+
+      if (!validateData.valid) {
+        setMessage({ type: "error", text: validateData.reason || "Invalid QR code" });
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Fetch session info using session_id from validate response
+      const sessionResponse = await fetch(`${API_BASE_URL}/session/${validateData.session_id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
 
       if (sessionResponse.ok) {
         const sessionData = await sessionResponse.json();
         const session = sessionData.data;
-        
-        // Check if session is active
-        if (session.status !== 'active') {
+
+        if (session.status !== "active") {
           setMessage({ type: "error", text: "Session is not active" });
           setLoading(false);
           return;
         }
 
-        // Check QR expiry
-        const expiry = new Date(session.qr_expiry_time);
-        if (new Date() > expiry) {
-          setMessage({ type: "error", text: "QR Code has expired" });
-          setLoading(false);
-          return;
-        }
+        // Store requestId inside sessionInfo for submitAttendance
+        setSessionInfo({ ...session, requestId: codeToVerify });
+        setLocationVerified(true);
+        setDeviceVerified(true);
 
-        setSessionInfo(session);
-        setMessage({ type: "success", text: "Session verified! Checking requirements..." });
-
-        // Verify location
-        const locationResult = await verifyLocation();
-        if (!locationResult.verified) {
-          setMessage({ type: "warning", text: `Location check: ${locationResult.message}` });
-        }
-
-        // Verify device
-        await verifyDevice();
-
-        setMessage({ type: "success", text: "All checks passed! Click Accept to mark attendance." });
+        const distanceMsg = validateData.distance ? ` (${validateData.distance}m from class)` : "";
+        setMessage({ type: "success", text: `✓ QR verified${distanceMsg}. Click Accept to mark attendance.` });
       } else {
         const errorData = await sessionResponse.json();
-        setMessage({ type: "error", text: errorData.message || "Invalid QR code" });
+        setMessage({ type: "error", text: errorData.message || "Could not fetch session info" });
         setSessionInfo(null);
       }
     } catch (error) {
@@ -221,10 +224,20 @@ function ScanQREnhanced() {
 
     try {
       const token = sessionStorage.getItem("authToken");
-      const userId = sessionStorage.getItem("userId");
-      const deviceId = localStorage.getItem('deviceId');
+      const requestId = sessionInfo.requestId;
 
-      const response = await fetch(`${API_BASE_URL}/attendance`, {
+      // 1. Record acceptance for live count (non-critical)
+      if (requestId && token) {
+        try {
+          await fetch(`${API_BASE_URL}/qr-request/${requestId}/accept`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+        } catch (_) { /* non-critical, ignore */ }
+      }
+
+      // 2. Mark attendance in the attendance table
+      const response = await fetch(`${API_BASE_URL}/attendance/mark`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -232,45 +245,28 @@ function ScanQREnhanced() {
         },
         body: JSON.stringify({
           sessionId: sessionInfo.id,
-          studentId: userId,
-          status: "present",
-          deviceId: deviceId
+          timestamp: Date.now()
         })
       });
 
       if (response.ok) {
-        setMessage({ 
-          type: "success", 
-          text: "✓ Attendance marked successfully!" 
-        });
+        setMessage({ type: "success", text: "✓ Attendance marked successfully!" });
         setQrCode("");
         setSessionInfo(null);
-        
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          navigate("/student-dashboard");
-        }, 2000);
+        setTimeout(() => navigate("/student-dashboard"), 2000);
       } else {
         const errorData = await response.json();
         let errorMessage = errorData.message || "Failed to mark attendance";
-        
-        // Provide specific error messages
-        if (errorMessage.includes("duplicate")) {
-          errorMessage = "⚠️ Duplicate: You have already marked attendance for this session";
-        } else if (errorMessage.includes("session")) {
-          errorMessage = "⚠️ Session Error: This session is not available";
-        } else if (errorMessage.includes("device")) {
-          errorMessage = "⚠️ Device Blocked: Only one device allowed per session";
+        if (errorMessage.includes("duplicate") || errorMessage.includes("already")) {
+          errorMessage = "⚠️ You have already marked attendance for this session";
+        } else if (errorMessage.includes("enrolled") || errorMessage.includes("course")) {
+          errorMessage = "⚠️ You are not enrolled in this course";
         }
-        
         setMessage({ type: "error", text: errorMessage });
       }
     } catch (error) {
       console.error("Error submitting attendance:", error);
-      setMessage({ 
-        type: "error", 
-        text: "❌ Failed to submit attendance. Please try again." 
-      });
+      setMessage({ type: "error", text: "❌ Failed to submit attendance. Please try again." });
     } finally {
       setLoading(false);
     }

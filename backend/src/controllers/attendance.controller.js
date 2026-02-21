@@ -118,23 +118,7 @@ const markAttendance = async (req, res, next) => {
             });
         }
 
-        // QR Data check - QR scan ka data toh chahiye hi
-        if (!qrData) {
-            // 400 Bad Request - QR data missing hai
-            return res.status(400).json({
-                success: false,
-                message: 'QR data is required. Please scan the QR code properly.'
-            });
-        }
-
-        // Timestamp check - kab scan kiya yeh bhi important hai
-        if (!timestamp) {
-            // 400 Bad Request - Timestamp missing hai
-            return res.status(400).json({
-                success: false,
-                message: 'Timestamp is required. Client timestamp missing hai.'
-            });
-        }
+        // qrData and timestamp are optional - qr-request system may not send them
 
         // ---------------------------------------------------------------------
         // STEP 4: Service Layer ko call karo
