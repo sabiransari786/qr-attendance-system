@@ -2,7 +2,6 @@ import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AuthContext } from "../context/AuthContext";
-import { logout } from "../services/api";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from "../animations/animationConfig";
 import { 
@@ -105,25 +104,8 @@ function FacultyDashboardWithCharts() {
     }
   }, [token, user?.id]);
 
-  const handleLogout = async () => {
-    try {
-      if (token) {
-        await logout(token);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      authContext?.logout();
-      navigate("/login");
-    }
-  };
-
   const handleGenerateQR = () => {
     navigate("/faculty/qr-generation");
-  };
-
-  const handleViewProfile = () => {
-    navigate("/faculty-profile");
   };
 
   const handleViewSessions = () => {
@@ -157,26 +139,7 @@ function FacultyDashboardWithCharts() {
             Welcome back, <strong>{user?.name}</strong>! View attendance analytics and manage your classes.
           </p>
         </div>
-        <div className="dashboard__buttons">
-          <motion.button
-            className="dashboard__button dashboard__button--primary"
-            type="button"
-            onClick={handleViewProfile}
-            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
-            whileTap={{ scale: 0.96 }}
-          >
-            👤 My Profile
-          </motion.button>
-          <motion.button
-            className="dashboard__button dashboard__button--secondary"
-            type="button"
-            onClick={handleLogout}
-            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
-            whileTap={{ scale: 0.96 }}
-          >
-            Logout
-          </motion.button>
-        </div>
+
       </motion.header>
 
       <main className="dashboard__content">
