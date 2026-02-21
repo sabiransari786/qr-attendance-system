@@ -22,9 +22,16 @@ function FacultySessions() {
   const [createLoading, setCreateLoading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [closeLoading, setCloseLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [editError, setEditError] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [closeError, setCloseError] = useState(null);
+  const [cancelError, setCancelError] = useState(null);
+  const [showCloseModal, setShowCloseModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [selectedSession, setSelectedSession] = useState(null);
   const [newSession, setNewSession] = useState({
     subject: '',
@@ -159,6 +166,69 @@ function FacultySessions() {
     setSelectedSession(session);
     setDeleteError(null);
     setShowDeleteModal(true);
+  };
+
+  // ── Close Session ──────────────────────────────────────────────────────────
+  const handleOpenClose = (session) => {
+    setSelectedSession(session);
+    setCloseError(null);
+    setShowCloseModal(true);
+  };
+
+  const handleCloseSession = async () => {
+    setCloseLoading(true);
+    setCloseError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}/close`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to close session');
+      setSessions((prev) =>
+        prev.map((s) => s.id === selectedSession.id ? { ...s, status: 'closed' } : s)
+      );
+      setShowCloseModal(false);
+      setSelectedSession(null);
+    } catch (err) {
+      setCloseError(err.message || 'Failed to close session');
+    } finally {
+      setCloseLoading(false);
+    }
+  };
+
+  // ── Cancel Session (HFR23) ─────────────────────────────────────────────────
+  const handleOpenCancel = (session) => {
+    setSelectedSession(session);
+    setCancelReason('');
+    setCancelError(null);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelSession = async () => {
+    setCancelLoading(true);
+    setCancelError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}/cancel`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: cancelReason.trim() || 'Cancelled by faculty' })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to cancel session');
+      setSessions((prev) =>
+        prev.map((s) => s.id === selectedSession.id ? { ...s, status: 'cancelled' } : s)
+      );
+      setShowCancelModal(false);
+      setSelectedSession(null);
+    } catch (err) {
+      setCancelError(err.message || 'Failed to cancel session');
+    } finally {
+      setCancelLoading(false);
+    }
   };
 
   const handleDeleteSession = async () => {
@@ -364,12 +434,12 @@ function FacultySessions() {
                       borderRadius: '20px',
                       fontSize: '0.85rem',
                       fontWeight: '600',
-                      backgroundColor: session.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: session.status === 'active' ? '#10b981' : '#ef4444',
-                      border: `1px solid ${session.status === 'active' ? '#10b981' : '#ef4444'}`
+                      backgroundColor: session.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : session.status === 'cancelled' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: session.status === 'active' ? '#10b981' : session.status === 'cancelled' ? '#f59e0b' : '#ef4444',
+                      border: `1px solid ${session.status === 'active' ? '#10b981' : session.status === 'cancelled' ? '#f59e0b' : '#ef4444'}`
                     }}>
-                      <span style={{ fontSize: '1.1em' }}>{session.status === 'active' ? '🟢' : '🔴'}</span>
-                      {session.status === 'active' ? 'Active' : 'Closed'}
+                      <span style={{ fontSize: '1.1em' }}>{session.status === 'active' ? '🟢' : session.status === 'cancelled' ? '🟡' : '🔴'}</span>
+                      {session.status === 'active' ? 'Active' : session.status === 'cancelled' ? 'Cancelled' : 'Closed'}
                     </span>
                   </div>
                 </div>
@@ -388,11 +458,12 @@ function FacultySessions() {
                   Generate QR →
                 </button>
 
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                   <button
                     className="dashboard__button dashboard__button--secondary"
                     onClick={() => handleOpenEdit(session)}
                     style={{ flex: 1 }}
+                    disabled={session.status !== 'active'}
                   >
                     ✏️ Edit
                   </button>
@@ -409,6 +480,36 @@ function FacultySessions() {
                     🗑️ Delete
                   </button>
                 </div>
+
+                {/* Close & Cancel — only for active sessions (HFR23) */}
+                {session.status === 'active' && (
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+                    <button
+                      className="dashboard__button"
+                      onClick={() => handleOpenClose(session)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                        color: '#6366f1',
+                        border: '1px solid #6366f1'
+                      }}
+                    >
+                      🔒 Close Session
+                    </button>
+                    <button
+                      className="dashboard__button"
+                      onClick={() => handleOpenCancel(session)}
+                      style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                        color: '#f59e0b',
+                        border: '1px solid #f59e0b'
+                      }}
+                    >
+                      ❌ Cancel Class
+                    </button>
+                  </div>
+                )}
               </motion.div>
             ))}
           </motion.div>
@@ -572,6 +673,96 @@ function FacultySessions() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Close Session Modal ────────────────────────────────────────────── */}
+      {showCloseModal && selectedSession && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '12px', padding: '2rem',
+            width: '100%', maxWidth: '420px',
+            border: '1px solid var(--color-border)'
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#6366f1' }}>🔒 Close Session</h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+              Close <strong>"{selectedSession.subject}"</strong>?<br />
+              Students who haven't scanned QR will be <strong>auto-marked Absent</strong>.
+            </p>
+            {closeError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{closeError}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button
+                className="dashboard__button dashboard__button--secondary"
+                onClick={() => { setShowCloseModal(false); setSelectedSession(null); }}
+                disabled={closeLoading}
+              >Back</button>
+              <button
+                className="dashboard__button"
+                onClick={handleCloseSession}
+                disabled={closeLoading}
+                style={{ backgroundColor: '#6366f1', color: 'white', border: 'none' }}
+              >{closeLoading ? 'Closing...' : '🔒 Close Session'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Cancel Session Modal (HFR23) ──────────────────────────────────── */}
+      {showCancelModal && selectedSession && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '12px', padding: '2rem',
+            width: '100%', maxWidth: '440px',
+            border: '1px solid var(--color-border)'
+          }}>
+            <h2 style={{ margin: '0 0 0.5rem 0', color: '#f59e0b' }}>❌ Cancel Class</h2>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>
+              Cancel <strong>"{selectedSession.subject}"</strong>?<br />
+              Students who already scanned will be marked <strong>Excused</strong> —
+              their attendance % won't be affected.
+            </p>
+            <textarea
+              placeholder="Reason for cancellation (optional)"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%', padding: '0.75rem',
+                borderRadius: '8px', fontSize: '0.95rem',
+                border: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-bg)',
+                color: 'var(--color-text)',
+                resize: 'vertical', boxSizing: 'border-box',
+                marginBottom: '1rem'
+              }}
+            />
+            {cancelError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{cancelError}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button
+                className="dashboard__button dashboard__button--secondary"
+                onClick={() => { setShowCancelModal(false); setSelectedSession(null); }}
+                disabled={cancelLoading}
+              >Back</button>
+              <button
+                className="dashboard__button"
+                onClick={handleCancelSession}
+                disabled={cancelLoading}
+                style={{ backgroundColor: '#f59e0b', color: 'white', border: 'none' }}
+              >{cancelLoading ? 'Cancelling...' : '❌ Cancel Class'}</button>
+            </div>
           </div>
         </div>
       )}
