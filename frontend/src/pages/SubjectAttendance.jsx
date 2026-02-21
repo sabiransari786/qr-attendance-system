@@ -1,15 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer } from "../animations/animationConfig";
 import "../styles/dashboard.css";
 
 function SubjectAttendance() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
   const { subjectId } = useParams();
   const [loading, setLoading] = useState(true);
   const [subjectData, setSubjectData] = useState(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   useEffect(() => {
     fetchSubjectData();
@@ -18,7 +24,9 @@ function SubjectAttendance() {
   const fetchSubjectData = async () => {
     try {
       const token = sessionStorage.getItem("authToken");
-      const userId = sessionStorage.getItem("userId");
+      const storedUser = sessionStorage.getItem("user");
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      const userId = authContext?.user?.id || parsedUser?.id;
 
       // Fetch attendance data and filter by subject
       const response = await fetch(`${API_BASE_URL}/attendance/student/${userId}`, {

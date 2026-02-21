@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer } from "../animations/animationConfig";
 import "../styles/dashboard.css";
 
 function AttendanceHistory() {
   const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [filteredRecords, setFilteredRecords] = useState([]);
@@ -17,6 +19,11 @@ function AttendanceHistory() {
     dateTo: ""
   });
   const [subjects, setSubjects] = useState([]);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
   useEffect(() => {
     fetchAttendanceHistory();
@@ -29,7 +36,10 @@ function AttendanceHistory() {
   const fetchAttendanceHistory = async () => {
     try {
       const token = sessionStorage.getItem("authToken");
-      const userId = sessionStorage.getItem("userId");
+      // userId is stored inside the 'user' JSON object, not as a separate 'userId' key
+      const storedUser = sessionStorage.getItem("user");
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      const userId = authContext?.user?.id || parsedUser?.id;
 
       if (!token || !userId) {
         navigate("/login");
