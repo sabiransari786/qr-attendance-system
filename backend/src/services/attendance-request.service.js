@@ -155,7 +155,20 @@ class AttendanceRequestService {
    */
   static async getAttendanceCount(request_id) {
     try {
-      return await AttendanceRequest.getAcceptedCount(request_id);
+      // Get session_id from the QR request
+      const [rows] = await pool.execute(
+        'SELECT session_id FROM attendance_request WHERE request_id = ?',
+        [request_id]
+      );
+      if (!rows[0]) return 0;
+      const session_id = rows[0].session_id;
+
+      // Count actual attendance records (present or late) for this session
+      const [countRows] = await pool.execute(
+        "SELECT COUNT(*) as cnt FROM attendance WHERE session_id = ? AND status IN ('present', 'late')",
+        [session_id]
+      );
+      return countRows[0]?.cnt || 0;
     } catch (error) {
       throw error;
     }
