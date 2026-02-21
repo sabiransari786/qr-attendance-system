@@ -39,6 +39,8 @@ const {
   getSessionById
 } = require('../../controllers/session.controller');
 
+const authMiddleware = require('../../middleware/auth.middleware');
+
 // ============================================================================
 // ATTENDANCE SESSION KYA HAI? (What is an Attendance Session?)
 // ============================================================================
@@ -174,7 +176,7 @@ const {
  * 
  * Response: { success: true, data: { session: { id, subject, location, status, qrCode: "..." } } }
  */
-router.post('/', createSession);
+router.post('/', authMiddleware, createSession);
 
 /**
  * GET / - Get All Active Sessions Route
@@ -193,7 +195,7 @@ router.post('/', createSession);
  * 
  * Response: { success: true, data: { sessions: [{ id, subject, location, status, startTime, ... }] } }
  */
-router.get('/', getActiveSessions);
+router.get('/', authMiddleware, getActiveSessions);
 
 /**
  * PUT /:sessionId/close - Close Session Route
@@ -212,7 +214,7 @@ router.get('/', getActiveSessions);
  * 
  * Response: { success: true, data: { session: { id, status: "closed", endTime: "..." } } }
  */
-router.put('/:sessionId/close', closeSession);
+router.put('/:sessionId/close', authMiddleware, closeSession);
 
 /**
  * GET /active - Get Active Sessions Route
@@ -231,7 +233,7 @@ router.put('/:sessionId/close', closeSession);
  * 
  * Response: { success: true, data: { sessions: [{ id, subject, location, status, startTime, ... }] } }
  */
-router.get('/active', getActiveSessions);
+router.get('/active', authMiddleware, getActiveSessions);
 
 /**
  * GET /:sessionId - Get Session Details By ID Route
@@ -250,7 +252,7 @@ router.get('/active', getActiveSessions);
  * 
  * Response: { success: true, data: { session: { id, subject, location, status, startTime, endTime, qrCode, attendanceCount, ... } } }
  */
-router.get('/:sessionId', getSessionById);
+router.get('/:sessionId', authMiddleware, getSessionById);
 
 // ============================================================================
 // ROUTER EXPORT
