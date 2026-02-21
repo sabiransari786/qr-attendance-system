@@ -615,6 +615,147 @@ router.delete('/admin/approved-users/:id', authMiddleware, requireAdmin, async (
 });
 
 /**
+ * POST /api/auth/admin/teachers
+ * Directly create a teacher account (users table) with a set password.
+ * Admin provides all details including initial password — teacher can log in immediately.
+ * No separate sign-up step required.
+ *
+ * Body: { name, email, contactNumber, teacherId, department, password, confirmPassword }
+ */
+router.post('/admin/teachers', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { pool } = require('../../config/database');
+    const bcrypt = require('bcrypt');
+
+    const {
+      name,
+      email,
+      contactNumber,
+      teacherId,
+      department,
+      password,
+      confirmPassword
+    } = req.body;
+
+    // ── Validate required fields ──────────────────────────────────────────────
+    if (!name || !email || !contactNumber || !teacherId || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, contact number, teacher ID and password are all required.'
+      });
+    }
+
+    if (!/^\d{10}$/.test(String(contactNumber).trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact number must be exactly 10 digits.'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters.'
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match.'
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedTeacherId = String(teacherId).trim().toUpperCase();
+
+    // ── Check uniqueness ──────────────────────────────────────────────────────
+    const [existingEmail] = await pool.query(
+      'SELECT id FROM users WHERE LOWER(email) = ?',
+      [normalizedEmail]
+    );
+    if (existingEmail.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'A user with this email already exists.'
+      });
+    }
+
+    const [existingTeacherId] = await pool.query(
+      'SELECT id FROM users WHERE teacher_id = ?',
+      [normalizedTeacherId]
+    );
+    if (existingTeacherId.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'This Teacher ID is already in use.'
+      });
+    }
+
+    // ── Create user with hashed password ──────────────────────────────────────
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [insertResult] = await pool.query(
+      `INSERT INTO users
+         (name, email, contact_number, password, role, teacher_id, department, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'faculty', ?, ?, 1, NOW(), NOW())`,
+      [
+        name.trim(),
+        normalizedEmail,
+        String(contactNumber).trim(),
+        hashedPassword,
+        normalizedTeacherId,
+        department?.trim() || null
+      ]
+    );
+
+    const newUserId = insertResult.insertId;
+
+    // ── Also record in approved_users (already registered) ────────────────────
+    await pool.query(
+      `INSERT INTO approved_users
+         (name, email, contact_number, role, teacher_id, department, is_registered, registered_user_id, created_at, updated_at)
+       VALUES (?, ?, ?, 'faculty', ?, ?, 1, ?, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE
+         is_registered = 1,
+         registered_user_id = ?,
+         updated_at = NOW()`,
+      [
+        name.trim(),
+        normalizedEmail,
+        String(contactNumber).trim(),
+        normalizedTeacherId,
+        department?.trim() || null,
+        newUserId,
+        newUserId
+      ]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Teacher account created successfully. They can log in immediately.',
+      data: {
+        id: newUserId,
+        name: name.trim(),
+        email: normalizedEmail,
+        contactNumber: String(contactNumber).trim(),
+        teacherId: normalizedTeacherId,
+        department: department?.trim() || null,
+        role: 'faculty',
+        is_active: true
+      }
+    });
+  } catch (error) {
+    console.error('Error creating teacher account:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create teacher account.',
+      error: error.message
+    });
+  }
+});
+
+/**
  * Router ko export kar rahe hain - app.js mein use hoga
  * 
  * app.js mein usage:

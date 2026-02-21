@@ -84,6 +84,37 @@ function TeacherProfile() {
           </section>
 
           <section className="profile__section">
+            <h2 className="profile__section-title">Security</h2>
+            <div className="profile__field">
+              <label className="profile__label">Password</label>
+              <p className="profile__value" style={{ opacity: 0.7 }}>••••••••</p>
+            </div>
+            <button
+              onClick={() => navigate("/forgot-password")}
+              style={{
+                marginTop: "0.75rem",
+                padding: "0.6rem 1.4rem",
+                borderRadius: "8px",
+                border: "1px solid rgba(99,102,241,0.5)",
+                background: "rgba(99,102,241,0.12)",
+                color: "inherit",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                letterSpacing: "0.01em",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.25)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(99,102,241,0.12)")}
+            >
+              🔑 Change Password via OTP
+            </button>
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.78rem", opacity: 0.55, lineHeight: 1.4 }}>
+              An OTP will be sent to your registered email to verify your identity before resetting.
+            </p>
+          </section>
+
+          <section className="profile__section">
             <h2 className="profile__section-title">Statistics</h2>
             <div className="profile__stats">
               <div className="profile__stat">
