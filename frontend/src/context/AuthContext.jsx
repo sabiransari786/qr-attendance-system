@@ -14,13 +14,30 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Check if a token is a real JWT (3 parts separated by dots)
+  const isRealJWT = (t) => {
+    if (!t || typeof t !== "string") return false;
+    return t.split(".").length === 3 && !t.startsWith("mock_token_");
+  };
+
   // Initialize auth from sessionStorage on mount
   useEffect(() => {
-    // Clean up old localStorage tokens (migration from localStorage to sessionStorage)
+    // Clean up old localStorage tokens
     localStorage.removeItem("authToken");
     localStorage.removeItem("user");
-    
+    // Also clean old localStorage keys used in older versions
+    localStorage.removeItem("token");
+
     const storedToken = sessionStorage.getItem("authToken");
+
+    // If token is a mock token (not a real JWT), clear it and force re-login
+    if (storedToken && !isRealJWT(storedToken)) {
+      sessionStorage.removeItem("authToken");
+      sessionStorage.removeItem("user");
+      setIsLoading(false);
+      return;
+    }
+
     if (storedToken) {
       setToken(storedToken);
       const storedUser = sessionStorage.getItem("user");
