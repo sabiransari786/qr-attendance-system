@@ -40,6 +40,8 @@ const {
 } = require('../../controllers/attendance.controller');
 
 const authMiddleware = require('../../middleware/auth.middleware');
+const { requireStudent } = require('../../middleware/auth.middleware');
+const { attendanceMarkLimiter } = require('../../middleware/rate-limit.middleware');
 
 // ============================================================================
 // ATTENDANCE ROUTES KYA HAIN? (What are Attendance Routes?)
@@ -122,7 +124,7 @@ const authMiddleware = require('../../middleware/auth.middleware');
  * 
  * Response: { success: true, data: { attendance: { id, sessionId, studentId, status, timestamp } } }
  */
-router.post('/mark', authMiddleware, markAttendance);
+router.post('/mark', attendanceMarkLimiter, authMiddleware, requireStudent, markAttendance);
 
 /**
  * GET /session/:sessionId - Get Attendance By Session Route

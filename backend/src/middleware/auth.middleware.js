@@ -225,4 +225,53 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+// =============================================================================
+// ROLE-BASED ACCESS GUARDS
+// =============================================================================
+
+/**
+ * Allow only users whose role === 'faculty'.
+ * Must be used AFTER authMiddleware so req.user is set.
+ */
+const requireFaculty = (req, res, next) => {
+  if (!req.user || req.user.role !== 'faculty') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Only faculty members can perform this action.'
+    });
+  }
+  next();
+};
+
+/**
+ * Allow only users whose role === 'student'.
+ * Must be used AFTER authMiddleware so req.user is set.
+ */
+const requireStudent = (req, res, next) => {
+  if (!req.user || req.user.role !== 'student') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Only students can perform this action.'
+    });
+  }
+  next();
+};
+
+/**
+ * Allow only users whose role === 'admin'.
+ * Must be used AFTER authMiddleware so req.user is set.
+ */
+const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Only administrators can perform this action.'
+    });
+  }
+  next();
+};
+
 module.exports = authMiddleware;
+module.exports.requireFaculty = requireFaculty;
+module.exports.requireStudent = requireStudent;
+module.exports.requireAdmin   = requireAdmin;

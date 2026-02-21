@@ -8,6 +8,8 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../../middleware/auth.middleware');
+const { requireFaculty, requireStudent } = require('../../middleware/auth.middleware');
+const { qrGenerateLimiter } = require('../../middleware/rate-limit.middleware');
 const {
   generateQRRequest,
   validateQRRequest,
@@ -15,32 +17,6 @@ const {
   getFacultyRequests,
   recordAcceptance
 } = require('../../controllers/qr-request.controller');
-
-/**
- * Middleware: Ensure only faculty can access these routes
- */
-const requireFaculty = (req, res, next) => {
-  if (req.user.role !== 'faculty') {
-    return res.status(403).json({
-      success: false,
-      message: 'Only faculty members can access this resource'
-    });
-  }
-  next();
-};
-
-/**
- * Middleware: Ensure only students can access these routes
- */
-const requireStudent = (req, res, next) => {
-  if (req.user.role !== 'student') {
-    return res.status(403).json({
-      success: false,
-      message: 'Only students can access this resource'
-    });
-  }
-  next();
-};
 
 // ============================================================================
 // ROUTES
@@ -50,8 +26,7 @@ const requireStudent = (req, res, next) => {
  * POST /api/qr-request/generate
  * Generate QR code for attendance
  * 
- * Faculty only
- * Requires: Authentication + Faculty role
+ * Faculty only — authentication + role + rate limit enforced
  * 
  * Body: {
  *   session_id: int
@@ -62,27 +37,27 @@ const requireStudent = (req, res, next) => {
  *   duration_minutes: number
  * }
  */
-router.post('/generate', authMiddleware, requireFaculty, generateQRRequest);
+router.post('/generate', qrGenerateLimiter, authMiddleware, requireFaculty, generateQRRequest);
 
 /**
  * POST /api/qr-request/validate
- * Validate QR request (used by students)
- * This is public - no auth required
- * 
+ * Validate QR request — student scans QR and this verifies location + expiry.
+ * Requires authentication (student) to prevent anonymous abuse.
+ *
  * Body: {
  *   request_id: UUID
  *   student_latitude: number
  *   student_longitude: number
  * }
  */
-router.post('/validate', validateQRRequest);
+router.post('/validate', authMiddleware, requireStudent, validateQRRequest);
 
 /**
  * GET /api/qr-request/:request_id/attendance-count
- * Get live attendance count for a request
- * Public endpoint for live polling
+ * Get live attendance count for a request.
+ * Faculty only — only the QR owner should see live counts.
  */
-router.get('/:request_id/attendance-count', getAttendanceCount);
+router.get('/:request_id/attendance-count', authMiddleware, requireFaculty, getAttendanceCount);
 
 /**
  * POST /api/qr-request/:request_id/accept

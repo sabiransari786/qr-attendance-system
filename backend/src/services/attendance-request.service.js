@@ -28,7 +28,11 @@ class AttendanceRequestService {
     try {
       // Validate session exists and is active
       const [sessions] = await pool.execute(
-        'SELECT id, faculty_id, status FROM sessions WHERE id = ?',
+        `SELECT s.id, s.faculty_id, s.status, s.course_id, s.department_id,
+                c.faculty_id AS course_faculty_id, c.department_id AS course_dept_id
+         FROM sessions s
+         LEFT JOIN courses c ON s.course_id = c.id
+         WHERE s.id = ?`,
         [session_id]
       );
       const session = sessions[0];
@@ -37,8 +41,16 @@ class AttendanceRequestService {
         throw new Error('Session not found');
       }
 
+      // Security: Faculty can only generate QR for sessions they own
       if (Number(session.faculty_id) !== Number(faculty_id)) {
         throw new Error('You can only generate QR for your own sessions');
+      }
+
+      // Department-level validation: session must belong to the faculty's course
+      // If course is assigned toh verify faculty is assigned to that course
+      if (session.course_id && session.course_faculty_id !== null &&
+          Number(session.course_faculty_id) !== Number(faculty_id)) {
+        throw new Error('Department mismatch: This session\'s course is not assigned to you');
       }
 
       if (session.status !== 'active') {

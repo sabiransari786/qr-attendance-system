@@ -281,7 +281,9 @@ function FacultyQRGeneration() {
     // Poll every 2 seconds
     pollingInterval.current = setInterval(async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/qr-request/${requestId}/attendance-count`);
+        const response = await fetch(`${API_BASE_URL}/qr-request/${requestId}/attendance-count`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         const data = await response.json();
         setAttendanceCount(data.count || 0);
       } catch (error) {

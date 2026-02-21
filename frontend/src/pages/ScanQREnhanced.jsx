@@ -164,7 +164,10 @@ function ScanQREnhanced() {
       // Step 2: Validate via QR request system (handles expiry + location check)
       const validateResponse = await fetch(`${API_BASE_URL}/qr-request/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           request_id: codeToVerify,
           student_latitude: lat,
