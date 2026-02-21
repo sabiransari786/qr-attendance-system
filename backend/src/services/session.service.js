@@ -350,9 +350,10 @@ const createSession = async (facultyId, sessionData) => {
         // Faculty exist karta hai ya nahi check karo
         // Faculty authorized hai ya nahi (role = faculty ya admin)
         const [faculty] = await pool.query(
-            `SELECT id, name, email, role
-             FROM users 
-             WHERE id = ? AND (role = ? OR role = ?)`,
+            `SELECT u.id, u.name, u.email, u.role, u.department, d.id AS dept_id
+             FROM users u
+             LEFT JOIN departments d ON d.name = u.department
+             WHERE u.id = ? AND (u.role = ? OR u.role = ?)`,
             [facultyId, ROLE.FACULTY, ROLE.ADMIN]
         );
         
@@ -377,9 +378,11 @@ const createSession = async (facultyId, sessionData) => {
         
         // ---------------------------------------------------------------------
         // STEP 4.5: Validate courseId belongs to this faculty (if provided)
+        // Then resolve department_id — always set from faculty's department
         // ---------------------------------------------------------------------
         let resolvedCourseId = null;
-        let resolvedDeptId = null;
+        let resolvedDeptId = faculty[0].dept_id || null; // default: faculty's own dept
+
         if (courseId) {
             const [courseRows] = await pool.query(
                 `SELECT c.id, c.department_id FROM courses c WHERE c.id = ? AND c.faculty_id = ?`,
@@ -390,6 +393,15 @@ const createSession = async (facultyId, sessionData) => {
             }
             resolvedCourseId = courseRows[0].id;
             resolvedDeptId = courseRows[0].department_id;
+
+            // Department consistency check: course's department must match faculty's department
+            if (faculty[0].dept_id && resolvedDeptId &&
+                Number(resolvedDeptId) !== Number(faculty[0].dept_id)) {
+                throw new InvalidSessionDataError(
+                    `This course belongs to a different department than yours (${faculty[0].department}). ` +
+                    `You can only create sessions for courses in your own department.`
+                );
+            }
         }
 
         // ---------------------------------------------------------------------

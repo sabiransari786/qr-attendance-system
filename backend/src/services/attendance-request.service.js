@@ -26,7 +26,7 @@ class AttendanceRequestService {
     } = data;
 
     try {
-      // Validate session exists and is active
+      // Fetch session + linked course details
       const [sessions] = await pool.execute(
         `SELECT s.id, s.faculty_id, s.status, s.course_id, s.department_id,
                 c.faculty_id AS course_faculty_id, c.department_id AS course_dept_id
@@ -46,11 +46,47 @@ class AttendanceRequestService {
         throw new Error('You can only generate QR for your own sessions');
       }
 
-      // Department-level validation: session must belong to the faculty's course
-      // If course is assigned toh verify faculty is assigned to that course
+      // -----------------------------------------------------------------------
+      // DEPARTMENT VALIDATION
+      // Faculty sirf apne department ke courses/sessions ka QR generate kar sakta hai
+      // -----------------------------------------------------------------------
+      // Fetch faculty's department name and resolve it to departments.id
+      const [faculties] = await pool.execute(
+        `SELECT u.id, u.department, d.id AS dept_id
+         FROM users u
+         LEFT JOIN departments d ON d.name = u.department
+         WHERE u.id = ? AND u.role = 'faculty'`,
+        [faculty_id]
+      );
+      const faculty = faculties[0];
+
+      if (!faculty) {
+        throw new Error('Faculty record not found');
+      }
+
+      // If the session has a department set, it must match the faculty's department
+      if (session.department_id && faculty.dept_id) {
+        if (Number(session.department_id) !== Number(faculty.dept_id)) {
+          throw new Error(
+            `Department mismatch: This session belongs to a different department. ` +
+            `You can only generate QR for sessions in your own department (${faculty.department}).`
+          );
+        }
+      }
+
+      // If the session has a linked course, that course's department must also match
+      if (session.course_id && session.course_dept_id && faculty.dept_id) {
+        if (Number(session.course_dept_id) !== Number(faculty.dept_id)) {
+          throw new Error(
+            `Course department mismatch: This course does not belong to your department (${faculty.department}).`
+          );
+        }
+      }
+
+      // If session has a course, the course must be assigned to this faculty
       if (session.course_id && session.course_faculty_id !== null &&
           Number(session.course_faculty_id) !== Number(faculty_id)) {
-        throw new Error('Department mismatch: This session\'s course is not assigned to you');
+        throw new Error('This course is not assigned to you');
       }
 
       if (session.status !== 'active') {
