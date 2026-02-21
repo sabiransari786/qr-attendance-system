@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../../middleware/auth.middleware');
+const { moduleFaultBoundary } = require('../../middleware/fault-isolation.middleware');
 const { pool } = require('../../config');
 
 /**
@@ -41,5 +42,8 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
     });
   }
 });
+
+// HFR8: Faculty module ka fault boundary
+router.use(moduleFaultBoundary('Faculty Service'));
 
 module.exports = router;

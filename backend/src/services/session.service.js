@@ -553,9 +553,8 @@ const closeSession = async (sessionId) => {
         // ---------------------------------------------------------------------
         // STEP 2: Fetch Session
         // ---------------------------------------------------------------------
-        // Session exist karti hai ya nahi check karo
         const [sessions] = await pool.query(
-            `SELECT id, status, end_time, faculty_id
+            `SELECT id, status, end_time, faculty_id, course_id
              FROM sessions 
              WHERE id = ?`,
             [sessionId]
@@ -570,16 +569,18 @@ const closeSession = async (sessionId) => {
         // ---------------------------------------------------------------------
         // STEP 3: Status Validation
         // ---------------------------------------------------------------------
-        // Session already closed hai ya nahi check karo
         if (session.status === SESSION_STATUS.CLOSED) {
             throw new SessionAlreadyClosedError();
         }
+        if (session.status === SESSION_STATUS.CANCELLED) {
+            const err = new Error('Session is already cancelled. Cannot close a cancelled session.');
+            err.statusCode = 400;
+            throw err;
+        }
         
         // ---------------------------------------------------------------------
-        // STEP 4: Update Session Status
+        // STEP 4: Update Session Status to CLOSED
         // ---------------------------------------------------------------------
-        // Session status ko CLOSED mein update karo
-        // End time ko current timestamp set karo (agar pehle se set nahi hai)
         const currentTime = new Date();
         
         await pool.query(
@@ -590,9 +591,36 @@ const closeSession = async (sessionId) => {
         );
         
         // ---------------------------------------------------------------------
-        // STEP 5: Fetch Updated Session
+        // STEP 5: HFR23 — Auto-Attendance Adjustment
+        // Session close hone ke baad enrolled students jo attendance mark nahi kar
+        // paaye unhe automatically 'absent' mark karo.
+        // Agar course_id linked hai to enrolled students fetch karo,
+        // jo already mark hain unhe skip karo, baaki ko absent insert karo.
         // ---------------------------------------------------------------------
-        // Updated session ko fetch karo with complete details
+        let autoAbsentCount = 0;
+        if (session.course_id) {
+            try {
+                const [absentResult] = await pool.query(
+                    `INSERT INTO attendance (student_id, session_id, status, marked_at, created_at)
+                     SELECT ce.student_id, ?, 'absent', NOW(), NOW()
+                     FROM course_enrollment ce
+                     WHERE ce.course_id = ?
+                       AND ce.status = 'active'
+                       AND ce.student_id NOT IN (
+                           SELECT student_id FROM attendance WHERE session_id = ?
+                       )`,
+                    [sessionId, session.course_id, sessionId]
+                );
+                autoAbsentCount = absentResult.affectedRows || 0;
+            } catch (autoErr) {
+                // Auto-absent fail hone se session close na ruke — fault isolation
+                console.error('[HFR23] Auto-absent marking failed (non-critical):', autoErr.message);
+            }
+        }
+        
+        // ---------------------------------------------------------------------
+        // STEP 6: Fetch Updated Session
+        // ---------------------------------------------------------------------
         const [updatedSessions] = await pool.query(
             `SELECT 
                 s.id,
@@ -613,9 +641,6 @@ const closeSession = async (sessionId) => {
         
         const updatedSession = updatedSessions[0];
         
-        // ---------------------------------------------------------------------
-        // STEP 6: Prepare Response
-        // ---------------------------------------------------------------------
         return {
             id: updatedSession.id,
             facultyId: updatedSession.faculty_id,
@@ -625,6 +650,7 @@ const closeSession = async (sessionId) => {
             startTime: updatedSession.start_time,
             endTime: updatedSession.end_time,
             createdAt: updatedSession.created_at,
+            autoAbsentMarked: autoAbsentCount,
             faculty: {
                 name: updatedSession.faculty_name,
                 email: updatedSession.faculty_email
@@ -632,13 +658,92 @@ const closeSession = async (sessionId) => {
         };
         
     } catch (error) {
-        // Custom errors directly throw karo
         if (error.name && error.statusCode) {
             throw error;
         }
-        
-        // Generic error handle karo
         throw new Error(`Failed to close session: ${error.message}`);
+    }
+};
+
+/**
+ * -----------------------------------------------------------------------------
+ * CANCEL SESSION — HFR23: Auto-Attendance Adjustment for Cancellations
+ * -----------------------------------------------------------------------------
+ * 
+ * Class cancel hone par:
+ * 1. Session status CANCELLED set karo
+ * 2. Jo students already QR scan kar chuke hain unki attendance 'excused' karo
+ *    (taaki cancel class ki wajah se unka percentage affect na ho)
+ * 3. Jo students ne scan nahi kiya unhe koi penalty nahi — koi record insert nahi
+ * 
+ * @param {number} sessionId - Session ka unique ID
+ * @param {string} reason    - Cancellation reason (optional, logging ke liye)
+ */
+const cancelSession = async (sessionId, reason = 'Class cancelled by faculty') => {
+    try {
+        if (!sessionId) {
+            throw new InvalidSessionDataError('Session ID is required.');
+        }
+
+        // Fetch session
+        const [sessions] = await pool.query(
+            `SELECT id, status, faculty_id, subject FROM sessions WHERE id = ?`,
+            [sessionId]
+        );
+
+        if (!sessions || sessions.length === 0) {
+            throw new SessionNotFoundError();
+        }
+
+        const session = sessions[0];
+
+        if (session.status === SESSION_STATUS.CANCELLED) {
+            const err = new Error('Session is already cancelled.');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        if (session.status === SESSION_STATUS.CLOSED) {
+            const err = new Error('Cannot cancel a closed session. Session is already closed.');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Step 1: Session status CANCELLED karo
+        await pool.query(
+            `UPDATE sessions SET status = ?, end_time = NOW() WHERE id = ?`,
+            [SESSION_STATUS.CANCELLED, sessionId]
+        );
+
+        // Step 2: Jo students ne attendance mark ki thi unhe 'excused' karo
+        // Cancelled class mein jo aaya tha usse penalize mat karo
+        let excusedCount = 0;
+        try {
+            const [excusedResult] = await pool.query(
+                `UPDATE attendance
+                 SET status = 'excused'
+                 WHERE session_id = ? AND status IN ('present', 'late', 'absent')`,
+                [sessionId]
+            );
+            excusedCount = excusedResult.affectedRows || 0;
+        } catch (excuseErr) {
+            console.error('[HFR23] Excused status update failed (non-critical):', excuseErr.message);
+        }
+
+        return {
+            sessionId,
+            status: SESSION_STATUS.CANCELLED,
+            subject: session.subject,
+            reason,
+            excusedCount,
+            message: `Session cancelled. ${excusedCount} student attendance records marked as excused.`
+        };
+
+    } catch (error) {
+        if (error.name && error.statusCode) {
+            throw error;
+        }
+        throw new Error(`Failed to cancel session: ${error.message}`);
     }
 };
 
@@ -940,6 +1045,7 @@ const getSessionById = async (sessionId) => {
 module.exports = {
     createSession,
     closeSession,
+    cancelSession,
     getActiveSessions,
     getSessionById
 };

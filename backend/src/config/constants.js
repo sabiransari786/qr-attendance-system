@@ -90,7 +90,11 @@ const ATTENDANCE_STATUS = {
   LATE: 'late',
 
   // Absent - student session mein present nahi tha
-  ABSENT: 'absent'
+  ABSENT: 'absent',
+
+  // Excused - class cancel hone ki wajah se attendance affected na ho
+  // HFR23: Auto-Attendance Adjustment for Cancellations
+  EXCUSED: 'excused'
 };
 
 // ============================================================================
@@ -112,7 +116,11 @@ const SESSION_STATUS = {
   ACTIVE: 'active',
 
   // Closed - session close ho chuki hai, attendance mark nahi kar sakte
-  CLOSED: 'closed'
+  CLOSED: 'closed',
+
+  // Cancelled - class cancel ho gayi, enrolled students ko penalize nahi kiya jayega
+  // HFR23: Auto-Attendance Adjustment for Cancellations
+  CANCELLED: 'cancelled'
 };
 
 // ============================================================================

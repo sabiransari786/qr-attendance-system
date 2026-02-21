@@ -271,12 +271,21 @@ const determineAttendanceStatus = (sessionStartTime, scanTime, lateThresholdMinu
  * @returns {Promise<Object>} Created attendance record
  */
 const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
+    // =========================================================================
+    // HFR16: Attendance Submission Transaction Control
+    // =========================================================================
+    // Dedicated connection lena zaroori hai taaki BEGIN/COMMIT/ROLLBACK
+    // ek hi connection pe ho. Pool se multiple connections aa sakte hain,
+    // toh agar alag-alag queries alag connections pe jayein to transaction
+    // kaam nahi karega. Isliye hamesha ek hi connection se transaction karo.
+    const connection = await pool.getConnection();
     try {
+        // Transaction shuru karo - sab queries ek atomic unit ki tarah chalenge
+        await connection.beginTransaction();
+
         // ---------------------------------------------------------------------
         // STEP 1: QR Code Decode aur Validation (optional)
         // ---------------------------------------------------------------------
-        // Agar qrData provided hai aur valid JSON session payload hai, validate karo
-        // Agar nahi hai (qr-request UUID system), skip karo - request system ne validate kar liya
         if (qrData) {
             try {
                 const decodedQR = decodeQRData(qrData);
@@ -287,87 +296,71 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
                     validateQRExpiry(decodedQR.expiryTime, timestamp);
                 }
             } catch (qrError) {
-                // Re-throw only critical errors (session mismatch, expired)
                 if (qrError instanceof QRCodeExpiredError ||
                     (qrError instanceof InvalidQRCodeError && qrError.message.includes('does not match'))) {
                     throw qrError;
                 }
-                // UUID-format or undecodable QR - qr-request system validated it already, continue
             }
         }
-        
+
         // ---------------------------------------------------------------------
-        // STEP 2: Session Validation
+        // STEP 2: Session Validation (transaction connection use karo)
         // ---------------------------------------------------------------------
-        // Session exist karti hai ya nahi check karo
-        // Session details fetch karni hai - status, start_time, end_time check karne ke liye
-        const [sessions] = await pool.query(
+        const [sessions] = await connection.query(
             `SELECT id, status, start_time, end_time, faculty_id, subject, location, course_id
              FROM sessions 
              WHERE id = ?`,
             [sessionId]
         );
-        
-        // Session nahi mili toh error
+
         if (!sessions || sessions.length === 0) {
             throw new SessionNotFoundError();
         }
-        
+
         const session = sessions[0];
-        
-        // Session active hai ya nahi check karo
-        // Closed sessions mein attendance mark nahi kar sakte
+
         if (session.status !== SESSION_STATUS.ACTIVE) {
             throw new SessionNotActiveError(`Session status is '${session.status}'. Only active sessions accept attendance.`);
         }
-        
-        // Optional: Session time window validation
-        // Agar scan time session start_time se pehle hai ya end_time ke baad hai
-        // Toh error throw kar sakte hain (but currently allow kar rahe hain kyunki faculty control karta hai)
-        
+
         // ---------------------------------------------------------------------
         // STEP 3: Student Validation
         // ---------------------------------------------------------------------
-        // Student exist karta hai ya nahi check karo
-        // Database query se student verify karo
-        const [students] = await pool.query(
+        const [students] = await connection.query(
             `SELECT id, name, student_id, email
              FROM users 
              WHERE id = ? AND role = 'student'`,
             [studentId]
         );
-        
-        // Student nahi mila toh error
+
         if (!students || students.length === 0) {
             throw new StudentNotFoundError();
         }
-        
+
         // ---------------------------------------------------------------------
-        // STEP 4: Duplicate Attendance Check
+        // STEP 4: Duplicate Attendance Check (FOR UPDATE — lock the row)
+        // FOR UPDATE se concurrent requests block ho jate hain jab tak
+        // current transaction complete na ho — HFR10 (concurrent handling) bhi cover hota hai
         // ---------------------------------------------------------------------
-        // Same student, same session ki pehle se attendance hai ya nahi check karo
-        // Duplicate attendance prevent karna zaroori hai - cheating prevent ke liye
-        const [existingAttendance] = await pool.query(
+        const [existingAttendance] = await connection.query(
             `SELECT id, status, marked_at
              FROM attendance 
-             WHERE student_id = ? AND session_id = ?`,
+             WHERE student_id = ? AND session_id = ?
+             FOR UPDATE`,
             [studentId, sessionId]
         );
-        
-        // Agar pehle se attendance marked hai, toh error
+
         if (existingAttendance && existingAttendance.length > 0) {
             throw new DuplicateAttendanceError(
                 `Attendance already marked at ${new Date(existingAttendance[0].marked_at).toLocaleString()}.`
             );
         }
-        
+
         // ---------------------------------------------------------------------
         // STEP 4.5: Course Enrollment Check
         // ---------------------------------------------------------------------
-        // Agar session ke saath course linked hai, toh student ka enrollment verify karo
-        // Only enrolled students of that course can mark attendance
         if (session.course_id) {
-            const [enrollment] = await pool.query(
+            const [enrollment] = await connection.query(
                 `SELECT ce.id FROM course_enrollment ce
                  WHERE ce.course_id = ? AND ce.student_id = ? AND ce.status = 'active'`,
                 [session.course_id, studentId]
@@ -376,37 +369,35 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
                 throw new Error('You are not enrolled in this course. Attendance cannot be marked.');
             }
         }
-        
+
         // ---------------------------------------------------------------------
         // STEP 5: Determine Attendance Status
         // ---------------------------------------------------------------------
-        // Attendance status calculate karo - PRESENT ya LATE
-        // Session start time aur scan time compare karke status decide karo
         const attendanceStatus = determineAttendanceStatus(
             session.start_time,
             timestamp,
-            15 // Late threshold: 15 minutes (configurable)
+            15
         );
-        
+
         // ---------------------------------------------------------------------
-        // STEP 6: Insert Attendance Record
+        // STEP 6: Insert Attendance Record (transaction connection use karo)
         // ---------------------------------------------------------------------
-        // Database mein attendance record insert karo
-        // marked_at field mein scan timestamp use kare (client timestamp)
-        const [result] = await pool.query(
+        const [result] = await connection.query(
             `INSERT INTO attendance (student_id, session_id, status, marked_at, created_at)
              VALUES (?, ?, ?, FROM_UNIXTIME(?/1000), NOW())`,
             [studentId, sessionId, attendanceStatus, timestamp]
         );
-        
-        // Inserted record ka ID mil gaya
+
         const attendanceId = result.insertId;
-        
+
         // ---------------------------------------------------------------------
-        // STEP 7: Fetch Complete Record
+        // STEP 7: Commit Transaction — sab kuch successful raha
         // ---------------------------------------------------------------------
-        // Inserted record ko student details ke saath fetch karo
-        // Frontend ko complete data chahiye
+        await connection.commit();
+
+        // ---------------------------------------------------------------------
+        // STEP 8: Fetch Complete Record (transaction ke bahar, pool se)
+        // ---------------------------------------------------------------------
         const [attendanceRecords] = await pool.query(
             `SELECT 
                 a.id,
@@ -427,21 +418,21 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
              WHERE a.id = ?`,
             [attendanceId]
         );
-        
-        // Record return karo
+
         return attendanceRecords[0];
-        
+
     } catch (error) {
-        // Agar custom error hai (SessionNotFoundError, etc.), toh directly throw karo
-        // Custom errors already proper format mein hain
+        // Koi bhi error aaye — transaction rollback karo
+        // Isse partial data save nahi hoga — atomicity ensure hoti hai
+        try { await connection.rollback(); } catch (_) { /* rollback fail ignore */ }
+
         if (error.name && error.statusCode) {
             throw error;
         }
-        
-        // Agar database error hai ya koi aur unexpected error
-        // Toh generic error throw karo with details
-        // Controllers global error handler ko pass kar denge
         throw new Error(`Failed to mark attendance: ${error.message}`);
+    } finally {
+        // Connection hamesha pool ko wapas do — memory leak prevent karo
+        connection.release();
     }
 };
 

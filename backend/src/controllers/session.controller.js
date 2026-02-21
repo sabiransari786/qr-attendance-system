@@ -564,9 +564,46 @@ const getSessionById = async (req, res, next) => {
  * router.get('/active', sessionController.getActiveSessions);
  * router.get('/:sessionId', sessionController.getSessionById);
  */
+/**
+ * -----------------------------------------------------------------------------
+ * CANCEL SESSION CONTROLLER — HFR23
+ * -----------------------------------------------------------------------------
+ * Faculty class cancel karna chahti hai:
+ * - Session ko CANCELLED mark karo
+ * - Jo students pehle se mark ho gaye unhe 'excused' karo
+ *
+ * PUT /api/session/:sessionId/cancel
+ * Body: { reason: "Teacher absent" }  (optional)
+ */
+const cancelSession = async (req, res, next) => {
+    try {
+        const { sessionId } = req.params;
+        const { reason } = req.body || {};
+
+        if (!sessionId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Session ID is required.'
+            });
+        }
+
+        const result = await sessionService.cancelSession(sessionId, reason);
+
+        return res.status(200).json({
+            success: true,
+            message: result.message || 'Session cancelled successfully.',
+            data: result
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     createSession,
     closeSession,
+    cancelSession,
     getActiveSessions,
     getSessionById
 };

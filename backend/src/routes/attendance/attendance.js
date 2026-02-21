@@ -450,6 +450,12 @@ router.patch('/manual-request/:id/reject', authMiddleware, requireFaculty, async
  * - Organization: Sab API routes /api se start - clear structure
  * - Separation: API routes aur static files alag - routing clear
  */
+const { moduleFaultBoundary } = require('../../middleware/fault-isolation.middleware');
+
+// HFR8: Attendance module ka fault boundary — agar yahan koi unhandled error aaye
+// toh sirf attendance service 503 dega, baaki services (session, auth) unaffected rahenge
+router.use(moduleFaultBoundary('Attendance Service'));
+
 module.exports = router;
 
 // ============================================================================

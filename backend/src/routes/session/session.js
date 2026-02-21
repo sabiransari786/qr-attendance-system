@@ -35,6 +35,7 @@ const router = express.Router();
 const {
   createSession,
   closeSession,
+  cancelSession,
   getActiveSessions,
   getSessionById
 } = require('../../controllers/session.controller');
@@ -217,6 +218,21 @@ router.get('/', authMiddleware, getActiveSessions);
 router.put('/:sessionId/close', authMiddleware, closeSession);
 
 /**
+ * PUT /:sessionId/cancel - Cancel Session Route (HFR23)
+ *
+ * Faculty class cancel karna chahte hain.
+ * - Session CANCELLED mark hogi
+ * - Jo students pehle attend kar chuke hain unhe 'excused' mark kiya jayega
+ *   (cancelled class ki wajah se unka attendance % affect nahi hoga)
+ *
+ * Request: PUT /api/session/:sessionId/cancel
+ * Headers: { Authorization: "Bearer <faculty_token>" }
+ * Body (optional): { reason: "Teacher absent" }
+ * Response: { success: true, data: { status: "cancelled", excusedCount: N, ... } }
+ */
+router.put('/:sessionId/cancel', authMiddleware, cancelSession);
+
+/**
  * GET /active - Get Active Sessions Route
  * 
  * Request: GET /api/session/active
@@ -276,6 +292,12 @@ router.get('/:sessionId', authMiddleware, getSessionById);
  * - Organization: Sab API routes /api se start - clear structure
  * - Separation: API routes aur static files alag - routing clear
  */
+const { moduleFaultBoundary } = require('../../middleware/fault-isolation.middleware');
+
+// HFR8: Session module ka fault boundary — agar yahan koi unhandled error aaye
+// toh sirf session service 503 dega, baaki services (attendance, auth) unaffected rahenge
+router.use(moduleFaultBoundary('Session Service'));
+
 module.exports = router;
 
 // ============================================================================
