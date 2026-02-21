@@ -304,7 +304,7 @@ const createSession = async (facultyId, sessionData) => {
         // ---------------------------------------------------------------------
         // STEP 1: Input Validation
         // ---------------------------------------------------------------------
-        const { subject, location, startTime, duration } = sessionData;
+        const { subject, location, startTime, duration, courseId } = sessionData;
         
         // Required fields check
         if (!subject || !location || !startTime || !duration) {
@@ -376,6 +376,23 @@ const createSession = async (facultyId, sessionData) => {
         const qrToken = generateSecureQRToken();
         
         // ---------------------------------------------------------------------
+        // STEP 4.5: Validate courseId belongs to this faculty (if provided)
+        // ---------------------------------------------------------------------
+        let resolvedCourseId = null;
+        let resolvedDeptId = null;
+        if (courseId) {
+            const [courseRows] = await pool.query(
+                `SELECT c.id, c.department_id FROM courses c WHERE c.id = ? AND c.faculty_id = ?`,
+                [courseId, facultyId]
+            );
+            if (!courseRows || courseRows.length === 0) {
+                throw new InvalidSessionDataError('Selected course does not belong to this faculty.');
+            }
+            resolvedCourseId = courseRows[0].id;
+            resolvedDeptId = courseRows[0].department_id;
+        }
+
+        // ---------------------------------------------------------------------
         // STEP 5: Insert Session into Database
         // ---------------------------------------------------------------------
         // Session record database mein insert karo
@@ -384,6 +401,8 @@ const createSession = async (facultyId, sessionData) => {
         const [result] = await pool.query(
             `INSERT INTO sessions (
                 faculty_id, 
+                course_id,
+                department_id,
                 subject, 
                 location, 
                 status, 
@@ -392,9 +411,11 @@ const createSession = async (facultyId, sessionData) => {
                 qr_code, 
                 qr_expiry_time, 
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
             [
                 facultyId,
+                resolvedCourseId,
+                resolvedDeptId,
                 subject.trim(),
                 location.trim(),
                 SESSION_STATUS.ACTIVE,
@@ -402,7 +423,6 @@ const createSession = async (facultyId, sessionData) => {
                 endTime,
                 qrToken,
                 qrExpiryTime,
-                // created_at automatically NOW() se set hoga
             ]
         );
         
@@ -424,6 +444,8 @@ const createSession = async (facultyId, sessionData) => {
             `SELECT 
                 s.id,
                 s.faculty_id,
+                s.course_id,
+                s.department_id,
                 s.subject,
                 s.location,
                 s.status,
@@ -433,9 +455,15 @@ const createSession = async (facultyId, sessionData) => {
                 s.qr_expiry_time,
                 s.created_at,
                 u.name as faculty_name,
-                u.email as faculty_email
+                u.email as faculty_email,
+                c.name as course_name,
+                c.code as course_code,
+                d.name as department_name,
+                d.code as department_code
              FROM sessions s
              LEFT JOIN users u ON s.faculty_id = u.id
+             LEFT JOIN courses c ON s.course_id = c.id
+             LEFT JOIN departments d ON s.department_id = d.id
              WHERE s.id = ?`,
             [sessionId]
         );
@@ -636,6 +664,8 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
             SELECT 
                 s.id,
                 s.faculty_id,
+                s.course_id,
+                s.department_id,
                 s.subject,
                 s.location,
                 s.status,
@@ -644,9 +674,15 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
                 s.qr_expiry_time,
                 s.created_at,
                 u.name as faculty_name,
-                u.email as faculty_email
+                u.email as faculty_email,
+                c.name as course_name,
+                c.code as course_code,
+                d.name as department_name,
+                d.code as department_code
             FROM sessions s
             LEFT JOIN users u ON s.faculty_id = u.id
+            LEFT JOIN courses c ON s.course_id = c.id
+            LEFT JOIN departments d ON s.department_id = d.id
             WHERE s.status = ?
         `;
         
@@ -704,6 +740,8 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
         return sessions.map(session => ({
             id: session.id,
             facultyId: session.faculty_id,
+            courseId: session.course_id,
+            departmentId: session.department_id,
             subject: session.subject,
             location: session.location,
             status: session.status,
@@ -714,6 +752,14 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
             faculty: {
                 name: session.faculty_name,
                 email: session.faculty_email
+            },
+            course: {
+                name: session.course_name,
+                code: session.course_code
+            },
+            department: {
+                name: session.department_name,
+                code: session.department_code
             }
         }));
         
@@ -757,6 +803,8 @@ const getSessionById = async (sessionId) => {
             `SELECT 
                 s.id,
                 s.faculty_id,
+                s.course_id,
+                s.department_id,
                 s.subject,
                 s.location,
                 s.status,
@@ -766,9 +814,15 @@ const getSessionById = async (sessionId) => {
                 s.qr_code,
                 s.created_at,
                 u.name as faculty_name,
-                u.email as faculty_email
+                u.email as faculty_email,
+                c.name as course_name,
+                c.code as course_code,
+                d.name as department_name,
+                d.code as department_code
              FROM sessions s
              LEFT JOIN users u ON s.faculty_id = u.id
+             LEFT JOIN courses c ON s.course_id = c.id
+             LEFT JOIN departments d ON s.department_id = d.id
              WHERE s.id = ?`,
             [sessionId]
         );
@@ -807,6 +861,8 @@ const getSessionById = async (sessionId) => {
         return {
             id: session.id,
             facultyId: session.faculty_id,
+            courseId: session.course_id,
+            departmentId: session.department_id,
             subject: session.subject,
             location: session.location,
             status: session.status,
@@ -817,6 +873,14 @@ const getSessionById = async (sessionId) => {
             faculty: {
                 name: session.faculty_name,
                 email: session.faculty_email
+            },
+            course: {
+                name: session.course_name,
+                code: session.course_code
+            },
+            department: {
+                name: session.department_name,
+                code: session.department_code
             },
             // QR data - agar session active hai toh QR payload bhi de sakte hain
             // Security: QR token expose nahi karte - sirf expiry time

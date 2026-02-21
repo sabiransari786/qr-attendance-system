@@ -367,10 +367,28 @@ function FacultyQRGeneration() {
                   <option value="">-- Select a session --</option>
                   {sessions.map(session => (
                     <option key={session.id} value={session.id}>
-                      {session.subject} - {session.location} (ID: {session.id})
+                      {session.subject}
+                      {session.course?.name ? ` [${session.course.name}]` : ''}
+                      {' '}- {session.location} (ID: {session.id})
                     </option>
                   ))}
                 </select>
+              )}
+              {/* Show course/department badge for selected session */}
+              {selectedSessionId && (() => {
+                const sel = sessions.find(s => s.id === selectedSessionId);
+                if (!sel) return null;
+                return (
+                  <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', backgroundColor: 'rgba(49,156,181,0.1)', borderRadius: '8px', border: '1px solid rgba(49,156,181,0.3)', fontSize: '0.9rem' }}>
+                    {sel.course?.name && (
+                      <span style={{ marginRight: '1rem' }}>📚 <strong>{sel.course.name}</strong> ({sel.course.code})</span>
+                    )}
+                    {sel.department?.name && (
+                      <span style={{ color: 'var(--color-text-secondary)' }}>🏫 {sel.department.name}</span>
+                    )}
+                  </div>
+                );
+              })()}
               )}
             </div>
 

@@ -296,7 +296,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // Session exist karti hai ya nahi check karo
         // Session details fetch karni hai - status, start_time, end_time check karne ke liye
         const [sessions] = await pool.query(
-            `SELECT id, status, start_time, end_time, faculty_id, subject, location
+            `SELECT id, status, start_time, end_time, faculty_id, subject, location, course_id
              FROM sessions 
              WHERE id = ?`,
             [sessionId]
@@ -353,6 +353,22 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
             throw new DuplicateAttendanceError(
                 `Attendance already marked at ${new Date(existingAttendance[0].marked_at).toLocaleString()}.`
             );
+        }
+        
+        // ---------------------------------------------------------------------
+        // STEP 4.5: Course Enrollment Check
+        // ---------------------------------------------------------------------
+        // Agar session ke saath course linked hai, toh student ka enrollment verify karo
+        // Only enrolled students of that course can mark attendance
+        if (session.course_id) {
+            const [enrollment] = await pool.query(
+                `SELECT ce.id FROM course_enrollment ce
+                 WHERE ce.course_id = ? AND ce.student_id = ? AND ce.status = 'active'`,
+                [session.course_id, studentId]
+            );
+            if (!enrollment || enrollment.length === 0) {
+                throw new Error('You are not enrolled in this course. Attendance cannot be marked.');
+            }
         }
         
         // ---------------------------------------------------------------------

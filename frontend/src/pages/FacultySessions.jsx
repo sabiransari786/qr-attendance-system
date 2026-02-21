@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
 import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from '../animations/animationConfig';
-import { COURSES } from '../config/dummyData';
 import '../styles/dashboard.css';
 
 function FacultySessions() {
@@ -14,6 +13,7 @@ function FacultySessions() {
   const user = authContext?.user;
 
   const [sessions, setSessions] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -30,7 +30,8 @@ function FacultySessions() {
     subject: '',
     location: '',
     startTime: '',
-    duration: 60
+    duration: 60,
+    courseId: ''
   });
   const [editSession, setEditSession] = useState({
     subject: '',
@@ -69,6 +70,24 @@ function FacultySessions() {
       fetchSessions();
     }
   }, [token, user?.id]);
+
+  // Fetch faculty's courses from API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/faculty/my-courses`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCourses(data.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+      }
+    };
+    if (token) fetchCourses();
+  }, [token]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -176,7 +195,8 @@ function FacultySessions() {
       subject: '',
       location: '',
       startTime: localIso,
-      duration: 60
+      duration: 60,
+      courseId: ''
     });
     setCreateError(null);
     setShowCreateModal(true);
@@ -198,7 +218,8 @@ function FacultySessions() {
           subject: newSession.subject.trim(),
           location: newSession.location.trim(),
           startTime: newSession.startTime,
-          duration: parseInt(newSession.duration)
+          duration: parseInt(newSession.duration),
+          courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined
         })
       });
 
@@ -312,13 +333,18 @@ function FacultySessions() {
               >
                 <div style={{ flex: 1 }}>
                   <h3 style={{ 
-                    margin: '0 0 0.75rem 0', 
+                    margin: '0 0 0.25rem 0', 
                     fontSize: '1.3rem',
                     fontWeight: '700',
                     color: 'var(--color-text)'
                   }}>
                     {session.subject}
                   </h3>
+                  {session.course?.name && (
+                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: '600' }}>
+                      📚 {session.course.name} ({session.course.code})
+                    </p>
+                  )}
 
                   <div style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
                     <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
@@ -413,14 +439,21 @@ function FacultySessions() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <select
                   className="form-input"
-                  value={newSession.subject}
-                  onChange={(e) => setNewSession((prev) => ({ ...prev, subject: e.target.value }))}
+                  value={newSession.courseId}
+                  onChange={(e) => {
+                    const selected = courses.find(c => c.id === parseInt(e.target.value));
+                    setNewSession((prev) => ({
+                      ...prev,
+                      courseId: e.target.value,
+                      subject: selected ? `${selected.name} (${selected.code})` : prev.subject
+                    }));
+                  }}
                   required
                 >
-                  <option value="">-- Select Subject --</option>
-                  {COURSES.map((c) => (
-                    <option key={c.code} value={`${c.name} (${c.code})`}>
-                      {c.name} ({c.code})
+                  <option value="">-- Select Your Course --</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.code}) — {c.department_name}
                     </option>
                   ))}
                 </select>
