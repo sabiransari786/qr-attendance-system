@@ -283,6 +283,7 @@ function StudentDashboardEnhanced() {
 
   const handleScanQR = () => navigate("/scan-qr");
   const handleViewHistory = () => navigate("/attendance-history");
+  const handleAttendanceRequest = () => navigate("/attendance-request");
 
   // Animations removed to avoid runtime errors and reduce motion.
 
@@ -419,6 +420,35 @@ function StudentDashboardEnhanced() {
             <p className="dashboard__card-text">Review your complete records</p>
             <button className="dashboard__card-action btn-action-glow">
               View History →
+            </button>
+          </motion.section>
+
+          {/* Generate Request Card - Amber Theme */}
+          <motion.section
+            className="dashboard__card premium-card card-gradient-3 card-clickable card-hover"
+            onClick={handleAttendanceRequest}
+            onMouseEnter={() => setHoveredCard(5)}
+            onMouseLeave={() => setHoveredCard(null)}
+            style={{
+              cursor: 'pointer',
+              transform: hoveredCard === 5 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
+              background: hoveredCard === 5
+                ? 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.3))'
+                : 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.2))',
+              border: '1px solid rgba(245,158,11,0.35)',
+            }}
+            variants={fadeInUp}
+            whileHover={{ y: -10, scale: 1.03, transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <div className="card-header-icon">📋</div>
+            <h2 className="dashboard__card-title">Generate Request</h2>
+            <p className="dashboard__card-text">Couldn't scan QR? Request attendance from teacher</p>
+            <button
+              className="dashboard__card-action btn-action-glow"
+              style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}
+            >
+              Send Request →
             </button>
           </motion.section>
         </motion.section>

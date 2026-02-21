@@ -29,6 +29,8 @@ import AdminActivityLogs from "../pages/AdminActivityLogs";
 import AdminDepartments from "../pages/AdminDepartments";
 import AdminSystemReports from "../pages/AdminSystemReports";
 import AdminTeacherManagement from "../pages/AdminTeacherManagement";
+import StudentAttendanceRequest from "../pages/StudentAttendanceRequest";
+import FacultyAttendanceRequests from "../pages/FacultyAttendanceRequests";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -103,6 +105,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/attendance-request"
+        element={
+          <ProtectedRoute requiredRoles={["student"]}>
+            <StudentAttendanceRequest />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/faculty-dashboard"
         element={
           <ProtectedRoute requiredRoles={["faculty"]}>
@@ -147,6 +157,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["faculty"]}>
             <FacultySuspiciousActivity />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/faculty/attendance-requests"
+        element={
+          <ProtectedRoute requiredRoles={["faculty"]}>
+            <FacultyAttendanceRequests />
           </ProtectedRoute>
         }
       />

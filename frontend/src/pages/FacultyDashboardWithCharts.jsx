@@ -120,6 +120,10 @@ function FacultyDashboardWithCharts() {
     navigate("/faculty/suspicious-activity");
   };
 
+  const handleViewAttendanceRequests = () => {
+    navigate("/faculty/attendance-requests");
+  };
+
   return (
     <motion.div
       className="dashboard"
@@ -293,6 +297,27 @@ function FacultyDashboardWithCharts() {
                 </p>
                 <button className="dashboard__card-action" style={{ marginTop: 'auto' }}>
                   View Activity →
+                </button>
+              </motion.section>
+
+              <motion.section
+                className="dashboard__card dashboard__card--clickable"
+                onClick={handleViewAttendanceRequests}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => e.key === 'Enter' && handleViewAttendanceRequests()}
+                style={{ cursor: 'pointer', border: '1px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.06)' }}
+                variants={fadeInUp}
+                whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(245,158,11,0.18)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}>📋</div>
+                <h2 className="dashboard__card-title">Attendance Requests</h2>
+                <p className="dashboard__card-text">
+                  Review and approve manual attendance requests from students who couldn't scan the QR code.
+                </p>
+                <button className="dashboard__card-action" style={{ marginTop: 'auto', background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none' }}>
+                  Review Requests →
                 </button>
               </motion.section>
             </motion.section>
