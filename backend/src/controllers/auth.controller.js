@@ -452,6 +452,15 @@ const register = async (req, res, next) => {
             });
         }
 
+        // Department required for students and faculty
+        const userRole = role || 'student';
+        if (userRole !== 'admin' && (!req.body.department || req.body.department.trim() === '')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Department/Branch is required. Apni branch select karo.'
+            });
+        }
+
         // ---------------------------------------------------------------------
         // STEP 3: User Data Object prepare karo
         // ---------------------------------------------------------------------

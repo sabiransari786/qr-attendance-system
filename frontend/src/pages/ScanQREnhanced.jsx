@@ -517,7 +517,7 @@ function ScanQREnhanced() {
               </div>
               <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Faculty</div>
-                <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{sessionInfo.faculty_name || 'N/A'}</div>
+                <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{sessionInfo.faculty?.name || sessionInfo.faculty_name || 'N/A'}</div>
               </div>
               <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Location</div>
@@ -526,7 +526,19 @@ function ScanQREnhanced() {
               <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Date & Time</div>
                 <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>
-                  {new Date(sessionInfo.start_time).toLocaleString()}
+                  {new Date(sessionInfo.startTime || sessionInfo.start_time).toLocaleString('en-IN', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                  })}
+                </div>
+              </div>
+              <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #6ee7b7' }}>
+                <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}>✅ Present Count</div>
+                <div style={{ fontWeight: '700', fontSize: '1.5rem', color: '#059669' }}>
+                  {sessionInfo.attendance?.present ?? 0}
+                  <span style={{ fontSize: '0.875rem', fontWeight: '400', color: '#666', marginLeft: '0.5rem' }}>
+                    marked present
+                  </span>
                 </div>
               </div>
             </div>

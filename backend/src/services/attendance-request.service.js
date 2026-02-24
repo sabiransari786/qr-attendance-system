@@ -170,28 +170,49 @@ class AttendanceRequestService {
         };
       }
 
-      // Validate location
-      const distance = this.calculateDistance(
-        request.latitude,
-        request.longitude,
-        student_latitude,
-        student_longitude
-      );
+      // Skip location check if:
+      // 1. Student location unavailable (sent as 0,0)
+      // 2. SKIP_LOCATION_CHECK env var is set (dev/testing)
+      const locationUnavailable =
+        (student_latitude === 0 && student_longitude === 0) ||
+        student_latitude === null || student_longitude === null;
+      const skipLocationCheck =
+        process.env.SKIP_LOCATION_CHECK === 'true' || locationUnavailable;
 
-      if (distance > request.radius_meters) {
+      if (!skipLocationCheck) {
+        const distance = this.calculateDistance(
+          request.latitude,
+          request.longitude,
+          student_latitude,
+          student_longitude
+        );
+
+        if (distance > request.radius_meters) {
+          return {
+            valid: false,
+            reason: `You are ${distance.toFixed(1)}m away from the classroom (allowed: ${request.radius_meters}m)`
+          };
+        }
+
         return {
-          valid: false,
-          reason: `You are ${distance.toFixed(1)}m away from the classroom (allowed: ${request.radius_meters}m)`
+          valid: true,
+          request_id,
+          attendance_value: request.attendance_value,
+          session_id: request.session_id,
+          faculty_id: request.faculty_id,
+          distance: distance.toFixed(1)
         };
       }
 
+      // Location unavailable — skip distance check, still allow attendance
       return {
         valid: true,
         request_id,
         attendance_value: request.attendance_value,
         session_id: request.session_id,
         faculty_id: request.faculty_id,
-        distance: distance.toFixed(1)
+        distance: null,
+        locationNote: locationUnavailable ? 'Location unavailable, distance check skipped' : 'Distance check disabled'
       };
     } catch (error) {
       throw error;
@@ -211,9 +232,9 @@ class AttendanceRequestService {
       if (!rows[0]) return 0;
       const session_id = rows[0].session_id;
 
-      // Count actual attendance records (present or late) for this session
+      // Count actual attendance records (present or late) for this session — today only
       const [countRows] = await pool.execute(
-        "SELECT COUNT(*) as cnt FROM attendance WHERE session_id = ? AND status IN ('present', 'late')",
+        "SELECT COUNT(*) as cnt FROM attendance WHERE session_id = ? AND status IN ('present', 'late') AND DATE(marked_at) = CURDATE()",
         [session_id]
       );
       return countRows[0]?.cnt || 0;

@@ -206,10 +206,10 @@ router.get('/students', async (req, res) => {
     const { pool } = require('../../config/database');
     
     const [students] = await pool.query(
-      `SELECT id, name, email, student_id, is_active, created_at 
+      `SELECT id, name, email, student_id, department, semester, is_active, created_at 
        FROM users 
        WHERE role = 'student' 
-       ORDER BY name ASC`
+       ORDER BY department ASC, semester ASC, name ASC`
     );
     
     return res.status(200).json({
@@ -223,6 +223,93 @@ router.get('/students', async (req, res) => {
       success: false,
       message: 'Failed to fetch students'
     });
+  }
+});
+
+/**
+ * PATCH /admin/students/:id/promote - Promote student to next semester
+ * - Updates users.semester  (e.g. '1st' → '2nd')
+ * - Re-builds course_enrollment for the new semester
+ * - If student is in 6th semester → marks as 'graduated' (is_active = 0, semester = 'graduated')
+ */
+router.patch('/admin/students/:id/promote', authMiddleware, requireAdmin, async (req, res) => {
+  const { pool } = require('../../config/database');
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const { id } = req.params;
+
+    // Fetch current student
+    const [[student]] = await conn.query(
+      `SELECT id, name, semester, department FROM users WHERE id = ? AND role = 'student'`,
+      [id]
+    );
+    if (!student) {
+      await conn.rollback();
+      return res.status(404).json({ success: false, message: 'Student not found.' });
+    }
+
+    const semOrder = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+    const curIdx = semOrder.indexOf(student.semester);
+
+    if (curIdx === -1) {
+      await conn.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `Student ka semester '${student.semester}' promote nahi ho sakta.`
+      });
+    }
+
+    // 6th semester → graduate
+    if (curIdx === 5) {
+      await conn.query(`UPDATE users SET semester = 'graduated', is_active = 0 WHERE id = ?`, [id]);
+      await conn.query(`DELETE FROM course_enrollment WHERE student_id = ?`, [id]);
+      await conn.commit();
+      return res.status(200).json({
+        success: true,
+        message: `${student.name} ko graduate kar diya gaya! 🎓`,
+        data: { newSemester: 'graduated', graduated: true }
+      });
+    }
+
+    const newSemester = semOrder[curIdx + 1];
+    const newSemNum  = curIdx + 2; // 1-indexed int for courses table
+
+    // Get department_id
+    const [[dept]] = await conn.query(
+      `SELECT id FROM departments WHERE name = ?`,
+      [student.department]
+    );
+
+    // Update semester
+    await conn.query(`UPDATE users SET semester = ? WHERE id = ?`, [newSemester, id]);
+
+    // Rebuild enrollments
+    await conn.query(`DELETE FROM course_enrollment WHERE student_id = ?`, [id]);
+
+    if (dept) {
+      const [courses] = await conn.query(
+        `SELECT id FROM courses WHERE department_id = ? AND semester = ? AND is_active = 1`,
+        [dept.id, newSemNum]
+      );
+      if (courses.length > 0) {
+        const rows = courses.map(c => [id, c.id]);
+        await conn.query(`INSERT INTO course_enrollment (student_id, course_id) VALUES ?`, [rows]);
+      }
+    }
+
+    await conn.commit();
+    return res.status(200).json({
+      success: true,
+      message: `${student.name} ko ${newSemester} semester mein promote kiya gaya! 🎉`,
+      data: { newSemester, graduated: false }
+    });
+  } catch (error) {
+    await conn.rollback();
+    console.error('Promote error:', error);
+    return res.status(500).json({ success: false, message: 'Promote karne mein error aaya.' });
+  } finally {
+    conn.release();
   }
 });
 

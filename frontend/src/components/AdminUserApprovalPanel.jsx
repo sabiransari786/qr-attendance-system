@@ -341,18 +341,11 @@ function AdminUserApprovalPanel({ isOpen, onClose }) {
               >
                 <option value="">-- Select Department --</option>
                 {[
-                  "Computer Science & Engineering",
-                  "Information Technology",
-                  "Electronics & Communication Engineering",
-                  "Electrical Engineering",
-                  "Mechanical Engineering",
+                  "Computer Engineering",
                   "Civil Engineering",
-                  "Chemical Engineering",
-                  "Biotechnology",
-                  "Mathematics & Computing",
-                  "Physics",
-                  "Administration",
-                  "Other",
+                  "Mechanical Engineering",
+                  "Electrical Engineering",
+                  "Electronics & Telecommunication Engg",
                 ].map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
@@ -372,7 +365,7 @@ function AdminUserApprovalPanel({ isOpen, onClose }) {
                   onChange={handleFormChange}
                   placeholder="4"
                   min="1"
-                  max="8"
+                  max="6"
                 />
               </div>
 

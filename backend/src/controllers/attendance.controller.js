@@ -155,14 +155,15 @@ const markAttendance = async (req, res, next) => {
         // ---------------------------------------------------------------------
         // ERROR HANDLING
         // ---------------------------------------------------------------------
-        // Koi bhi error aaye - service se ya kahi se bhi
-        // Hum use next() se global error handler ko pass kar denge
-        // Global error handler proper error response format karega
-        // 
-        // Yahan error handle NAHI kar rahe kyunki:
-        // - Centralized error handling better hai
-        // - Consistent error responses milte hain
-        // - Error logging ek jagah hoti hai
+        // Business logic errors (with statusCode) — return proper HTTP response
+        // so they don't get swallowed by moduleFaultBoundary as a 503.
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message
+            });
+        }
+        // Truly unexpected errors — pass to fault isolation middleware
         next(error);
     }
 };

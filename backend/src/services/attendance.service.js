@@ -77,6 +77,18 @@ class SessionNotFoundError extends Error {
 }
 
 /**
+ * Course Enrollment Error
+ * Jab student us course mein enrolled nahi hai
+ */
+class CourseEnrollmentError extends Error {
+    constructor(message = 'You are not enrolled in this course. Attendance cannot be marked.') {
+        super(message);
+        this.name = 'CourseEnrollmentError';
+        this.statusCode = 403;
+    }
+}
+
+/**
  * Session Not Active Error
  * Jab session closed ho chuki hai ya active nahi hai
  */
@@ -307,9 +319,10 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // STEP 2: Session Validation (transaction connection use karo)
         // ---------------------------------------------------------------------
         const [sessions] = await connection.query(
-            `SELECT id, status, start_time, end_time, faculty_id, subject, location, course_id
-             FROM sessions 
-             WHERE id = ?`,
+            `SELECT s.id, s.status, s.start_time, s.end_time, s.faculty_id, s.subject, s.location, s.course_id, s.department_id, c.semester AS course_semester
+             FROM sessions s
+             LEFT JOIN courses c ON c.id = s.course_id
+             WHERE s.id = ?`,
             [sessionId]
         );
 
@@ -327,9 +340,10 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // STEP 3: Student Validation
         // ---------------------------------------------------------------------
         const [students] = await connection.query(
-            `SELECT id, name, student_id, email
-             FROM users 
-             WHERE id = ? AND role = 'student'`,
+            `SELECT u.id, u.name, u.student_id, u.email, u.department, u.semester, d.id AS dept_id
+             FROM users u
+             LEFT JOIN departments d ON d.name = u.department
+             WHERE u.id = ? AND u.role = 'student'`,
             [studentId]
         );
 
@@ -338,21 +352,58 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         }
 
         // ---------------------------------------------------------------------
+        // STEP 3.5: Department Mismatch Check
+        // Student sirf apni branch ke sessions mein attendance mark kar sakta hai
+        // ---------------------------------------------------------------------
+        if (session.department_id) {
+            const studentDeptId = students[0].dept_id;
+            if (!studentDeptId || Number(studentDeptId) !== Number(session.department_id)) {
+                const err = new Error(
+                    `Branch mismatch: Yeh session aapki branch ka nahi hai. ` +
+                    `Aap sirf apni branch (${students[0].department || 'unset'}) ke sessions mein attendance mark kar sakte ho.`
+                );
+                err.statusCode = 403;
+                throw err;
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // STEP 3.6: Semester Mismatch Check
+        // Student sirf apne current semester ke sessions mein attendance mark kar sakta hai
+        // University rule: 1st sem student 3rd sem class attend nahi kar sakta
+        // ---------------------------------------------------------------------
+        if (session.course_semester) {
+            const semesterMap = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
+            const studentSemNum = semesterMap[students[0].semester];
+            const courseSemNum = Number(session.course_semester);
+            if (!studentSemNum || studentSemNum !== courseSemNum) {
+                const err = new Error(
+                    `Semester mismatch: Yeh session Semester-${courseSemNum} ka hai. ` +
+                    `Aap abhi Semester-${students[0].semester || 'unknown'} mein hain. ` +
+                    `Aap sirf apne current semester ki classes attend kar sakte ho.`
+                );
+                err.statusCode = 403;
+                throw err;
+            }
+        }
+
+        // ---------------------------------------------------------------------
         // STEP 4: Duplicate Attendance Check (FOR UPDATE — lock the row)
+        // Check only for TODAY — same session can repeat on different days
         // FOR UPDATE se concurrent requests block ho jate hain jab tak
         // current transaction complete na ho — HFR10 (concurrent handling) bhi cover hota hai
         // ---------------------------------------------------------------------
         const [existingAttendance] = await connection.query(
             `SELECT id, status, marked_at
              FROM attendance 
-             WHERE student_id = ? AND session_id = ?
+             WHERE student_id = ? AND session_id = ? AND DATE(marked_at) = CURDATE()
              FOR UPDATE`,
             [studentId, sessionId]
         );
 
         if (existingAttendance && existingAttendance.length > 0) {
             throw new DuplicateAttendanceError(
-                `Attendance already marked at ${new Date(existingAttendance[0].marked_at).toLocaleString()}.`
+                `Attendance already marked today at ${new Date(existingAttendance[0].marked_at).toLocaleTimeString()}.`
             );
         }
 
@@ -366,7 +417,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
                 [session.course_id, studentId]
             );
             if (!enrollment || enrollment.length === 0) {
-                throw new Error('You are not enrolled in this course. Attendance cannot be marked.');
+                throw new CourseEnrollmentError();
             }
         }
 

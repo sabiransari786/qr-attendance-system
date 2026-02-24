@@ -4,18 +4,11 @@
  */
 
 export const DEPARTMENTS = [
-  "Computer Science & Engineering",
-  "Information Technology",
-  "Electronics & Communication Engineering",
-  "Electrical Engineering",
-  "Mechanical Engineering",
+  "Computer Engineering",
   "Civil Engineering",
-  "Chemical Engineering",
-  "Biotechnology",
-  "Mathematics & Computing",
-  "Physics",
-  "Administration",
-  "Other",
+  "Mechanical Engineering",
+  "Electrical Engineering",
+  "Electronics & Telecommunication Engg",
 ];
 
 export const COURSES = [
@@ -51,6 +44,6 @@ export const COURSES = [
   { code: "HS201", name: "Engineering Ethics" },
 ];
 
-export const SEMESTERS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+export const SEMESTERS = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
 
 export const SECTIONS = ["A", "B", "C", "D", "E"];

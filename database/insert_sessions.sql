@@ -1,0 +1,16 @@
+INSERT INTO sessions (faculty_id, course_id, department_id, subject, location, start_time, end_time, status, qr_code, qr_expiry_time, created_at) VALUES
+(3, 196, 1, 'Communication Skills-I', 'Room 101, Civil Block', '2026-02-16 09:00:00', '2026-02-16 10:00:00', 'closed', NULL, '2026-02-16 09:15:00', '2026-02-16 09:00:00'),
+(3, 205, 1, 'Applied Mathematics-II', 'Room 102, Civil Block', '2026-02-20 11:00:00', '2026-02-20 12:00:00', 'closed', NULL, '2026-02-20 11:15:00', '2026-02-20 11:00:00'),
+(3, 214, 1, 'Building Construction', 'Room 201, Civil Block', NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'active', NULL, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW()),
+(5, 251, 2, 'Communication Skills-I', 'Room 101, Mech Block', '2026-02-17 09:00:00', '2026-02-17 10:00:00', 'closed', NULL, '2026-02-17 09:15:00', '2026-02-17 09:00:00'),
+(5, 260, 2, 'Applied Maths-II', 'Room 103, Mech Block', '2026-02-21 10:00:00', '2026-02-21 11:00:00', 'closed', NULL, '2026-02-21 10:15:00', '2026-02-21 10:00:00'),
+(5, 269, 2, 'Electrical Technology', 'Room 202, Mech Block', NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'active', NULL, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW()),
+(39, 359, 3, 'Communication Skills-I', 'Room 101, Electrical Block', '2026-02-16 14:00:00', '2026-02-16 15:00:00', 'closed', NULL, '2026-02-16 14:15:00', '2026-02-16 14:00:00'),
+(39, 368, 3, 'Applied Mathematics-II', 'Room 202, Electrical Block', '2026-02-19 09:00:00', '2026-02-19 10:00:00', 'closed', NULL, '2026-02-19 09:15:00', '2026-02-19 09:00:00'),
+(39, 377, 3, 'Measurements & Measuring Instruments', 'Lab 01, Electrical Block', NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'active', NULL, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW()),
+(35, 31, 4, 'Communication Skill-I', 'Room 101, CS Block', '2026-02-18 09:00:00', '2026-02-18 10:00:00', 'closed', NULL, '2026-02-18 09:15:00', '2026-02-18 09:00:00'),
+(35, 40, 4, 'Applied Maths-II', 'Room 202, CS Block', '2026-02-22 11:00:00', '2026-02-22 12:00:00', 'closed', NULL, '2026-02-22 11:15:00', '2026-02-22 11:00:00'),
+(35, 49, 4, 'Computer Oriented Numerical Methods', 'Lab 301, CS Block', NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'active', NULL, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW()),
+(41, 305, 5, 'Communication Skills-I', 'Room 101, EXTC Block', '2026-02-17 14:00:00', '2026-02-17 15:00:00', 'closed', NULL, '2026-02-17 14:15:00', '2026-02-17 14:00:00'),
+(41, 314, 5, 'Applied Maths-II', 'Room 203, EXTC Block', '2026-02-21 14:00:00', '2026-02-21 15:00:00', 'closed', NULL, '2026-02-21 14:15:00', '2026-02-21 14:00:00'),
+(41, 323, 5, 'Electronic Devices & Circuits-I', 'Lab 201, EXTC Block', NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR), 'active', NULL, DATE_ADD(NOW(), INTERVAL 15 MINUTE), NOW());

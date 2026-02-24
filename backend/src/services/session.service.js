@@ -839,7 +839,31 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
                 query += ` AND s.faculty_id = ?`;
                 queryParams.push(userContext.userId);
             }
-            // Students ko sab active sessions dikhayi jayengi (attendance mark karne ke liye)
+            // Students ko sirf apni branch + semester ke sessions dikhayi jayengi
+            else if (userContext.userRole === ROLE.STUDENT) {
+                const [studentInfo] = await pool.query(
+                    `SELECT u.semester, d.id AS dept_id
+                     FROM users u
+                     LEFT JOIN departments d ON d.name = u.department
+                     WHERE u.id = ?`,
+                    [userContext.userId]
+                );
+                if (studentInfo && studentInfo.length > 0) {
+                    const semMap = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
+                    const studentSem = semMap[studentInfo[0].semester];
+                    const studentDeptId = studentInfo[0].dept_id;
+                    // Sirf apni branch ke sessions dikhao
+                    if (studentDeptId) {
+                        query += ` AND s.department_id = ?`;
+                        queryParams.push(studentDeptId);
+                    }
+                    // Sirf apne semester ke sessions dikhao
+                    if (studentSem) {
+                        query += ` AND c.semester = ?`;
+                        queryParams.push(studentSem);
+                    }
+                }
+            }
         }
         
         // Order by start_time DESC - latest sessions pehle
@@ -961,7 +985,7 @@ const getSessionById = async (sessionId) => {
                 COUNT(CASE WHEN status = 'present' THEN 1 END) as present_count,
                 COUNT(CASE WHEN status = 'late' THEN 1 END) as late_count
              FROM attendance
-             WHERE session_id = ?`,
+             WHERE session_id = ? AND DATE(marked_at) = CURDATE()`,
             [sessionId]
         );
         

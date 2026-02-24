@@ -63,6 +63,8 @@ function Signup() {
       !formValues.email.trim() ||
       !formValues.rollNumber.trim() ||
       !formValues.contactNumber.trim() ||
+      !formValues.department ||
+      !formValues.semester ||
       !formValues.password.trim() ||
       !formValues.confirmPassword.trim()
     );

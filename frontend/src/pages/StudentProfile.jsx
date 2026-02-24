@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
+import { DEPARTMENTS } from "../config/dummyData";
 import "../styles/profile.css";
 import {
   fadeInUp,
@@ -734,8 +735,6 @@ function StudentProfile() {
                     <option value="4th">4th</option>
                     <option value="5th">5th</option>
                     <option value="6th">6th</option>
-                    <option value="7th">7th</option>
-                    <option value="8th">8th</option>
                   </select>
                 ) : (
                   <p className="form-value">{profileData.semester}</p>

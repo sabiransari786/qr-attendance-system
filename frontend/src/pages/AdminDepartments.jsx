@@ -15,6 +15,7 @@ const INITIAL_DEPARTMENTS = [
   { id: 4, name: "Civil Engineering", code: "CE", icon: "🏗️", color: "#10b981", hod: "Dr. Priya Nair", established: 1975, building: "Block D", phone: "+91-11-2345-6704", description: "Encompasses structural, geotechnical, environmental, and transportation engineering." },
   { id: 5, name: "Electronics & Communication", code: "ECE", icon: "📡", color: "#ef4444", hod: "Dr. Vikram Singh", established: 1990, building: "Block E", phone: "+91-11-2345-6705", description: "Covers VLSI design, IoT, wireless communications, and microelectronics." },
   { id: 6, name: "Information Technology", code: "IT", icon: "🌐", color: "#ec4899", hod: "Dr. Kavita Joshi", established: 1998, building: "Block F", phone: "+91-11-2345-6706", description: "Focuses on cloud computing, cybersecurity, full-stack development, and data analytics." },
+  { id: 7, name: "Computer Engineering", code: "COMP", icon: "🖥️", color: "#0ea5e9", hod: "Dr. Rajan Mehta", established: 2002, building: "Block G", phone: "+91-11-2345-6707", description: "Covers engineering mathematics, data structures, computer networks, DBMS, and operating systems." },
 ];
 
 const INITIAL_FACULTY = {
@@ -53,6 +54,13 @@ const INITIAL_FACULTY = {
     { id: 602, name: "Prof. Rahul Das", designation: "Associate Professor", email: "rahul.das@college.edu", phone: "9812300022", specialization: "Cybersecurity", experience: 10, status: "Active" },
     { id: 603, name: "Dr. Divya Menon", designation: "Assistant Professor", email: "divya.menon@college.edu", phone: "9812300023", specialization: "Full-Stack Development", experience: 5, status: "Active" },
     { id: 604, name: "Ms. Ankita Roy", designation: "Assistant Professor", email: "ankita.roy@college.edu", phone: "9812300024", specialization: "Data Analytics", experience: 3, status: "Active" },
+  ],
+  7: [
+    { id: 701, name: "Dr. Rajan Mehta", designation: "Professor & HOD", email: "rajan.mehta@college.edu", phone: "9812300025", specialization: "Engineering Mathematics", experience: 16, status: "Active" },
+    { id: 702, name: "Prof. Nisha Yadav", designation: "Associate Professor", email: "nisha.yadav@college.edu", phone: "9812300026", specialization: "Data Structures", experience: 11, status: "Active" },
+    { id: 703, name: "Dr. Sameer Qureshi", designation: "Associate Professor", email: "sameer.qureshi@college.edu", phone: "9812300027", specialization: "Computer Networks", experience: 9, status: "Active" },
+    { id: 704, name: "Dr. Preeti Sharma", designation: "Assistant Professor", email: "preeti.sharma@college.edu", phone: "9812300028", specialization: "Database Management Systems", experience: 7, status: "Active" },
+    { id: 705, name: "Mr. Vivek Tiwari", designation: "Assistant Professor", email: "vivek.tiwari@college.edu", phone: "9812300029", specialization: "Operating Systems", experience: 5, status: "Active" },
   ],
 };
 
@@ -110,6 +118,13 @@ const INITIAL_COURSES = {
     { id: "it105", code: "DA201", name: "Data Analytics", credits: 3, semester: 4, type: "Elective", facultyId: 604, enrolled: 35, attendance: 88, schedule: { Tue: 3, Thu: 4 } },
     { id: "it106", code: "NS201", name: "Network Security", credits: 3, semester: 5, type: "Core", facultyId: 602, enrolled: 37, attendance: 82, schedule: { Mon: 4, Wed: 4 } },
     { id: "it107", code: "BE201", name: "Business Intelligence", credits: 2, semester: 4, type: "Elective", facultyId: 604, enrolled: 30, attendance: 86, schedule: { Thu: 5 } },
+  ],
+  7: [
+    { id: "cp101", code: "COMP301", name: "Engineering Mathematics-III", credits: 4, semester: 3, type: "Core", facultyId: 701, enrolled: 55, attendance: 84, schedule: { Mon: 0, Wed: 0, Fri: 1 } },
+    { id: "cp102", code: "COMP302", name: "Data Structures", credits: 4, semester: 3, type: "Core", facultyId: 702, enrolled: 52, attendance: 88, schedule: { Tue: 1, Thu: 1 } },
+    { id: "cp103", code: "COMP303", name: "Computer Networks", credits: 3, semester: 5, type: "Core", facultyId: 703, enrolled: 48, attendance: 79, schedule: { Mon: 2, Wed: 3 } },
+    { id: "cp104", code: "COMP304", name: "Database Management Systems", credits: 3, semester: 5, type: "Core", facultyId: 704, enrolled: 50, attendance: 85, schedule: { Tue: 2, Thu: 3 } },
+    { id: "cp105", code: "COMP305", name: "Operating Systems", credits: 4, semester: 5, type: "Core", facultyId: 705, enrolled: 47, attendance: 82, schedule: { Wed: 4, Fri: 4 } },
   ],
 };
 
