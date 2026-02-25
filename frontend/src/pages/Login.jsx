@@ -84,28 +84,14 @@ function Login() {
     setIsLoading(true);
 
     try {
-      // Debug: Log current window location and expected API URL
-      console.log("🌐 Window location:", window.location.href);
-      console.log("🌐 Hostname:", window.location.hostname);
-      console.log("🔗 Using API_BASE_URL:", API_BASE_URL);
-      console.log("🔗 Login endpoint:", `${API_BASE_URL}/auth/login`);
-      
-      // Send login request to backend
-      console.log("Attempting login with:", { email: formValues.email.trim(), password: "***" });
       const response = await login({
         email: formValues.email.trim(),
         password: formValues.password,
       });
 
-      console.log("Login response:", response);
-
       // Extract token and user data from response
-      // Handle both backend format (response.data) and mock API format (response)
       const token = response?.data?.token || response?.token;
       const userData = response?.data?.user || response?.user;
-
-      console.log("Extracted token:", token);
-      console.log("Extracted userData:", userData);
 
       if (!token || !userData) {
         setErrorMessage("Invalid response from server. Please try again.");
@@ -118,14 +104,12 @@ function Login() {
       // Show success modal
       setSuccessUserName(userData.name);
       setShowSuccessModal(true);
-      console.log("Modal shown, will redirect in 3000ms");
 
       // Determine dashboard route based on role
       const dashboardPath = ROLE_ROUTES[userData.role] || "/";
 
-      // Redirect after modal closes (give extra time for animation)
+      // Redirect after modal closes
       setTimeout(() => {
-        console.log("Redirecting to:", dashboardPath);
         navigate(dashboardPath);
       }, 3000);
     } catch (error) {

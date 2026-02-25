@@ -62,7 +62,7 @@
  * 
  * Controller sirf isko call karega, khud kuch nahi karega
  */
-console.log("AUTH CONTROLLER LOADED");
+
 const authService = require('../services/auth.service');
 
 // =============================================================================

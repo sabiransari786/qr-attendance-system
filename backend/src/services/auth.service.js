@@ -47,7 +47,7 @@
  * Database Pool Import
  * MySQL connection pool database queries execute karne ke liye
  */
-console.log("AUTH SERVICE LOADED");
+
 const { pool, ROLE } = require('../config');
 
 /**
@@ -632,10 +632,6 @@ const updateProfile = async (userId, updateData) => {
     try {
         const { pool } = require('../config/database');
         
-        console.log('🔧 Service: Starting profile update');
-        console.log('User ID:', userId);
-        console.log('Update Data received:', updateData);
-        
         // Fields that can be updated
         const allowedFields = ['name', 'phone', 'contactNumber', 'department', 'semester', 'section'];
         const updates = [];
@@ -652,7 +648,6 @@ const updateProfile = async (userId, updateData) => {
             if (allowedFields.includes(key) && updateData[key] !== undefined && updateData[key] !== null) {
                 updates.push(`${dbKey} = ?`);
                 values.push(updateData[key]);
-                console.log(`  ✓ Adding field: ${dbKey} = ${updateData[key]}`);
             }
         });
         
@@ -664,13 +659,9 @@ const updateProfile = async (userId, updateData) => {
         values.push(userId);
         
         const updateQuery = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-        console.log('📊 SQL Query:', updateQuery);
-        console.log('📊 Values:', values);
         
         // Update user in database
         await pool.query(updateQuery, values);
-        
-        console.log('✅ Database updated successfully');
         
         // Fetch updated user data
         const [users] = await pool.query(
@@ -685,10 +676,7 @@ const updateProfile = async (userId, updateData) => {
             throw new Error('User not found');
         }
         
-        console.log('📤 Fetched updated user from DB:', users[0]);
-        
         const userResponse = prepareUserResponse(users[0]);
-        console.log('📤 Prepared user response:', userResponse);
         
         return userResponse;
         
@@ -749,10 +737,6 @@ const uploadProfilePhoto = async (userId, photoBuffer, mimeType) => {
             throw new Error('MIME type is required');
         }
         
-        console.log(`📸 Uploading photo for user ${userId}`);
-        console.log(`   Photo size: ${photoBuffer.length} bytes`);
-        console.log(`   MIME type: ${mimeType}`);
-        
         // Store photo in database
         const updateQuery = `
             UPDATE users 
@@ -766,8 +750,6 @@ const uploadProfilePhoto = async (userId, photoBuffer, mimeType) => {
             console.error('Database error:', dbError);
             throw new Error(`Database update failed: ${dbError.message}`);
         }
-        
-        console.log('✅ Photo uploaded successfully');
         
         // Fetch updated user
         const [users] = await pool.query(
@@ -798,19 +780,14 @@ const uploadProfilePhoto = async (userId, photoBuffer, mimeType) => {
  */
 const getProfilePhoto = async (userId) => {
     try {
-        console.log(`📷 Fetching photo for user ${userId}`);
-        
         const [users] = await pool.query(
             `SELECT profile_photo, photo_mime_type FROM users WHERE id = ?`,
             [userId]
         );
         
         if (users.length === 0 || !users[0].profile_photo) {
-            console.log('   No photo found');
             return null;
         }
-        
-        console.log(`   Photo size: ${users[0].profile_photo.length} bytes`);
         
         return {
             photo: users[0].profile_photo,

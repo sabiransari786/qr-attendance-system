@@ -84,6 +84,14 @@ const moduleFaultBoundary = (moduleName) => (err, req, res, next) => {
         return next(err);
     }
 
+    // Agar error ka statusCode < 500 hai (jaise 400, 401, 403, 404) toh
+    // ye known business errors hain — crash nahi, isliye next() pe pass karo
+    // taaki global error handler properly handle kare
+    const statusCode = err.statusCode || err.status || 500;
+    if (statusCode < 500) {
+        return next(err);
+    }
+
     console.error(
         `[FaultIsolation] Module "${moduleName}" error at ${req.method} ${req.originalUrl}:`,
         err.message

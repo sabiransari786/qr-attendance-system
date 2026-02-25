@@ -62,14 +62,17 @@ class AttendanceRequestModel {
    * Get requests by faculty_id
    */
   static async getByFacultyId(faculty_id, limit = 10) {
+    // LIMIT ko directly interpolate karo - prepared statement mein LIMIT ? ka
+    // mysql2 ke saath kabhi kabhi "Incorrect arguments" error aata hai
+    const safeLimit = parseInt(limit) || 10;
     const query = `
       SELECT * FROM attendance_request 
       WHERE faculty_id = ?
       ORDER BY created_at DESC
-      LIMIT ?
+      LIMIT ${safeLimit}
     `;
 
-    const [results] = await pool.execute(query, [faculty_id, limit]);
+    const [results] = await pool.execute(query, [faculty_id]);
     return results || [];
   }
 

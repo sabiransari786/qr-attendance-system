@@ -41,7 +41,6 @@ function Navbar() {
         setProfilePhoto(url);
       }
     } catch (error) {
-      console.log("No profile photo found");
       setProfilePhoto(null);
     }
   };

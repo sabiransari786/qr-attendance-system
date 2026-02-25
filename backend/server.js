@@ -21,21 +21,12 @@ const app = require('./src/app');
 // STEP 2: PORT Environment Variable Define Kar Rahe Hain
 // ============================================================================
 
-// PORT environment variable se le rahe hain, nahi mila to default 5000 use hoga
-// Kyun environment variable? - Production mein hosting platform (Heroku, AWS, etc.) apna PORT provide karta hai
-// Development mein .env file se PORT load hota hai (dotenv app.js mein already configured hai)
-// Fallback value (5000) development ke liye default port hai - agar .env mein PORT define nahi kiya to ye use hoga
 const PORT = process.env.PORT || 5000;
 
 // ============================================================================
 // STEP 3: HTTP Server Start Kar Rahe Hain
 // ============================================================================
 
-// app.listen() se HTTP server start hota hai - ye Express ka built-in method hai
-// PORT pe server listen karega - incoming requests accept karega
-// Callback function execute hota hai jab server successfully start ho jata hai
-// Production-ready: NODE_ENV check karke environment-specific message dikha rahe hain
-// 0.0.0.0 se bind karke network se bhi accessible ho jayega
 const os = require('os');
 const getLocalIP = () => {
   const interfaces = os.networkInterfaces();
@@ -56,6 +47,35 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Local: http://localhost:${PORT}`);
   console.log(`🌐 Network: http://${localIP}:${PORT}`);
   console.log(`✅ API Health Check: http://localhost:${PORT}/api/health`);
+
+  // ============================================================================
+  // AUTO SESSION CLOSE — Orphan Sessions Fix
+  // ============================================================================
+  // Jo sessions bahut purani ho gayi hain (end_time nikal gaya) unhe auto-close karo
+  // Ye every 10 minutes chalega
+  const { pool } = require('./src/config');
+
+  const autoCloseSessions = async () => {
+    try {
+      const [result] = await pool.query(
+        `UPDATE sessions 
+         SET status = 'closed', updated_at = NOW()
+         WHERE status = 'active' 
+           AND end_time IS NOT NULL 
+           AND end_time < NOW()`
+      );
+      if (result.affectedRows > 0) {
+        console.log(`🔄 Auto-closed ${result.affectedRows} expired session(s)`);
+      }
+    } catch (err) {
+      console.error('Auto session close error:', err.message);
+    }
+  };
+
+  // Pehle immediately run karo (orphan sessions clean karo on startup)
+  autoCloseSessions();
+  // Phir har 10 minute pe run karo
+  setInterval(autoCloseSessions, 10 * 60 * 1000);
 });
 
 // ============================================================================

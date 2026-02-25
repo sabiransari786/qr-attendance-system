@@ -56,7 +56,6 @@ function FacultyProfile() {
         const blob = await response.blob();
         setPhotoPreview(URL.createObjectURL(blob));
       }
-    } catch { console.log("No profile photo found"); }
   };
 
   const fetchProfileData = async () => {

@@ -44,7 +44,6 @@
  * Controller sirf isko call karega, khud kuch nahi karega
  * 
  */
-console.log("ATTENDANCE CONTROLLER LOADED");
 const attendanceService = require('../services/attendance.service');
 
 // =============================================================================

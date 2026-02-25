@@ -74,7 +74,6 @@
  * Controller sirf isko call karega, khud kuch nahi karega
  * 
  */
-console.log("SESSION CONTROLLER LOADED");
 const sessionService = require('../services/session.service');
 
 // =============================================================================

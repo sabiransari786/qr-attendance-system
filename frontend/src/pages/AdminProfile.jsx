@@ -56,7 +56,6 @@ function AdminProfile() {
         setPhotoPreview(url);
       }
     } catch (error) {
-      console.log("No profile photo found");
     }
   };
 
@@ -307,8 +306,6 @@ function AdminProfile() {
     try {
       const token = sessionStorage.getItem("authToken");
       
-      console.log('📝 Saving admin profile...');
-      console.log('Data being sent:', editedData);
       
       const response = await fetch(`${API_BASE_URL}/auth/profile`, {
         method: "PUT",
@@ -321,7 +318,6 @@ function AdminProfile() {
 
       const data = await response.json();
       
-      console.log('📨 Server response:', data);
 
       // Handle token expiry
       if (response.status === 403 || response.status === 401) {
@@ -341,7 +337,6 @@ function AdminProfile() {
       if (response.ok) {
         // Use the updated data from server response
         const updatedUser = data.data || data.user;
-        console.log('✅ Update successful! Server returned:', updatedUser);
         
         const updatedProfile = {
           name: updatedUser.name || editedData.name,
@@ -352,7 +347,6 @@ function AdminProfile() {
           designation: updatedUser.designation || editedData.designation
         };
         
-        console.log('💾 Setting profile data to:', updatedProfile);
         
         setProfileData(updatedProfile);
         setEditedData(updatedProfile);

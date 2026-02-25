@@ -47,7 +47,7 @@
  * MySQL connection pool database queries execute karne ke liye
  * Pool se connection borrow karte hain, query execute karte hain, phir release
  */
-console.log("ATTENDANCE SERVICE LOADED");
+
 const { pool, ATTENDANCE_STATUS, SESSION_STATUS, QR_EXPIRY_TIME } = require('../config');
 
 // =============================================================================
@@ -787,7 +787,7 @@ const getAttendanceReport = async (sessionId, format = 'json') => {
              FROM users u
              LEFT JOIN attendance a ON u.id = a.student_id AND a.session_id = ?
              WHERE u.role = 'student'
-             ORDER BY u.roll_no ASC`,
+             ORDER BY u.name ASC`,
             [ATTENDANCE_STATUS.ABSENT, sessionId]
         );
         

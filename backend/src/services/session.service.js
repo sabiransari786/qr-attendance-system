@@ -55,7 +55,6 @@
  * Database Pool Import
  * MySQL connection pool database queries execute karne ke liye
  */
-console.log("SESSION SERVICE LOADED");
 const { pool, SESSION_STATUS, QR_EXPIRY_TIME, ROLE } = require('../config');
 
 /**

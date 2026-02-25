@@ -7,13 +7,10 @@ import "../styles/login-modal.css";
  */
 function LoginSuccessModal({ userName, onComplete }) {
   useEffect(() => {
-    console.log("Modal mounted with userName:", userName);
     const timer = setTimeout(() => {
-      console.log("Modal timer completed, calling onComplete");
       onComplete();
     }, 3000);
     return () => {
-      console.log("Cleaning up modal timer");
       clearTimeout(timer);
     };
   }, [onComplete]);
