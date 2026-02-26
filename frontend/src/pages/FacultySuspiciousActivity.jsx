@@ -15,47 +15,29 @@ function FacultySuspiciousActivity() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterAction, setFilterAction] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedActivity, setSelectedActivity] = useState(null);
-  const [rejectionLoading, setRejectionLoading] = useState(false);
+  const [dismissed, setDismissed] = useState(new Set());
 
   useEffect(() => {
     const fetchActivities = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/auth/admin/logs?role=student&limit=100`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        setError(null);
+        const response = await fetch(`${API_BASE_URL}/faculty/suspicious-activity?limit=100`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
           const data = await response.json();
-          const logs = data?.data?.logs || [];
-          
-          // Filter for suspicious activities
-          const suspiciousActivities = logs.filter((log) => {
-            const action = log.action || '';
-            return (
-              action.includes('failed') ||
-              action.includes('denied') ||
-              action.includes('expired') ||
-              action.includes('duplicate') ||
-              action.includes('invalid') ||
-              action.includes('unauthorized')
-            );
-          });
-
-          setActivities(suspiciousActivities);
+          setActivities(data.data || []);
         } else {
-          setError('Failed to fetch activity logs');
+          const data = await response.json().catch(() => ({}));
+          setError(data.message || 'Failed to fetch suspicious activities');
         }
       } catch (err) {
         console.error('Error fetching activities:', err);
-        setError('Error loading activities');
+        setError('Error loading activities. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -67,64 +49,35 @@ function FacultySuspiciousActivity() {
   }, [token, user?.role]);
 
   const formatDate = (dateString) => {
+    if (!dateString) return '—';
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   };
 
-  const getActionColor = (action) => {
-    if (action.includes('failed') || action.includes('denied')) return '#ef4444';
-    if (action.includes('expired')) return '#f97316';
-    if (action.includes('duplicate')) return '#eab308';
-    if (action.includes('invalid')) return '#ec4899';
-    return '#6366f1';
+  const TYPE_META = {
+    duplicate_attendance:  { label: 'Duplicate Attendance',   icon: '👥', color: '#eab308', bg: 'rgba(234,179,8,0.1)',   border: 'rgba(234,179,8,0.4)' },
+    unauthorized_attempt:  { label: 'Unauthorized Attempt',   icon: '🚫', color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.4)' },
+    invalid_qr:            { label: 'Invalid QR Code',        icon: '❌', color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.4)' },
+    failed_login:          { label: 'Failed Login',           icon: '🔐', color: '#6366f1', bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.4)' },
+    system_error:          { label: 'System Error',           icon: '⚠️', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', border: 'rgba(236,72,153,0.4)' },
+    suspicious:            { label: 'Suspicious Activity',    icon: '🔍', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.4)' },
   };
 
-  const getActionIcon = (action) => {
-    if (action.includes('failed') || action.includes('denied')) return '❌';
-    if (action.includes('expired')) return '⏰';
-    if (action.includes('duplicate')) return '👥';
-    if (action.includes('invalid')) return '⚠️';
-    return '🔍';
-  };
+  const getMeta = (type) => TYPE_META[type] || TYPE_META.suspicious;
 
-  const handleApprove = async (activity) => {
-    // In a real system, this would approve the flagged activity
-    setActivities(prev => prev.filter(a => a.id !== activity.id));
-  };
+  const handleDismiss = (id) => setDismissed(prev => new Set([...prev, id]));
 
-  const handleOpenReject = (activity) => {
-    setSelectedActivity(activity);
-    setRejectionReason('');
-    setShowRejectModal(true);
-  };
+  const counts = activities.reduce((acc, a) => { acc[a.type] = (acc[a.type] || 0) + 1; return acc; }, {});
 
-  const handleReject = async () => {
-    setRejectionLoading(true);
-    // In a real system, this would save the rejection reason to backend
-    setTimeout(() => {
-      setActivities(prev => prev.filter(a => a.id !== selectedActivity.id));
-      setShowRejectModal(false);
-      setSelectedActivity(null);
-      setRejectionLoading(false);
-    }, 500);
-  };
-
-  const handleBack = () => {
-    navigate('/faculty-dashboard');
-  };
-
-  const filteredActivities = activities
-    .filter((a) => filterAction === 'all' || a.action.includes(filterAction))
+  const visible = activities
+    .filter(a => !dismissed.has(a.id))
+    .filter(a => filterType === 'all' || a.type === filterType)
     .sort((a, b) => {
-      if (sortBy === 'recent') return new Date(b.created_at) - new Date(a.created_at);
-      if (sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
-      return 0;
+      const da = new Date(a.createdAt || 0), db = new Date(b.createdAt || 0);
+      return sortBy === 'recent' ? db - da : da - db;
     });
 
   return (
@@ -152,7 +105,7 @@ function FacultySuspiciousActivity() {
         </div>
         <motion.button
           className="dashboard__button dashboard__button--secondary"
-          onClick={handleBack}
+          onClick={() => navigate('/faculty-dashboard')}
           whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
           whileTap={{ scale: 0.96 }}
         >
@@ -168,303 +121,147 @@ function FacultySuspiciousActivity() {
         )}
 
         {error && (
-          <div style={{
-            padding: '1.5rem',
-            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-            border: '1px solid #ff6b6b',
-            borderRadius: '10px',
-            color: '#ff6b6b',
-            marginBottom: '2rem'
-          }}>
+          <div style={{ padding: '1.5rem', backgroundColor: 'rgba(255,107,107,0.1)', border: '1px solid #ff6b6b', borderRadius: '10px', color: '#ff6b6b', marginBottom: '2rem' }}>
             ❌ {error}
           </div>
         )}
 
         {!loading && !error && (
           <>
-            <div style={{
-              display: 'flex',
-              gap: '1rem',
-              marginBottom: '2rem',
-              flexWrap: 'wrap',
-              alignItems: 'center'
-            }}>
+            {/* Summary chips */}
+            {activities.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                {Object.entries(counts).map(([type, cnt]) => {
+                  const m = getMeta(type);
+                  return (
+                    <span key={type} onClick={() => setFilterType(prev => prev === type ? 'all' : type)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', backgroundColor: filterType === type ? m.color : m.bg, color: filterType === type ? '#fff' : m.color, border: `1px solid ${m.border}`, transition: 'all 0.18s' }}
+                    >
+                      {m.icon} {m.label} <strong>({cnt})</strong>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  Filter by Action:
-                </label>
-                <select
-                  value={filterAction}
-                  onChange={(e) => setFilterAction(e.target.value)}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="all">All Activities</option>
-                  <option value="failed">Failed Attempts</option>
-                  <option value="expired">Expired QR</option>
-                  <option value="duplicate">Duplicates</option>
-                  <option value="invalid">Invalid Requests</option>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.88rem', color: 'var(--color-text-secondary)' }}>Filter by Type</label>
+                <select value={filterType} onChange={e => setFilterType(e.target.value)}
+                  style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  <option value="all">All Types</option>
+                  <option value="duplicate_attendance">Duplicate Attendance</option>
+                  <option value="unauthorized_attempt">Unauthorized Attempts</option>
+                  <option value="invalid_qr">Invalid QR</option>
+                  <option value="failed_login">Failed Login</option>
+                  <option value="system_error">System Errors</option>
                 </select>
               </div>
-
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                  Sort by:
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text)',
-                    cursor: 'pointer'
-                  }}
-                >
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.88rem', color: 'var(--color-text-secondary)' }}>Sort by</label>
+                <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+                  style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', fontSize: '0.9rem' }}>
                   <option value="recent">Most Recent</option>
                   <option value="oldest">Oldest First</option>
                 </select>
               </div>
-
-              <div style={{ marginLeft: 'auto', padding: '1.75rem 0' }}>
-                <span style={{
-                  display: 'inline-block',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                  color: '#6366f1',
-                  borderRadius: '20px',
-                  fontWeight: '600'
-                }}>
-                  {filteredActivities.length} Activities
+              <div style={{ marginLeft: 'auto' }}>
+                <span style={{ display: 'inline-block', padding: '0.6rem 1rem', backgroundColor: 'rgba(99,102,241,0.12)', color: '#6366f1', borderRadius: '20px', fontWeight: 600, fontSize: '0.9rem' }}>
+                  {visible.length} {visible.length === 1 ? 'record' : 'records'}
                 </span>
               </div>
             </div>
 
-            {filteredActivities.length === 0 && (
-              <div style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                borderRadius: '12px',
-                border: '1px solid rgba(16, 185, 129, 0.2)'
-              }}>
+            {/* Empty state */}
+            {visible.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '70px 20px', backgroundColor: 'rgba(16,185,129,0.05)', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
                 <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem', color: '#10b981' }}>
-                  ✅ No suspicious activities detected!
+                  {filterType === 'all' ? 'No suspicious activities detected!' : 'No records for this filter'}
                 </h3>
                 <p style={{ color: 'var(--color-text-secondary)' }}>
-                  All attendance attempts appear to be legitimate. Great job!
+                  {filterType === 'all' ? 'All attendance attempts appear legitimate.' : 'Try changing the filter to see other records.'}
                 </p>
               </div>
             )}
 
-            {filteredActivities.length > 0 && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem'
-              }}>
-                {filteredActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    style={{
-                      padding: '1.5rem',
-                      border: `2px solid ${getActionColor(activity.action)}`,
-                      borderRadius: '12px',
-                      backgroundColor: `${getActionColor(activity.action)}15`,
-                      display: 'grid',
-                      gridTemplateColumns: '1fr auto',
-                      gap: '1rem',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                        <span style={{ fontSize: '1.5rem' }}>{getActionIcon(activity.action)}</span>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: getActionColor(activity.action) }}>
-                          {activity.action}
-                        </h3>
-                      </div>
-
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                        gap: '1rem',
-                        marginTop: '1rem',
-                        padding: '1rem 0'
-                      }}>
-                        {activity.entity_id && (
+            {/* Cards */}
+            {visible.length > 0 && (
+              <motion.div variants={staggerContainer} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {visible.map((activity) => {
+                  const m = getMeta(activity.type);
+                  return (
+                    <motion.div key={activity.id} variants={fadeInUp}
+                      style={{ padding: '1.25rem 1.5rem', border: `1.5px solid ${m.border}`, borderLeft: `4px solid ${m.color}`, borderRadius: '10px', backgroundColor: m.bg, display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'start' }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                          <span style={{ fontSize: '1.4rem' }}>{m.icon}</span>
+                          <span style={{ fontWeight: 700, fontSize: '1rem', color: m.color }}>{m.label}</span>
+                          {activity.statusCode && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '10px', backgroundColor: 'rgba(0,0,0,0.15)', color: m.color }}>HTTP {activity.statusCode}</span>
+                          )}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.5rem 1.5rem', marginTop: '0.5rem' }}>
+                          {activity.studentName && (
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student</p>
+                              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>
+                                {activity.studentName}
+                                {activity.studentEmail && <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400, fontSize: '0.8rem', marginLeft: '0.35rem' }}>({activity.studentEmail})</span>}
+                              </p>
+                            </div>
+                          )}
+                          {activity.subject && (
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subject</p>
+                              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>{activity.subject}</p>
+                            </div>
+                          )}
+                          {activity.attemptCount && (
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Attempts</p>
+                              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: m.color }}>{activity.attemptCount}×</p>
+                            </div>
+                          )}
+                          {(activity.action || activity.path) && (
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Action</p>
+                              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.85rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>{activity.action || activity.path}</p>
+                            </div>
+                          )}
+                          {activity.ipAddress && (
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>IP Address</p>
+                              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.85rem', fontFamily: 'monospace' }}>{activity.ipAddress}</p>
+                            </div>
+                          )}
                           <div>
-                            <p style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Entity</p>
-                            <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem' }}>
-                              {activity.entity_type} #{activity.entity_id}
-                            </p>
+                            <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time</p>
+                            <p style={{ margin: 0, fontWeight: 600, fontSize: '0.85rem' }}>{formatDate(activity.createdAt)}</p>
                           </div>
-                        )}
-
-                        {activity.old_value && (
-                          <div>
-                            <p style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Attempt</p>
-                            <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem', fontFamily: 'monospace' }}>
-                              {activity.old_value.substring(0, 30)}...
-                            </p>
-                          </div>
-                        )}
-
-                        <div>
-                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Timestamp</p>
-                          <p style={{ margin: 0, fontWeight: '600', fontSize: '0.95rem' }}>
-                            {formatDate(activity.created_at)}
-                          </p>
+                          {activity.firstAttempt && activity.lastAttempt && (
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Range</p>
+                              <p style={{ margin: 0, fontWeight: 600, fontSize: '0.8rem' }}>{formatDate(activity.firstAttempt)} → {formatDate(activity.lastAttempt)}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
-
-                      {activity.new_value && (
-                        <div style={{
-                          marginTop: '1rem',
-                          padding: '0.75rem',
-                          backgroundColor: 'rgba(0,0,0,0.1)',
-                          borderRadius: '8px',
-                          fontFamily: 'monospace',
-                          fontSize: '0.85rem',
-                          color: 'var(--color-text-secondary)',
-                          wordBreak: 'break-all'
-                        }}>
-                          <strong>Details:</strong> {activity.new_value}
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.75rem',
-                      minWidth: '150px'
-                    }}>
-                      <button
-                        onClick={() => handleApprove(activity)}
-                        style={{
-                          padding: '0.75rem 1.25rem',
-                          backgroundColor: '#10b981',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontWeight: '600',
-                          fontSize: '0.9rem',
-                          transition: 'all 0.2s'
-                        }}
-                        onHover={(e) => {
-                          e.target.style.backgroundColor = '#059669';
-                        }}
-                      >
-                        ✓ Approve
-                      </button>
-                      <button
-                        onClick={() => handleOpenReject(activity)}
-                        style={{
-                          padding: '0.75rem 1.25rem',
-                          backgroundColor: '#ef4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontWeight: '600',
-                          fontSize: '0.9rem',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        ✗ Reject
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      <button onClick={() => handleDismiss(activity.id)} title="Dismiss"
+                        style={{ background: 'none', border: `1px solid ${m.border}`, borderRadius: '6px', padding: '0.3rem 0.7rem', cursor: 'pointer', color: m.color, fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = m.color; e.currentTarget.style.color = '#fff'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = m.color; }}
+                      >✓ Dismiss</button>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
             )}
           </>
         )}
       </main>
-
-      {showRejectModal && selectedActivity && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: '12px',
-            padding: '2rem',
-            width: '100%',
-            maxWidth: '520px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h2 style={{ margin: '0 0 1rem 0', color: '#ef4444' }}>Reject Activity</h2>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>
-              Are you sure you want to reject this suspicious activity? Provide a reason for reference.
-            </p>
-
-            <textarea
-              placeholder="Rejection reason (optional)"
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-background)',
-                color: 'var(--color-text)',
-                fontFamily: 'inherit',
-                marginBottom: '1.5rem',
-                minHeight: '100px',
-                resize: 'vertical'
-              }}
-            />
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button
-                className="dashboard__button dashboard__button--secondary"
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setSelectedActivity(null);
-                }}
-                disabled={rejectionLoading}
-              >
-                Cancel
-              </button>
-              <button
-                backgroundColor="ef4444"
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  disabled: rejectionLoading
-                }}
-                onClick={handleReject}
-              >
-                {rejectionLoading ? 'Rejecting...' : '✗ Reject'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 }

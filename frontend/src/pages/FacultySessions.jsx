@@ -40,6 +40,8 @@ function FacultySessions() {
     duration: 60,
     courseId: ''
   });
+  const [courseSearch, setCourseSearch] = useState('');
+  const [showCourseDropdown, setShowCourseDropdown] = useState(false);
   const [editSession, setEditSession] = useState({
     subject: '',
     location: '',
@@ -268,6 +270,8 @@ function FacultySessions() {
       duration: 60,
       courseId: ''
     });
+    setCourseSearch('');
+    setShowCourseDropdown(false);
     setCreateError(null);
     setShowCreateModal(true);
   };
@@ -538,26 +542,120 @@ function FacultySessions() {
             <h2 style={{ margin: '0 0 1rem 0' }}>Create New Session</h2>
             <form onSubmit={handleCreateSession}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <select
-                  className="form-input"
-                  value={newSession.courseId}
-                  onChange={(e) => {
-                    const selected = courses.find(c => c.id === parseInt(e.target.value));
-                    setNewSession((prev) => ({
-                      ...prev,
-                      courseId: e.target.value,
-                      subject: selected ? `${selected.name} (${selected.code})` : prev.subject
-                    }));
-                  }}
-                  required
-                >
-                  <option value="">-- Select Your Course --</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.code}) — {c.department_name}
-                    </option>
-                  ))}
-                </select>
+                {/* Searchable Course Dropdown */}
+                <div style={{ position: 'relative' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      padding: '0.55rem 0.75rem',
+                      backgroundColor: 'var(--color-surface)',
+                      cursor: 'text'
+                    }}
+                    onClick={() => setShowCourseDropdown(true)}
+                  >
+                    <span style={{ fontSize: '1rem', opacity: 0.6 }}>🔍</span>
+                    <input
+                      type="text"
+                      placeholder={newSession.courseId ? courses.find(c => c.id === parseInt(newSession.courseId))?.name || 'Search course...' : 'Search course...'}
+                      value={courseSearch}
+                      onChange={(e) => { setCourseSearch(e.target.value); setShowCourseDropdown(true); }}
+                      onFocus={() => setShowCourseDropdown(true)}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        background: 'transparent',
+                        flex: 1,
+                        fontSize: '0.95rem',
+                        color: 'var(--color-text)'
+                      }}
+                    />
+                    {newSession.courseId && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setNewSession(p=>({...p,courseId:'',subject:''})); setCourseSearch(''); }}
+                        style={{ background:'none', border:'none', cursor:'pointer', color:'var(--color-text-secondary)', fontSize:'1.1rem', lineHeight:1, padding:0 }}
+                      >✕</button>
+                    )}
+                  </div>
+
+                  {/* Selected course badge */}
+                  {newSession.courseId && (() => {
+                    const sel = courses.find(c => c.id === parseInt(newSession.courseId));
+                    return sel ? (
+                      <div style={{ marginTop:'0.4rem', padding:'0.4rem 0.75rem', backgroundColor:'rgba(49,156,181,0.12)', borderRadius:'6px', fontSize:'0.82rem', color:'var(--color-accent)', fontWeight:600 }}>
+                        ✅ {sel.name} ({sel.code}){sel.semester ? ` · Sem ${sel.semester}` : ''} — {sel.department_name}
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {/* Dropdown list */}
+                  {showCourseDropdown && (
+                    <>
+                      <div style={{ position:'fixed', inset:0, zIndex:10 }} onClick={() => setShowCourseDropdown(false)} />
+                      <div style={{
+                        position:'absolute', top:'calc(100% + 4px)', left:0, right:0,
+                        backgroundColor:'var(--color-surface)', border:'1px solid var(--color-border)',
+                        borderRadius:'8px', maxHeight:'220px', overflowY:'auto', zIndex:11,
+                        boxShadow:'0 8px 24px rgba(0,0,0,0.18)'
+                      }}>
+                        {(() => {
+                          const q = courseSearch.toLowerCase();
+                          const filtered = courses.filter(c =>
+                            c.name.toLowerCase().includes(q) ||
+                            c.code.toLowerCase().includes(q) ||
+                            (c.department_name || '').toLowerCase().includes(q) ||
+                            (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false)
+                          );
+                          if (filtered.length === 0) return (
+                            <div style={{ padding:'0.75rem 1rem', color:'var(--color-text-secondary)', fontSize:'0.88rem' }}>No courses found</div>
+                          );
+                          // Group by semester
+                          const bySem = filtered.reduce((acc, c) => {
+                            const key = c.semester ? `Semester ${c.semester}` : 'General';
+                            if (!acc[key]) acc[key] = [];
+                            acc[key].push(c);
+                            return acc;
+                          }, {});
+                          return Object.entries(bySem).map(([semLabel, items]) => (
+                            <div key={semLabel}>
+                              <div style={{ padding:'0.4rem 0.75rem', fontSize:'0.78rem', fontWeight:700, color:'var(--color-accent)', backgroundColor:'rgba(49,156,181,0.08)', letterSpacing:'0.05em', textTransform:'uppercase' }}>
+                                📅 {semLabel}
+                              </div>
+                              {items.map(c => (
+                                <div
+                                  key={c.id}
+                                  onClick={() => {
+                                    setNewSession(p => ({ ...p, courseId: String(c.id), subject: `${c.name} (${c.code})` }));
+                                    setCourseSearch('');
+                                    setShowCourseDropdown(false);
+                                  }}
+                                  style={{
+                                    padding:'0.55rem 1rem', cursor:'pointer', fontSize:'0.9rem',
+                                    backgroundColor: newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'transparent',
+                                    borderBottom:'1px solid rgba(255,255,255,0.05)',
+                                    transition:'background 0.15s'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(49,156,181,0.1)'}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = newSession.courseId===String(c.id)?'rgba(49,156,181,0.15)':'transparent'}
+                                >
+                                  <span style={{ fontWeight:600 }}>{c.name}</span>
+                                  <span style={{ color:'var(--color-text-secondary)', fontSize:'0.8rem', marginLeft:'0.4rem' }}>({c.code})</span>
+                                  <span style={{ float:'right', fontSize:'0.75rem', color:'var(--color-text-secondary)' }}>{c.department_name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </>
+                  )}
+                </div>
+                {/* Hidden required validation */}
+                <input type="text" required value={newSession.courseId} onChange={()=>{}} style={{ display:'none' }} />
                 <input
                   type="text"
                   className="form-input"

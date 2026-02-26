@@ -56,6 +56,9 @@ function FacultyProfile() {
         const blob = await response.blob();
         setPhotoPreview(URL.createObjectURL(blob));
       }
+    } catch (err) {
+      // Photo load failed silently
+    }
   };
 
   const fetchProfileData = async () => {
