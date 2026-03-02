@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { XCircle, CheckCircle, Loader, ClipboardList, AlertTriangle, Inbox, BookOpen, MapPin, Calendar, X, Check } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 
@@ -28,7 +29,7 @@ const Toast = ({ toast, onClose }) => {
         maxWidth: "420px",
       }}
     >
-      <span>{toast.type === "error" ? "✗" : "✓"}</span>
+      <span>{toast.type === "error" ? <X size={16} /> : <Check size={16} />}</span>
       <span style={{ flex: 1 }}>{toast.message}</span>
       <button
         onClick={onClose}
@@ -42,10 +43,10 @@ const Toast = ({ toast, onClose }) => {
 
 const STATUS_TABS = ["pending", "approved", "rejected", "all"];
 const STATUS_COLORS = {
-  pending:  { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", icon: "⏳" },
-  approved: { color: "#10b981", bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.35)", icon: "✅" },
-  rejected: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.35)",  icon: "✗" },
-  all:      { color: "#8b5cf6", bg: "rgba(139,92,246,0.10)", border: "rgba(139,92,246,0.3)",  icon: "📋" },
+  pending:  { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", icon: <Loader size={14} /> },
+  approved: { color: "#10b981", bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.35)", icon: <CheckCircle size={14} /> },
+  rejected: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.35)",  icon: <XCircle size={14} /> },
+  all:      { color: "#8b5cf6", bg: "rgba(139,92,246,0.10)", border: "rgba(139,92,246,0.3)",  icon: <ClipboardList size={14} /> },
 };
 
 function fmtDate(d) {
@@ -85,7 +86,7 @@ function RejectModal({ request, onConfirm, onClose }) {
           maxWidth: 440,
         }}
       >
-        <h3 style={{ margin: "0 0 0.4rem", color: "#ef4444" }}>✗ Reject Request</h3>
+        <h3 style={{ margin: "0 0 0.4rem", color: "#ef4444" }}><XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Reject Request</h3>
         <p style={{ margin: "0 0 1rem", opacity: 0.7, fontSize: "0.88rem" }}>
           Rejecting attendance request for <strong>{request.student_name}</strong> — <em>{request.subject}</em>
         </p>
@@ -278,11 +279,11 @@ export default function FacultyAttendanceRequests() {
           </button>
           <div>
             <h1 style={{ margin: 0, fontSize: "1.7rem", fontWeight: 700 }}>
-              📋 Student Attendance Requests
+              <ClipboardList size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Student Attendance Requests
             </h1>
             {pendingCount > 0 && statusTab !== "pending" && (
               <span style={{ fontSize: "0.8rem", color: "#f59e0b" }}>
-                ⚠️ {pendingCount} pending request{pendingCount > 1 ? "s" : ""} awaiting review
+                <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{pendingCount} pending request{pendingCount > 1 ? "s" : ""} awaiting review
               </span>
             )}
           </div>
@@ -341,7 +342,7 @@ export default function FacultyAttendanceRequests() {
           <p style={{ opacity: 0.6, textAlign: "center", padding: "2rem" }}>Loading…</p>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: "center", padding: "4rem", opacity: 0.45 }}>
-            <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>📭</div>
+            <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}><Inbox size={48} /></div>
             <p style={{ fontSize: "0.95rem" }}>
               {search ? "No requests match your search." : `No ${statusTab === "all" ? "" : statusTab} requests.`}
             </p>
@@ -396,7 +397,7 @@ export default function FacultyAttendanceRequests() {
 
                     {/* Session info */}
                     <div style={{ fontSize: "0.83rem", opacity: 0.75, marginBottom: "0.65rem" }}>
-                      📚 <strong>{r.subject}</strong> &nbsp;|&nbsp; 📍 {r.location} &nbsp;|&nbsp; 📅 {fmtDate(r.start_time)}
+                      <BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /><strong>{r.subject}</strong> &nbsp;|&nbsp; <MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{r.location} &nbsp;|&nbsp; <Calendar size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{fmtDate(r.start_time)}
                     </div>
 
                     {/* Reason */}
@@ -455,7 +456,7 @@ export default function FacultyAttendanceRequests() {
                               opacity: isRejecting || isApproving ? 0.5 : 1,
                             }}
                           >
-                            {isRejecting ? "…" : "✗ Reject"}
+                            {isRejecting ? "…" : <><X size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Reject</>}
                           </button>
                           <button
                             onClick={() => handleApprove(r.id)}
@@ -474,7 +475,7 @@ export default function FacultyAttendanceRequests() {
                               fontSize: "0.85rem",
                             }}
                           >
-                            {isApproving ? "Approving…" : "✓ Approve"}
+                            {isApproving ? "Approving…" : <><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Approve</>}
                           </button>
                         </div>
                       )}

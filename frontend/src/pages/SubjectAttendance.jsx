@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { CheckCircle, XCircle, Clock, AlertTriangle, BookOpen, Lightbulb, Check, X } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer } from "../animations/animationConfig";
@@ -140,9 +141,9 @@ function SubjectAttendance() {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "present": return "✓";
-      case "absent": return "✗";
-      case "late": return "⏰";
+      case "present": return <Check size={14} />;
+      case "absent": return <X size={14} />;
+      case "late": return <Clock size={14} />;
       default: return "-";
     }
   };
@@ -213,7 +214,7 @@ function SubjectAttendance() {
             </div>
             {subjectData.percentage < 75 && (
               <div className="warning-message">
-                ⚠️ Your attendance is below 75%. Attend more classes to improve.
+                <AlertTriangle size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Your attendance is below 75%. Attend more classes to improve.
               </div>
             )}
           </div>
@@ -222,28 +223,28 @@ function SubjectAttendance() {
         {/* Statistics Grid */}
         <section className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">📚</div>
+            <div className="stat-icon"><BookOpen size={24} /></div>
             <div className="stat-info">
               <span className="stat-label">Total Classes</span>
               <span className="stat-value">{subjectData.totalClasses}</span>
             </div>
           </div>
           <div className="stat-card present">
-            <div className="stat-icon">✓</div>
+            <div className="stat-icon"><CheckCircle size={24} /></div>
             <div className="stat-info">
               <span className="stat-label">Present</span>
               <span className="stat-value">{subjectData.attended}</span>
             </div>
           </div>
           <div className="stat-card absent">
-            <div className="stat-icon">✗</div>
+            <div className="stat-icon"><XCircle size={24} /></div>
             <div className="stat-info">
               <span className="stat-label">Absent</span>
               <span className="stat-value">{subjectData.absent}</span>
             </div>
           </div>
           <div className="stat-card late">
-            <div className="stat-icon">⏰</div>
+            <div className="stat-icon"><Clock size={24} /></div>
             <div className="stat-info">
               <span className="stat-label">Late</span>
               <span className="stat-value">{subjectData.late}</span>
@@ -281,22 +282,22 @@ function SubjectAttendance() {
             {subjectData.percentage < 75 ? (
               <>
                 <div className="recommendation-item warning">
-                  <span className="recommendation-icon">⚠️</span>
+                  <span className="recommendation-icon"><AlertTriangle size={16} /></span>
                   <p>You need to attend at least {Math.ceil((0.75 * subjectData.totalClasses) - subjectData.attended)} more classes to reach 75%</p>
                 </div>
                 <div className="recommendation-item">
-                  <span className="recommendation-icon">💡</span>
+                  <span className="recommendation-icon"><Lightbulb size={16} /></span>
                   <p>Try not to miss any upcoming classes</p>
                 </div>
               </>
             ) : (
               <>
                 <div className="recommendation-item success">
-                  <span className="recommendation-icon">✓</span>
+                  <span className="recommendation-icon"><CheckCircle size={16} /></span>
                   <p>Great! You're maintaining good attendance</p>
                 </div>
                 <div className="recommendation-item">
-                  <span className="recommendation-icon">💡</span>
+                  <span className="recommendation-icon"><Lightbulb size={16} /></span>
                   <p>Keep up the good work and maintain this level</p>
                 </div>
               </>

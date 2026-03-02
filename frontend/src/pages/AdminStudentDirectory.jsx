@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { GraduationCap, AlertTriangle, Check, Loader } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
@@ -135,7 +136,7 @@ function AdminStudentDirectory() {
         {confirmId !== null && (() => {
           const s = students.find(x => x.id === confirmId);
           const curIdx = SEM_ORDER.indexOf(s?.semester);
-          const nextSem = curIdx === 5 ? "Graduated 🎓" : curIdx >= 0 ? `${SEM_ORDER[curIdx + 1]} Semester` : "?";
+          const nextSem = curIdx === 5 ? "Graduated" : curIdx >= 0 ? `${SEM_ORDER[curIdx + 1]} Semester` : "?";
           return (
             <motion.div
               initial={{ opacity: 0 }}
@@ -169,7 +170,7 @@ function AdminStudentDirectory() {
                   <br />karna chahte ho?
                   {curIdx === 5 && (
                     <><br /><span style={{ color: "#ef4444", fontSize: "0.82rem" }}>
-                      ⚠️ Account deactivate ho jayega (graduated).
+                      <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Account deactivate ho jayega (graduated).
                     </span></>
                   )}
                 </p>
@@ -183,7 +184,7 @@ function AdminStudentDirectory() {
                     className="ap__btn ap__btn--primary"
                     style={{ flex: 1, background: "#10b981", borderColor: "#10b981" }}
                     onClick={() => handlePromote(confirmId)}
-                  >Promote ✓</button>
+                  >Promote <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '2px' }} /></button>
                 </div>
               </motion.div>
             </motion.div>
@@ -292,7 +293,7 @@ function AdminStudentDirectory() {
                     <tr>
                       <td colSpan={7}>
                         <div className="ap__empty">
-                          <div className="ap__empty-icon">🎓</div>
+                          <div className="ap__empty-icon"><GraduationCap size={48} /></div>
                           <p className="ap__empty-title">No students found</p>
                           <p className="ap__empty-text">Try adjusting your search or filters.</p>
                         </div>
@@ -344,7 +345,7 @@ function AdminStudentDirectory() {
                               fontWeight: 700,
                               textTransform: "capitalize",
                             }}>
-                              {isGraduated ? "🎓 Grad" : s.semester ? `Sem ${s.semester}` : "—"}
+                              {isGraduated ? <><GraduationCap size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Grad</> : s.semester ? `Sem ${s.semester}` : "—"}
                             </span>
                           </td>
                           <td>
@@ -371,11 +372,11 @@ function AdminStudentDirectory() {
                                   opacity: promoting === s.id ? 0.5 : 1,
                                 }}
                               >
-                                {promoting === s.id ? "⏳ …" : "↑ Promote"}
+                                {promoting === s.id ? <><Loader size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />…</> : "↑ Promote"}
                               </button>
                             ) : (
                               <span style={{ color: "var(--color-text-secondary)", fontSize: "0.78rem" }}>
-                                {isGraduated ? "🎓 done" : "—"}
+                                {isGraduated ? <><GraduationCap size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />done</> : "—"}
                               </span>
                             )}
                           </td>

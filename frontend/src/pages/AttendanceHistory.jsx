@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Check, X, Clock } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer } from "../animations/animationConfig";
@@ -150,9 +151,9 @@ function AttendanceHistory() {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "present": return "✓";
-      case "absent": return "✗";
-      case "late": return "⏰";
+      case "present": return <Check size={14} />;
+      case "absent": return <X size={14} />;
+      case "late": return <Clock size={14} />;
       default: return "-";
     }
   };

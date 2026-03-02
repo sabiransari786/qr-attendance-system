@@ -5,17 +5,18 @@ import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import "../styles/dashboard.css";
 import "../styles/admin-pages.css";
 import "../styles/admin-departments.css";
+import { Monitor, Zap, Settings, Building2, Radio, Globe, MonitorSmartphone, X, Check, Pencil, Trash2, BookOpen, UserCheck, CalendarDays, GraduationCap, Mail, Phone, Building } from 'lucide-react';
 
 /* ═══════════════════════ DUMMY DATA ═══════════════════════ */
 
 const INITIAL_DEPARTMENTS = [
-  { id: 1, name: "Computer Science & Engineering", code: "CSE", icon: "💻", color: "#319cb5", hod: "Dr. Anita Sharma", established: 1985, building: "Block A", phone: "+91-11-2345-6701", description: "Focuses on software development, algorithms, AI/ML, and systems programming." },
-  { id: 2, name: "Electrical Engineering", code: "EE", icon: "⚡", color: "#8b5cf6", hod: "Dr. Rajesh Kumar", established: 1978, building: "Block B", phone: "+91-11-2345-6702", description: "Covers power systems, control systems, signal processing, and embedded systems." },
-  { id: 3, name: "Mechanical Engineering", code: "ME", icon: "⚙️", color: "#f59e0b", hod: "Prof. Suresh Reddy", established: 1972, building: "Block C", phone: "+91-11-2345-6703", description: "Deals with thermodynamics, fluid mechanics, manufacturing, and robotics." },
-  { id: 4, name: "Civil Engineering", code: "CE", icon: "🏗️", color: "#10b981", hod: "Dr. Priya Nair", established: 1975, building: "Block D", phone: "+91-11-2345-6704", description: "Encompasses structural, geotechnical, environmental, and transportation engineering." },
-  { id: 5, name: "Electronics & Communication", code: "ECE", icon: "📡", color: "#ef4444", hod: "Dr. Vikram Singh", established: 1990, building: "Block E", phone: "+91-11-2345-6705", description: "Covers VLSI design, IoT, wireless communications, and microelectronics." },
-  { id: 6, name: "Information Technology", code: "IT", icon: "🌐", color: "#ec4899", hod: "Dr. Kavita Joshi", established: 1998, building: "Block F", phone: "+91-11-2345-6706", description: "Focuses on cloud computing, cybersecurity, full-stack development, and data analytics." },
-  { id: 7, name: "Computer Engineering", code: "COMP", icon: "🖥️", color: "#0ea5e9", hod: "Dr. Rajan Mehta", established: 2002, building: "Block G", phone: "+91-11-2345-6707", description: "Covers engineering mathematics, data structures, computer networks, DBMS, and operating systems." },
+  { id: 1, name: "Computer Science & Engineering", code: "CSE", icon: <Monitor size={24} />, color: "#319cb5", hod: "Dr. Anita Sharma", established: 1985, building: "Block A", phone: "+91-11-2345-6701", description: "Focuses on software development, algorithms, AI/ML, and systems programming." },
+  { id: 2, name: "Electrical Engineering", code: "EE", icon: <Zap size={24} />, color: "#8b5cf6", hod: "Dr. Rajesh Kumar", established: 1978, building: "Block B", phone: "+91-11-2345-6702", description: "Covers power systems, control systems, signal processing, and embedded systems." },
+  { id: 3, name: "Mechanical Engineering", code: "ME", icon: <Settings size={24} />, color: "#f59e0b", hod: "Prof. Suresh Reddy", established: 1972, building: "Block C", phone: "+91-11-2345-6703", description: "Deals with thermodynamics, fluid mechanics, manufacturing, and robotics." },
+  { id: 4, name: "Civil Engineering", code: "CE", icon: <Building2 size={24} />, color: "#10b981", hod: "Dr. Priya Nair", established: 1975, building: "Block D", phone: "+91-11-2345-6704", description: "Encompasses structural, geotechnical, environmental, and transportation engineering." },
+  { id: 5, name: "Electronics & Communication", code: "ECE", icon: <Radio size={24} />, color: "#ef4444", hod: "Dr. Vikram Singh", established: 1990, building: "Block E", phone: "+91-11-2345-6705", description: "Covers VLSI design, IoT, wireless communications, and microelectronics." },
+  { id: 6, name: "Information Technology", code: "IT", icon: <Globe size={24} />, color: "#ec4899", hod: "Dr. Kavita Joshi", established: 1998, building: "Block F", phone: "+91-11-2345-6706", description: "Focuses on cloud computing, cybersecurity, full-stack development, and data analytics." },
+  { id: 7, name: "Computer Engineering", code: "COMP", icon: <MonitorSmartphone size={24} />, color: "#0ea5e9", hod: "Dr. Rajan Mehta", established: 2002, building: "Block G", phone: "+91-11-2345-6707", description: "Covers engineering mathematics, data structures, computer networks, DBMS, and operating systems." },
 ];
 
 const INITIAL_FACULTY = {
@@ -137,7 +138,7 @@ function Modal({ title, onClose, children }) {
         <motion.div className="dept-modal" initial={{ scale: 0.88, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.88, opacity: 0 }} transition={{ type: "spring", stiffness: 320, damping: 26 }} onClick={e => e.stopPropagation()}>
           <div className="dept-modal__head">
             <h3 className="dept-modal__title">{title}</h3>
-            <button className="dept-modal__close" onClick={onClose}>✕</button>
+            <button className="dept-modal__close" onClick={onClose}><X size={16} /></button>
           </div>
           <div className="dept-modal__body">{children}</div>
         </motion.div>
@@ -226,7 +227,7 @@ function AdminDepartments() {
   const field = (key, val) => setFormData(p => ({ ...p, [key]: val }));
 
   /* ── DEPT CRUD ── */
-  const openAddDept = () => { setFormData({ name: "", code: "", icon: "🏫", color: "#319cb5", hod: "", established: new Date().getFullYear(), building: "", phone: "", description: "" }); setModal("add-dept"); };
+  const openAddDept = () => { setFormData({ name: "", code: "", icon: <Building size={24} />, color: "#319cb5", hod: "", established: new Date().getFullYear(), building: "", phone: "", description: "" }); setModal("add-dept"); };
   const openEditDept = d => { setFormData({ ...d }); setModal("edit-dept"); };
   const saveDept = () => {
     if (!formData.name || !formData.code) return showToast("Name and Code are required", "error");
@@ -331,7 +332,7 @@ function AdminDepartments() {
       <AnimatePresence>
         {toast && (
           <motion.div className={`dept-toast dept-toast--${toast.type}`} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            {toast.type === "success" ? "✓" : "✕"} {toast.msg}
+            {toast.type === "success" ? <Check size={14} /> : <X size={14} />} {toast.msg}
           </motion.div>
         )}
       </AnimatePresence>
@@ -356,7 +357,7 @@ function AdminDepartments() {
                 <div><label>Code*</label><input className="dept-input" value={formData.code || ""} onChange={e => field("code", e.target.value.toUpperCase())} placeholder="CSE" /></div>
               </div>
               <div className="dept-form-row2">
-                <div><label>Icon (emoji)</label><input className="dept-input" value={formData.icon || ""} onChange={e => field("icon", e.target.value)} placeholder="💻" /></div>
+                <div><label>Icon (emoji)</label><input className="dept-input" value={formData.icon || ""} onChange={e => field("icon", e.target.value)} placeholder="Icon" /></div>
                 <div><label>Color</label><input className="dept-input" type="color" value={formData.color || "#319cb5"} onChange={e => field("color", e.target.value)} /></div>
               </div>
               <div className="dept-form-row2">
@@ -497,8 +498,8 @@ function AdminDepartments() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div className="ap__dept-icon" style={{ background: `${dept.color}20` }}>{dept.icon}</div>
                       <div style={{ display: "flex", gap: "0.35rem" }}>
-                        <button className="dept-icon-btn" title="Edit" onClick={() => openEditDept(dept)}>✏️</button>
-                        <button className="dept-icon-btn dept-icon-btn--del" title="Delete" onClick={() => deleteDept(dept.id)}>🗑️</button>
+                        <button className="dept-icon-btn" title="Edit" onClick={() => openEditDept(dept)}><Pencil size={14} /></button>
+                        <button className="dept-icon-btn dept-icon-btn--del" title="Delete" onClick={() => deleteDept(dept.id)}><Trash2 size={14} /></button>
                       </div>
                     </div>
                     <p className="ap__dept-name" style={{ marginTop: "0.5rem" }}>{dept.name}</p>
@@ -532,7 +533,7 @@ function AdminDepartments() {
               {["courses", "faculty", "timetable"].map(tab => (
                 <button key={tab} className={`dept-tab${activeTab === tab ? " dept-tab--active" : ""}`}
                   style={{ "--tab-color": activeDept.color }} onClick={() => setActiveTab(tab)}>
-                  {tab === "courses" ? "📚 Courses" : tab === "faculty" ? "👩‍🏫 Faculty" : "🗓️ Timetable"}
+                  {tab === "courses" ? <><BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Courses</> : tab === "faculty" ? <><UserCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Faculty</> : <><CalendarDays size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Timetable</>}
                 </button>
               ))}
             </div>
@@ -584,8 +585,8 @@ function AdminDepartments() {
                             </td>
                             <td>
                               <div style={{ display: "flex", gap: "0.35rem" }}>
-                                <button className="dept-icon-btn" onClick={() => openEditCourse(course)}>✏️</button>
-                                <button className="dept-icon-btn dept-icon-btn--del" onClick={() => deleteCourse(course.id)}>🗑️</button>
+                                <button className="dept-icon-btn" onClick={() => openEditCourse(course)}><Pencil size={14} /></button>
+                                <button className="dept-icon-btn dept-icon-btn--del" onClick={() => deleteCourse(course.id)}><Trash2 size={14} /></button>
                               </div>
                             </td>
                           </tr>
@@ -616,14 +617,14 @@ function AdminDepartments() {
                       <div className="dept-faculty-card__info">
                         <p className="dept-faculty-card__name">{f.name}</p>
                         <p className="dept-faculty-card__desig">{f.designation}</p>
-                        <p className="dept-faculty-card__meta">🎓 {f.specialization}</p>
-                        <p className="dept-faculty-card__meta">📧 {f.email}</p>
-                        <p className="dept-faculty-card__meta">📞 {f.phone} · {f.experience} yrs exp</p>
+                        <p className="dept-faculty-card__meta"><GraduationCap size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{f.specialization}</p>
+                        <p className="dept-faculty-card__meta"><Mail size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{f.email}</p>
+                        <p className="dept-faculty-card__meta"><Phone size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{f.phone} · {f.experience} yrs exp</p>
                         <span className={`ap__badge ${f.status === "Active" ? "ap__badge--active" : "ap__badge--warn"}`} style={{ marginTop: "0.5rem" }}>{f.status}</span>
                       </div>
                       <div className="dept-faculty-card__actions">
-                        <button className="dept-icon-btn" onClick={() => openEditFaculty(f)}>✏️</button>
-                        <button className="dept-icon-btn dept-icon-btn--del" onClick={() => deleteFaculty(f.id)}>🗑️</button>
+                        <button className="dept-icon-btn" onClick={() => openEditFaculty(f)}><Pencil size={14} /></button>
+                        <button className="dept-icon-btn dept-icon-btn--del" onClick={() => deleteFaculty(f.id)}><Trash2 size={14} /></button>
                       </div>
                     </motion.div>
                   ))}

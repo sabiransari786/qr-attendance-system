@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { RefreshCw, CheckCircle, Loader } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import Toast from "../components/Toast";
@@ -435,7 +436,7 @@ function AdminUserApprovalPage() {
                 onClick={fetchApprovedUsers}
                 disabled={isLoading}
               >
-                🔄 Refresh
+                <RefreshCw size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Refresh
               </button>
             </div>
 
@@ -504,7 +505,7 @@ function AdminUserApprovalPage() {
                         </td>
                         <td>
                           <span className={`admin-approval-page__status ${user.is_registered ? "admin-approval-page__status--registered" : "admin-approval-page__status--pending"}`}>
-                            {user.is_registered ? "✓ Registered" : "⏳ Pending"}
+                            {user.is_registered ? <><CheckCircle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Registered</> : <><Loader size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Pending</>}
                           </span>
                         </td>
                         <td>

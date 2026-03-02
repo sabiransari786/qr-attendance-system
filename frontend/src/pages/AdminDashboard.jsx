@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { UserCheck } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from "../animations/animationConfig";
@@ -508,7 +509,7 @@ function AdminDashboard() {
             whileHover={{ y: -8, scale: 1.02, boxShadow: '0 20px 50px rgba(111,120,255,0.25)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
             whileTap={{ scale: 0.97 }}
           >
-            <h2 className="dashboard__card-title">👨‍🏫 Teacher Management</h2>
+            <h2 className="dashboard__card-title"><UserCheck size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Teacher Management</h2>
             <p className="dashboard__card-text">
               Create Teacher IDs, activate or deactivate accounts. Only pre-registered teachers can sign up and log in.
             </p>

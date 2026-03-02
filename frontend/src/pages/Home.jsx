@@ -1,4 +1,8 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { Smartphone, Zap, Check, BarChart3, KeyRound, Lock, Users, Target, Cloud, HardDrive, TrendingUp, RefreshCw, UserCheck, CheckCircle, Star, ArrowLeft } from 'lucide-react';
 import "../styles/home.css";
 import {
   fadeInUp,
@@ -10,6 +14,22 @@ import {
 } from '../animations/animationConfig';
 
 function Home() {
+  const navigate = useNavigate();
+  const authContext = useContext(AuthContext);
+  const isAuthenticated = authContext?.isAuthenticated || false;
+  const userRole = authContext?.user?.role;
+
+  const getDashboardPath = () => {
+    if (userRole === 'student') return '/student-dashboard';
+    if (userRole === 'faculty') return '/faculty-dashboard';
+    if (userRole === 'admin') return '/admin-dashboard';
+    return '/';
+  };
+
+  const scrollToFeatures = () => {
+    document.getElementById('features-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <motion.div className="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}>
       <div className="home__objects" aria-hidden="true">
@@ -39,19 +59,34 @@ function Home() {
               and providing centralized record management for colleges and schools.
             </motion.p>
             <motion.div className="home__hero-actions" variants={fadeInUp}>
-              <motion.button
-                className="home__hero-action home__hero-action--primary"
-                variants={buttonHover}
-                whileHover="hover"
-                whileTap={buttonTap}
-              >
-                Start a Demo
-              </motion.button>
+              {isAuthenticated && userRole ? (
+                <motion.button
+                  className="home__hero-action home__hero-action--primary home__hero-action--dashboard"
+                  variants={buttonHover}
+                  whileHover="hover"
+                  whileTap={buttonTap}
+                  onClick={() => navigate(getDashboardPath())}
+                >
+                  <ArrowLeft size={18} />
+                  Go to Dashboard
+                </motion.button>
+              ) : (
+                <motion.button
+                  className="home__hero-action home__hero-action--primary"
+                  variants={buttonHover}
+                  whileHover="hover"
+                  whileTap={buttonTap}
+                  onClick={() => navigate('/login')}
+                >
+                  Start a Demo
+                </motion.button>
+              )}
               <motion.button
                 className="home__hero-action home__hero-action--ghost"
                 variants={buttonHover}
                 whileHover="hover"
                 whileTap={buttonTap}
+                onClick={scrollToFeatures}
               >
                 View Features
               </motion.button>
@@ -132,7 +167,7 @@ function Home() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  📱
+                  <Smartphone size={56} />
                 </div>
                 <span className="home__feature-badge">Core Feature</span>
                 <h3 className="home__feature-title" style={{marginTop: '1rem'}}>QR-Based Attendance</h3>
@@ -142,9 +177,9 @@ function Home() {
                   Instructors generate unique QR codes for each class session. Students scan to instantly mark attendance.
                 </p>
                 <div className="home__feature-highlights" style={{marginTop: '20px'}}>
-                  <span className="home__feature-tag">⚡ Real-time</span>
-                  <span className="home__feature-tag">✓ Automated</span>
-                  <span className="home__feature-tag">📊 Accurate</span>
+                  <span className="home__feature-tag"><Zap size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Real-time</span>
+                  <span className="home__feature-tag"><Check size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Automated</span>
+                  <span className="home__feature-tag"><BarChart3 size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Accurate</span>
                 </div>
                 <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
                   Learn more →
@@ -161,7 +196,7 @@ function Home() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  🔐
+                  <KeyRound size={56} />
                 </div>
                 <span className="home__feature-badge home__feature-badge--security">Security</span>
                 <h3 className="home__feature-title" style={{marginTop: '1rem'}}>Role-Based Access</h3>
@@ -171,9 +206,9 @@ function Home() {
                   Different access levels for administrators, faculty, and students with dedicated functionality.
                 </p>
                 <div className="home__feature-highlights" style={{marginTop: '20px'}}>
-                  <span className="home__feature-tag">🔒 Secure</span>
-                  <span className="home__feature-tag">👥 Multi-role</span>
-                  <span className="home__feature-tag">🎯 Customized</span>
+                  <span className="home__feature-tag"><Lock size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Secure</span>
+                  <span className="home__feature-tag"><Users size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Multi-role</span>
+                  <span className="home__feature-tag"><Target size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Customized</span>
                 </div>
                 <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
                   Learn more →
@@ -190,7 +225,7 @@ function Home() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  ☁️
+                  <Cloud size={56} />
                 </div>
                 <span className="home__feature-badge home__feature-badge--cloud">Cloud</span>
                 <h3 className="home__feature-title" style={{marginTop: '1rem'}}>Centralized Data</h3>
@@ -200,9 +235,9 @@ function Home() {
                   All attendance records stored securely in a centralized database for easy reporting and auditing.
                 </p>
                 <div className="home__feature-highlights" style={{marginTop: '20px'}}>
-                  <span className="home__feature-tag">💾 Reliable</span>
-                  <span className="home__feature-tag">📈 Scalable</span>
-                  <span className="home__feature-tag">🔄 Sync</span>
+                  <span className="home__feature-tag"><HardDrive size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Reliable</span>
+                  <span className="home__feature-tag"><TrendingUp size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Scalable</span>
+                  <span className="home__feature-tag"><RefreshCw size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Sync</span>
                 </div>
                 <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
                   Learn more →
@@ -295,7 +330,7 @@ function Home() {
         >
           <motion.div className="home__workflow-step" variants={fadeInUp}>
             <div className="home__workflow-number">1</div>
-            <div className="home__workflow-icon">👨‍🏫</div>
+            <div className="home__workflow-icon"><UserCheck size={32} /></div>
             <h3 className="home__workflow-step-title">Faculty Generates QR</h3>
             <p className="home__workflow-description">Instructors create unique QR codes for each class session with a single click</p>
           </motion.div>
@@ -304,7 +339,7 @@ function Home() {
 
           <motion.div className="home__workflow-step" variants={fadeInUp}>
             <div className="home__workflow-number">2</div>
-            <div className="home__workflow-icon">📱</div>
+            <div className="home__workflow-icon"><Smartphone size={32} /></div>
             <h3 className="home__workflow-step-title">Students Scan Code</h3>
             <p className="home__workflow-description">Students use mobile devices to scan the QR code during class</p>
           </motion.div>
@@ -313,7 +348,7 @@ function Home() {
 
           <motion.div className="home__workflow-step" variants={fadeInUp}>
             <div className="home__workflow-number">3</div>
-            <div className="home__workflow-icon">✅</div>
+            <div className="home__workflow-icon"><CheckCircle size={32} /></div>
             <h3 className="home__workflow-step-title">Record Attendance</h3>
             <p className="home__workflow-description">System instantly logs attendance with timestamp and marks it in the database</p>
           </motion.div>
@@ -348,7 +383,7 @@ function Home() {
           variants={staggerContainer}
         >
           <motion.div className="home__testimonial-card" variants={fadeInUp}>
-            <div className="home__testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <div className="home__testimonial-stars" style={{ display: 'flex', gap: '0.15rem' }}>{[...Array(5)].map((_, i) => <Star key={i} size={18} fill="#f59e0b" color="#f59e0b" />)}</div>
             <p className="home__testimonial-text">
               "This system has revolutionized our attendance tracking. It's accurate, fast, and students love using it. Management has become so much easier!"
             </p>
@@ -362,7 +397,7 @@ function Home() {
           </motion.div>
 
           <motion.div className="home__testimonial-card" variants={fadeInUp}>
-            <div className="home__testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <div className="home__testimonial-stars" style={{ display: 'flex', gap: '0.15rem' }}>{[...Array(5)].map((_, i) => <Star key={i} size={18} fill="#f59e0b" color="#f59e0b" />)}</div>
             <p className="home__testimonial-text">
               "As a faculty member, I appreciate the simplicity. No more manual roll calls, no disputes about attendance. Takes less than a minute!"
             </p>
@@ -376,7 +411,7 @@ function Home() {
           </motion.div>
 
           <motion.div className="home__testimonial-card" variants={fadeInUp}>
-            <div className="home__testimonial-stars">⭐⭐⭐⭐⭐</div>
+            <div className="home__testimonial-stars" style={{ display: 'flex', gap: '0.15rem' }}>{[...Array(5)].map((_, i) => <Star key={i} size={18} fill="#f59e0b" color="#f59e0b" />)}</div>
             <p className="home__testimonial-text">
               "Transparent and efficient! I can see my attendance records in real-time. The system is very reliable and never fails."
             </p>
@@ -410,14 +445,16 @@ function Home() {
               variants={buttonHover}
               whileHover="hover"
               whileTap={buttonTap}
+              onClick={() => navigate(isAuthenticated && userRole ? getDashboardPath() : '/signup')}
             >
-              Get Started Now →
+              {isAuthenticated && userRole ? '← Back to Dashboard' : 'Get Started Now →'}
             </motion.button>
             <motion.button
               className="home__cta-button home__cta-button--secondary"
               variants={buttonHover}
               whileHover="hover"
               whileTap={buttonTap}
+              onClick={scrollToFeatures}
             >
               Learn More
             </motion.button>

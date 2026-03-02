@@ -31,6 +31,9 @@ import AdminSystemReports from "../pages/AdminSystemReports";
 import AdminTeacherManagement from "../pages/AdminTeacherManagement";
 import StudentAttendanceRequest from "../pages/StudentAttendanceRequest";
 import FacultyAttendanceRequests from "../pages/FacultyAttendanceRequests";
+import TermsAndConditions from "../pages/TermsAndConditions";
+import PrivacyPolicy from "../pages/PrivacyPolicy";
+import CookiePolicy from "../pages/CookiePolicy";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -62,6 +65,9 @@ function AppRoutes() {
         path="/forgot-password" 
         element={isAuthenticated ? <Navigate to="/" replace /> : <ForgotPassword />} 
       />
+      <Route path="/terms" element={<TermsAndConditions />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/cookies" element={<CookiePolicy />} />
 
       {/* Protected Routes - Role-based dashboards */}
       <Route

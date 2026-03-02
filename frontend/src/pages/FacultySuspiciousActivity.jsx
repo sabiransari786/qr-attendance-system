@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Users, Ban, XCircle, KeyRound, AlertTriangle, Search, ShieldAlert, Loader, CheckCircle, Check } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
 import { fadeInUp, staggerContainer } from '../animations/animationConfig';
@@ -58,12 +59,12 @@ function FacultySuspiciousActivity() {
   };
 
   const TYPE_META = {
-    duplicate_attendance:  { label: 'Duplicate Attendance',   icon: '👥', color: '#eab308', bg: 'rgba(234,179,8,0.1)',   border: 'rgba(234,179,8,0.4)' },
-    unauthorized_attempt:  { label: 'Unauthorized Attempt',   icon: '🚫', color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.4)' },
-    invalid_qr:            { label: 'Invalid QR Code',        icon: '❌', color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.4)' },
-    failed_login:          { label: 'Failed Login',           icon: '🔐', color: '#6366f1', bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.4)' },
-    system_error:          { label: 'System Error',           icon: '⚠️', color: '#ec4899', bg: 'rgba(236,72,153,0.1)', border: 'rgba(236,72,153,0.4)' },
-    suspicious:            { label: 'Suspicious Activity',    icon: '🔍', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.4)' },
+    duplicate_attendance:  { label: 'Duplicate Attendance',   icon: <Users size={18} />, color: '#eab308', bg: 'rgba(234,179,8,0.1)',   border: 'rgba(234,179,8,0.4)' },
+    unauthorized_attempt:  { label: 'Unauthorized Attempt',   icon: <Ban size={18} />, color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.4)' },
+    invalid_qr:            { label: 'Invalid QR Code',        icon: <XCircle size={18} />, color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.4)' },
+    failed_login:          { label: 'Failed Login',           icon: <KeyRound size={18} />, color: '#6366f1', bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.4)' },
+    system_error:          { label: 'System Error',           icon: <AlertTriangle size={18} />, color: '#ec4899', bg: 'rgba(236,72,153,0.1)', border: 'rgba(236,72,153,0.4)' },
+    suspicious:            { label: 'Suspicious Activity',    icon: <Search size={18} />, color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.4)' },
   };
 
   const getMeta = (type) => TYPE_META[type] || TYPE_META.suspicious;
@@ -100,7 +101,7 @@ function FacultySuspiciousActivity() {
         transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div>
-          <h1 className="dashboard__title">🚨 Suspicious Activity Log</h1>
+          <h1 className="dashboard__title"><ShieldAlert size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Suspicious Activity Log</h1>
           <p className="dashboard__subtitle">Review and manage flagged attendance attempts</p>
         </div>
         <motion.button
@@ -116,13 +117,13 @@ function FacultySuspiciousActivity() {
       <main>
         {loading && (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ fontSize: '1.1rem', color: 'var(--color-text-secondary)' }}>⏳ Loading activities...</p>
+            <p style={{ fontSize: '1.1rem', color: 'var(--color-text-secondary)' }}><Loader size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading activities...</p>
           </div>
         )}
 
         {error && (
           <div style={{ padding: '1.5rem', backgroundColor: 'rgba(255,107,107,0.1)', border: '1px solid #ff6b6b', borderRadius: '10px', color: '#ff6b6b', marginBottom: '2rem' }}>
-            ❌ {error}
+            <XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{error}
           </div>
         )}
 
@@ -176,7 +177,7 @@ function FacultySuspiciousActivity() {
             {/* Empty state */}
             {visible.length === 0 && (
               <div style={{ textAlign: 'center', padding: '70px 20px', backgroundColor: 'rgba(16,185,129,0.05)', borderRadius: '12px', border: '1px solid rgba(16,185,129,0.2)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><CheckCircle size={48} color="#10b981" /></div>
                 <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem', color: '#10b981' }}>
                   {filterType === 'all' ? 'No suspicious activities detected!' : 'No records for this filter'}
                 </h3>
@@ -193,7 +194,8 @@ function FacultySuspiciousActivity() {
                   const m = getMeta(activity.type);
                   return (
                     <motion.div key={activity.id} variants={fadeInUp}
-                      style={{ padding: '1.25rem 1.5rem', border: `1.5px solid ${m.border}`, borderLeft: `4px solid ${m.color}`, borderRadius: '10px', backgroundColor: m.bg, display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'start' }}
+                      className="suspicious-card"
+                      style={{ padding: '1.25rem 1.5rem', border: `1.5px solid ${m.border}`, borderLeft: `4px solid ${m.color}`, borderRadius: '10px', backgroundColor: m.bg, display: 'grid', gap: '1rem', alignItems: 'start' }}
                     >
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
@@ -203,7 +205,7 @@ function FacultySuspiciousActivity() {
                             <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '10px', backgroundColor: 'rgba(0,0,0,0.15)', color: m.color }}>HTTP {activity.statusCode}</span>
                           )}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.5rem 1.5rem', marginTop: '0.5rem' }}>
+                        <div className="suspicious-details-grid" style={{ marginTop: '0.5rem' }}>
                           {activity.studentName && (
                             <div>
                               <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student</p>
@@ -253,7 +255,7 @@ function FacultySuspiciousActivity() {
                         style={{ background: 'none', border: `1px solid ${m.border}`, borderRadius: '6px', padding: '0.3rem 0.7rem', cursor: 'pointer', color: m.color, fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', transition: 'all 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.backgroundColor = m.color; e.currentTarget.style.color = '#fff'; }}
                         onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = m.color; }}
-                      >✓ Dismiss</button>
+                      ><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Dismiss</button>
                     </motion.div>
                   );
                 })}

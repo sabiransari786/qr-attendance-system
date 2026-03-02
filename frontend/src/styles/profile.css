@@ -1321,3 +1321,19 @@
   background: rgba(90, 168, 245, 0.2);
   box-shadow: 0 0 15px rgba(90, 168, 245, 0.3);
 }
+
+/* ===== Mobile responsive for info-cards ===== */
+@media (max-width: 768px) {
+  .info-cards {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .info-card {
+    padding: 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -1,11 +1,14 @@
-import { useContext, useState, useEffect, useRef } from "react";
+import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import Tilt from "react-parallax-tilt";
+import { GraduationCap, Calendar, BarChart3, Camera, ScrollText, ClipboardList, CheckCircle, XCircle, BookOpen, Bell, Inbox, MapPin, UserCheck, TrendingDown, AlertTriangle, Lightbulb, Clock, Loader, ArrowRight, Sparkles } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import "../styles/dashboard.css";
 import "../styles/enhanced-dashboard.css";
 import "../styles/enhanced-student-dashboard.css";
+import "../styles/tilt-cards.css";
 import {
   fadeInUp,
   fadeInDown,
@@ -13,6 +16,8 @@ import {
   scaleIn,
   buttonHover,
   buttonTap,
+  tiltCardEntrance,
+  tiltCardStagger,
 } from "../animations/animationConfig";
 
 // Color Theme System
@@ -60,6 +65,31 @@ const COLOR_THEME = {
     name: 'Indigo'
   }
 };
+
+// Animated Counter Component
+function AnimatedCounter({ value, suffix = '', duration = 1.5 }) {
+  const nodeRef = useRef(null);
+  const prevValue = useRef(0);
+  
+  useEffect(() => {
+    const node = nodeRef.current;
+    if (!node) return;
+    
+    const numValue = parseFloat(value) || 0;
+    const controls = animate(prevValue.current, numValue, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate(v) {
+        node.textContent = Math.round(v) + suffix;
+      },
+    });
+    
+    prevValue.current = numValue;
+    return () => controls.stop();
+  }, [value, suffix, duration]);
+  
+  return <span ref={nodeRef}>{(parseFloat(value) || 0) + suffix}</span>;
+}
 
 function StudentDashboardEnhanced() {
   const navigate = useNavigate();
@@ -184,7 +214,7 @@ function StudentDashboardEnhanced() {
           notifs.push({
             id: 1,
             type: 'warning',
-            icon: '⚠️',
+            icon: <AlertTriangle size={18} />,
             title: 'Low Attendance Alert',
             message: `Your attendance is ${overallPercentage}%. Minimum 75% required.`,
             time: 'Just now'
@@ -196,7 +226,7 @@ function StudentDashboardEnhanced() {
             notifs.push({
               id: idx + 2,
               type: 'warning',
-              icon: '📉',
+              icon: <TrendingDown size={18} />,
               title: `${subject.name} - Low Attendance`,
               message: `Only ${subject.percentage}% attendance in this subject.`,
               time: 'Today'
@@ -208,7 +238,7 @@ function StudentDashboardEnhanced() {
           notifs.push({
             id: 100,
             type: 'success',
-            icon: '✅',
+            icon: <CheckCircle size={18} />,
             title: 'Attendance Confirmed',
             message: 'Your attendance for today has been marked.',
             time: '2 hours ago'
@@ -285,6 +315,108 @@ function StudentDashboardEnhanced() {
   const handleViewHistory = () => navigate("/attendance-history");
   const handleAttendanceRequest = () => navigate("/attendance-request");
 
+  // ── Data-driven card config ──
+  const heroCards = [
+    {
+      id: 'today',
+      variant: 'today',
+      glareColor: '#54ffd8',
+      icon: <Calendar size={26} />,
+      title: "Today's Status",
+      particles: [
+        'rgba(102,126,234,0.5)', 'rgba(118,75,162,0.4)', 'rgba(165,180,252,0.3)',
+        'rgba(139,92,246,0.35)', 'rgba(196,181,253,0.25)',
+      ],
+      renderBody: () => (
+        <>
+          <div className="tilt-card__value"><AnimatedCounter value={todayStatus?.marked || 0} /></div>
+          <p className="tilt-card__badge">
+            {todayStatus?.status === 'present' ? <><CheckCircle size={15} /> Attendance Marked</> :
+             todayStatus?.status === 'late'    ? <><Clock size={15} /> Marked Late</> :
+                                                  <><Loader size={15} /> Not Marked Yet</>}
+          </p>
+        </>
+      ),
+    },
+    {
+      id: 'attendance',
+      variant: 'attendance',
+      glareColor: '#6f78ff',
+      icon: <BarChart3 size={26} />,
+      title: 'Overall Attendance',
+      particles: [
+        'rgba(16,185,129,0.5)', 'rgba(5,150,105,0.4)', 'rgba(110,231,183,0.3)',
+        'rgba(52,211,153,0.35)', 'rgba(167,243,208,0.25)',
+      ],
+      renderBody: () => (
+        <>
+          <div className="tilt-card__value tilt-card__value--large"><AnimatedCounter value={attendanceStats?.overall || 0} suffix="%" /></div>
+          <p className="tilt-card__subtitle">
+            {attendanceStats?.present || 0}/{attendanceStats?.total || 0} Classes • {getAttendanceStatus(attendanceStats?.overall || 0)}
+          </p>
+          <div className="tilt-card__progress">
+            <div className="tilt-card__progress-bar" style={{ width: `${attendanceStats?.overall || 0}%`, background: getAttendanceColor(attendanceStats?.overall || 0) }} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'scan',
+      variant: 'scan',
+      glareColor: '#ff7a7a',
+      tiltMax: 14,
+      perspective: 900,
+      scale: 1.04,
+      showSparkle: true,
+      icon: <Camera size={26} />,
+      title: 'Scan QR Code',
+      desc: 'Mark your attendance instantly',
+      onClick: handleScanQR,
+      btnLabel: 'Start Scanning',
+      btnVariant: 'scan',
+      particles: [
+        'rgba(240,147,251,0.5)', 'rgba(245,87,108,0.4)', 'rgba(253,164,175,0.3)',
+        'rgba(251,113,133,0.35)', 'rgba(244,114,182,0.25)',
+      ],
+    },
+    {
+      id: 'history',
+      variant: 'history',
+      glareColor: '#4facfe',
+      tiltMax: 14,
+      perspective: 900,
+      scale: 1.04,
+      icon: <ScrollText size={26} />,
+      title: 'Attendance History',
+      desc: 'Review your complete records',
+      onClick: handleViewHistory,
+      btnLabel: 'View History',
+      btnVariant: 'history',
+      particles: [
+        'rgba(79,172,254,0.5)', 'rgba(0,242,254,0.4)', 'rgba(147,197,253,0.3)',
+        'rgba(96,165,250,0.35)', 'rgba(56,189,248,0.25)',
+      ],
+    },
+    {
+      id: 'request',
+      variant: 'request',
+      glareColor: '#f59e0b',
+      tiltMax: 14,
+      perspective: 900,
+      scale: 1.04,
+      icon: <ClipboardList size={26} />,
+      title: 'Generate Request',
+      desc: "Couldn't scan QR? Request attendance from teacher",
+      onClick: handleAttendanceRequest,
+      btnLabel: 'Send Request',
+      btnVariant: 'request',
+      particles: [
+        'rgba(245,158,11,0.5)', 'rgba(217,119,6,0.4)', 'rgba(252,211,77,0.3)',
+        'rgba(251,191,36,0.35)', 'rgba(253,224,71,0.25)',
+      ],
+    },
+  ];
+
   // Animations removed to avoid runtime errors and reduce motion.
 
   if (loading) {
@@ -292,7 +424,7 @@ function StudentDashboardEnhanced() {
       <div className="dashboard">
         <div className="loading-container">
           <div className="spinner"></div>
-          <p className="loading-text">⏳ Loading your dashboard...</p>
+          <p className="loading-text"><Loader size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -318,7 +450,7 @@ function StudentDashboardEnhanced() {
       >
         <div className="header-content">
           <div className="header-text">
-            <h1 id="dashboard-title" className="dashboard__title slide-in-down">🎓 Student Dashboard</h1>
+            <h1 id="dashboard-title" className="dashboard__title slide-in-down"><GraduationCap size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Student Dashboard</h1>
             <p className="dashboard__subtitle fade-in">
               Welcome back, <strong>{user?.name}</strong>! {formatDate(currentTime)} • {formatTime(currentTime)}
             </p>
@@ -331,148 +463,77 @@ function StudentDashboardEnhanced() {
         <motion.section 
           ref={heroGridRef}
           className="dashboard__grid hero-grid" 
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
-          variants={staggerContainer}
+          variants={tiltCardStagger}
           initial="hidden"
           animate="visible"
         >
-          {/* Today's Status Card */}
-          <motion.section 
-            className="dashboard__card premium-card card-gradient-1 card-hover"
-            onMouseEnter={() => setHoveredCard(1)}
-            onMouseLeave={() => setHoveredCard(null)}
-            style={{ 
-              transform: hoveredCard === 1 ? 'translateY(-8px)' : 'translateY(0)'
-            }}
-            variants={fadeInUp}
-            whileHover={{ y: -10, scale: 1.02, boxShadow: '0 24px 64px rgba(49, 156, 181, 0.25)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}
-          >
-            <div className="card-header-icon">📅</div>
-            <h2 className="dashboard__card-title">Today's Status</h2>
-            <div className="card-value">{todayStatus?.marked || 0}</div>
-            <p className="dashboard__card-text status-badge">
-              {todayStatus?.status === 'present' ? '✓ Attendance Marked' : 
-               todayStatus?.status === 'late' ? '⏰ Marked Late' : 
-               '⏳ Not Marked Yet'}
-            </p>
-          </motion.section>
+          {heroCards.map((card) => (
+            <motion.div key={card.id} variants={tiltCardEntrance}>
+              <Tilt
+                tiltMaxAngleX={card.tiltMax || 12}
+                tiltMaxAngleY={card.tiltMax || 12}
+                perspective={card.perspective || 1000}
+                scale={card.scale || 1.03}
+                transitionSpeed={400}
+                gyroscope={true}
+                glareEnable={true}
+                glareMaxOpacity={0.18}
+                glareColor={card.glareColor}
+                glarePosition="all"
+                glareBorderRadius="20px"
+                className="tilt-card-wrapper"
+              >
+                <div
+                  className={`tilt-card tilt-card--${card.variant}`}
+                  onClick={card.onClick}
+                  style={card.onClick ? { cursor: 'pointer' } : undefined}
+                >
+                  <div className="tilt-card__glow" />
+                  <div className="tilt-card__particles">
+                    {card.particles.map((bg, i) => (
+                      <span key={i} className="tilt-card__particle" style={{ background: bg }} />
+                    ))}
+                  </div>
+                  {card.showSparkle && <div className="tilt-card__sparkle"><Sparkles size={16} /></div>}
+                  <div className={`tilt-card__icon tilt-card__icon--${card.variant}`}>{card.icon}</div>
+                  <h2 className="tilt-card__title">{card.title}</h2>
 
-          {/* Overall Attendance Card - Red Theme */}
-          <motion.section 
-            className="dashboard__card premium-card card-gradient-2 card-hover"
-            onMouseEnter={() => setHoveredCard(2)}
-            onMouseLeave={() => setHoveredCard(null)}
-            style={{ 
-              transform: hoveredCard === 2 ? 'translateY(-8px)' : 'translateY(0)',
-              boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
-            }}
-            variants={fadeInUp}
-            whileHover={{ y: -10, scale: 1.02, boxShadow: '0 24px 64px rgba(49, 156, 181, 0.25)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}
-          >
-            <div className="card-header-icon">📊</div>
-            <h2 className="dashboard__card-title">Overall Attendance</h2>
-            <div className="card-value-large">{attendanceStats?.overall || 0}%</div>
-            <p className="dashboard__card-text percentage-text">
-              {attendanceStats?.present || 0}/{attendanceStats?.total || 0} Classes • {getAttendanceStatus(attendanceStats?.overall || 0)}
-            </p>
-          </motion.section>
+                  {/* Custom body (stats cards) */}
+                  {card.renderBody && card.renderBody()}
 
-          {/* Scan QR Card - Pink Theme */}
-          <motion.section 
-            className="dashboard__card premium-card card-gradient-3 card-clickable card-hover"
-            onClick={handleScanQR}
-            onMouseEnter={() => setHoveredCard(3)}
-            onMouseLeave={() => setHoveredCard(null)}
-            style={{ 
-              cursor: 'pointer', 
-              transform: hoveredCard === 3 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
-              boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
-            }}
-            variants={fadeInUp}
-            whileHover={{ y: -10, scale: 1.03, transition: { type: 'spring', stiffness: 280, damping: 22 } }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <div className="card-header-icon">📷</div>
-            <h2 className="dashboard__card-title">Scan QR Code</h2>
-            <p className="dashboard__card-text">Mark your attendance instantly</p>
-            <button className="dashboard__card-action btn-action-glow">
-              Start Scanning →
-            </button>
-          </motion.section>
-
-          {/* View History Card - Cyan Theme */}
-          <motion.section 
-            className="dashboard__card premium-card card-gradient-4 card-clickable card-hover"
-            onClick={handleViewHistory}
-            onMouseEnter={() => setHoveredCard(4)}
-            onMouseLeave={() => setHoveredCard(null)}
-            style={{ 
-              cursor: 'pointer', 
-              transform: hoveredCard === 4 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
-              boxShadow: theme === 'dark' ? '0 10px 30px rgba(49, 156, 181, 0.35)' : '0 10px 30px rgba(0, 0, 0, 0.1)'
-            }}
-            variants={fadeInUp}
-            whileHover={{ y: -10, scale: 1.03, transition: { type: 'spring', stiffness: 280, damping: 22 } }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <div className="card-header-icon">📜</div>
-            <h2 className="dashboard__card-title">Attendance History</h2>
-            <p className="dashboard__card-text">Review your complete records</p>
-            <button className="dashboard__card-action btn-action-glow">
-              View History →
-            </button>
-          </motion.section>
-
-          {/* Generate Request Card - Amber Theme */}
-          <motion.section
-            className="dashboard__card premium-card card-gradient-3 card-clickable card-hover"
-            onClick={handleAttendanceRequest}
-            onMouseEnter={() => setHoveredCard(5)}
-            onMouseLeave={() => setHoveredCard(null)}
-            style={{
-              cursor: 'pointer',
-              transform: hoveredCard === 5 ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
-              background: hoveredCard === 5
-                ? 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(217,119,6,0.3))'
-                : 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.2))',
-              border: '1px solid rgba(245,158,11,0.35)',
-            }}
-            variants={fadeInUp}
-            whileHover={{ y: -10, scale: 1.03, transition: { type: 'spring', stiffness: 280, damping: 22 } }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <div className="card-header-icon">📋</div>
-            <h2 className="dashboard__card-title">Generate Request</h2>
-            <p className="dashboard__card-text">Couldn't scan QR? Request attendance from teacher</p>
-            <button
-              className="dashboard__card-action btn-action-glow"
-              style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}
-            >
-              Send Request →
-            </button>
-          </motion.section>
+                  {/* Action cards (desc + button) */}
+                  {card.desc && <p className="tilt-card__desc">{card.desc}</p>}
+                  {card.btnLabel && (
+                    <button className={`tilt-card__btn tilt-card__btn--${card.btnVariant}`} onClick={card.onClick}>
+                      {card.btnLabel} <ArrowRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </Tilt>
+            </motion.div>
+          ))}
         </motion.section>
 
         {/* Statistics Row - Counters */}
         <motion.section 
           ref={statsGridRef}
           className="statistics-grid" 
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginTop: '2rem', gap: '1rem' }}
+          style={{ marginTop: '2rem', gap: '1rem' }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         >
-          <StatCounter icon="✅" count={attendanceStats?.present || 0} label="Present" color="var(--student-card-2)" theme={theme} />
-          <StatCounter icon="⏰" count={attendanceStats?.late || 0} label="Late" color="var(--student-card-3)" theme={theme} />
-          <StatCounter icon="❌" count={attendanceStats?.absent || 0} label="Absent" color="var(--student-card-4)" theme={theme} />
-          <StatCounter icon="📚" count={attendanceStats?.subjects?.length || 0} label="Subjects" color="var(--student-card-1)" theme={theme} />
+          <StatCounter icon={<CheckCircle size={28} />} count={attendanceStats?.present || 0} label="Present" color="var(--student-card-2)" theme={theme} />
+          <StatCounter icon={<Clock size={28} />} count={attendanceStats?.late || 0} label="Late" color="var(--student-card-3)" theme={theme} />
+          <StatCounter icon={<XCircle size={28} />} count={attendanceStats?.absent || 0} label="Absent" color="var(--student-card-4)" theme={theme} />
+          <StatCounter icon={<BookOpen size={28} />} count={attendanceStats?.subjects?.length || 0} label="Subjects" color="var(--student-card-1)" theme={theme} />
         </motion.section>
 
         {/* Notifications & Upcoming Sessions */}
         <motion.section
-          className="dashboard__grid"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginTop: '2rem', gap: '1.5rem' }}
+          className="dashboard__grid notifications-sessions-grid"
+          style={{ marginTop: '2rem', gap: '1.5rem' }}
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
@@ -481,7 +542,7 @@ function StudentDashboardEnhanced() {
           {/* Notifications Card */}
           <motion.section className="dashboard__card content-card notifications-card" variants={fadeInUp} whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.18)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}>
             <div className="card-title-header">
-              <h2 className="dashboard__card-title">🔔 Notifications</h2>
+              <h2 className="dashboard__card-title"><Bell size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Notifications</h2>
               <span className="notification-badge">{notifications.length}</span>
             </div>
             <div 
@@ -508,7 +569,7 @@ function StudentDashboardEnhanced() {
                 ))
               ) : (
                 <div className="empty-state">
-                  <span style={{ fontSize: '3rem' }}>📭</span>
+                  <span style={{ fontSize: '3rem' }}><Inbox size={48} /></span>
                   <p>No new notifications</p>
                 </div>
               )}
@@ -518,7 +579,7 @@ function StudentDashboardEnhanced() {
           {/* Upcoming Sessions Card */}
           <motion.section className="dashboard__card content-card sessions-card" variants={fadeInUp} whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.18)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}>
             <div className="card-title-header">
-              <h2 className="dashboard__card-title">📅 Upcoming Sessions</h2>
+              <h2 className="dashboard__card-title"><Calendar size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Upcoming Sessions</h2>
               <span className="session-badge">{upcomingSessions.length}</span>
             </div>
             <div 
@@ -538,14 +599,14 @@ function StudentDashboardEnhanced() {
                     <div className="session-time">{session.time}</div>
                     <div className="session-details">
                       <div className="session-subject">{session.subject}</div>
-                      <div className="session-room">📍 {session.room}</div>
-                      <div className="session-faculty">👨‍🏫 {session.faculty}</div>
+                      <div className="session-room"><MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />{session.room}</div>
+                      <div className="session-faculty"><UserCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />{session.faculty}</div>
                     </div>
                   </motion.div>
                 ))
               ) : (
                 <div className="empty-state">
-                  <span style={{ fontSize: '3rem' }}>📭</span>
+                  <span style={{ fontSize: '3rem' }}><Inbox size={48} /></span>
                   <p>No upcoming sessions today</p>
                 </div>
               )}
@@ -564,14 +625,13 @@ function StudentDashboardEnhanced() {
           whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.18)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}
         >
           <div className="card-title-header">
-            <h2 className="dashboard__card-title">📚 Subject-wise Attendance</h2>
+            <h2 className="dashboard__card-title"><BookOpen size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Subject-wise Attendance</h2>
             <span className="subject-badge">{attendanceStats?.subjects?.length || 0}</span>
           </div>
           <div 
             ref={subjectsGridRef}
-            className="dashboard__grid" 
+            className="dashboard__grid subjects-grid" 
             style={{ 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
               gap: '1rem',
               marginTop: '1rem'
             }}
@@ -598,7 +658,7 @@ function StudentDashboardEnhanced() {
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           whileHover={{ y: -6, boxShadow: '0 20px 50px rgba(49, 156, 181, 0.2)', transition: { type: 'spring', stiffness: 260, damping: 24 } }}
         >
-          <h2 className="dashboard__card-title" style={{ color: 'var(--student-card-text)' }}>💡 Quick Tips</h2>
+          <h2 className="dashboard__card-title" style={{ color: 'var(--student-card-text)' }}><Lightbulb size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Quick Tips</h2>
           <ul className="tips-list" style={{ marginTop: '1rem' }}>
             <li><span className="tip-dot"></span>Maintain at least 75% attendance in each subject</li>
             <li><span className="tip-dot"></span>Scan QR code within the class time</li>
@@ -671,7 +731,7 @@ function SubjectCard({ subject, index, theme = 'light' }) {
       </div>
       {subject.percentage < 75 && (
         <div className="warning-badge" style={{ background: theme === 'dark' ? '#78350f' : '#fef3c7', color: theme === 'dark' ? '#fed7aa' : '#92400e' }}>
-          ⚠️ Below minimum required
+          <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Below minimum required
         </div>
       )}
     </div>

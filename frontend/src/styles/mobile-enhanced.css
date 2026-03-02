@@ -296,9 +296,13 @@
   }
   
   /* ==================== BUTTONS ==================== */
-  button,
+  .dashboard__button,
+  .action-btn,
   .btn,
-  .action-btn {
+  .login__button,
+  .signup__button,
+  .profile-actions button,
+  .form-actions button {
     padding: 0.9rem 1.5rem !important;
     font-size: 1rem !important;
     min-height: 48px;
@@ -312,13 +316,20 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
-  button:hover,
-  .btn:hover,
-  .action-btn:hover {
+  .dashboard__button:hover,
+  .action-btn:hover,
+  .btn:hover {
     background: rgba(49, 156, 181, 0.25) !important;
     border-color: rgba(49, 156, 181, 0.7) !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 12px 40px rgba(49, 156, 181, 0.3) !important;
+  }
+
+  /* Ensure all buttons have reasonable touch targets */
+  button {
+    min-height: 44px;
+    border-radius: 10px;
+    cursor: pointer;
   }
   
   /* ==================== CARDS ==================== */

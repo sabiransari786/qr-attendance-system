@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BookOpen, MapPin, Clock, Circle, Pencil, Trash2, Lock, XCircle, Search, X, CheckCircle, Calendar, Loader, Plus } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
 import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from '../animations/animationConfig';
@@ -335,7 +336,7 @@ function FacultySessions() {
         transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div>
-          <h1 className="dashboard__title">📚 My Class Sessions</h1>
+          <h1 className="dashboard__title"><BookOpen size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />My Class Sessions</h1>
           <p className="dashboard__subtitle">Manage and monitor all your active class sessions</p>
         </div>
         <motion.button
@@ -351,7 +352,7 @@ function FacultySessions() {
       <main>
         {loading && (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ fontSize: '1.1rem', color: 'var(--color-text-secondary)' }}>⏳ Loading sessions...</p>
+            <p style={{ fontSize: '1.1rem', color: 'var(--color-text-secondary)' }}><Loader size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading sessions...</p>
           </div>
         )}
 
@@ -364,7 +365,7 @@ function FacultySessions() {
             color: '#ff6b6b',
             marginBottom: '2rem'
           }}>
-            ❌ {error}
+            <XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{error}
           </div>
         )}
 
@@ -393,7 +394,7 @@ function FacultySessions() {
               whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
               whileTap={{ scale: 0.97 }}
             >
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}>➕</div>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}><Plus size={40} /></div>
               <h3 className="dashboard__card-title">Add New Session</h3>
               <p className="dashboard__card-text">Create a new class session with subject, location, and time.</p>
               <button className="dashboard__card-action" style={{ marginTop: '1.2rem' }}>
@@ -416,16 +417,16 @@ function FacultySessions() {
                   </h3>
                   {session.course?.name && (
                     <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: '600' }}>
-                      📚 {session.course.name} ({session.course.code})
+                      <BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{session.course.name} ({session.course.code})
                     </p>
                   )}
 
                   <div style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
                     <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
-                      📍 <strong>{session.location}</strong>
+                      <MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /><strong>{session.location}</strong>
                     </p>
                     <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
-                      🕐 {formatDate(session.startTime)}
+                      <Clock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{formatDate(session.startTime)}
                     </p>
                   </div>
 
@@ -442,7 +443,7 @@ function FacultySessions() {
                       color: session.status === 'active' ? '#10b981' : session.status === 'cancelled' ? '#f59e0b' : '#ef4444',
                       border: `1px solid ${session.status === 'active' ? '#10b981' : session.status === 'cancelled' ? '#f59e0b' : '#ef4444'}`
                     }}>
-                      <span style={{ fontSize: '1.1em' }}>{session.status === 'active' ? '🟢' : session.status === 'cancelled' ? '🟡' : '🔴'}</span>
+                      <span style={{ fontSize: '1.1em' }}>{session.status === 'active' ? <Circle size={14} style={{ fill: '#22c55e', color: '#22c55e' }} /> : session.status === 'cancelled' ? <Circle size={14} style={{ fill: '#eab308', color: '#eab308' }} /> : <Circle size={14} style={{ fill: '#ef4444', color: '#ef4444' }} />}</span>
                       {session.status === 'active' ? 'Active' : session.status === 'cancelled' ? 'Cancelled' : 'Closed'}
                     </span>
                   </div>
@@ -469,7 +470,7 @@ function FacultySessions() {
                     style={{ flex: 1 }}
                     disabled={session.status !== 'active'}
                   >
-                    ✏️ Edit
+                    <Pencil size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Edit
                   </button>
                   <button
                     className="dashboard__button"
@@ -481,7 +482,7 @@ function FacultySessions() {
                       border: '1px solid #ef4444'
                     }}
                   >
-                    🗑️ Delete
+                    <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Delete
                   </button>
                 </div>
 
@@ -498,7 +499,7 @@ function FacultySessions() {
                         border: '1px solid #6366f1'
                       }}
                     >
-                      🔒 Close Session
+                      <Lock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Close Session
                     </button>
                     <button
                       className="dashboard__button"
@@ -510,7 +511,7 @@ function FacultySessions() {
                         border: '1px solid #f59e0b'
                       }}
                     >
-                      ❌ Cancel Class
+                      <XCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Cancel Class
                     </button>
                   </div>
                 )}
@@ -557,7 +558,7 @@ function FacultySessions() {
                     }}
                     onClick={() => setShowCourseDropdown(true)}
                   >
-                    <span style={{ fontSize: '1rem', opacity: 0.6 }}>🔍</span>
+                    <span style={{ fontSize: '1rem', opacity: 0.6 }}><Search size={16} /></span>
                     <input
                       type="text"
                       placeholder={newSession.courseId ? courses.find(c => c.id === parseInt(newSession.courseId))?.name || 'Search course...' : 'Search course...'}
@@ -578,7 +579,7 @@ function FacultySessions() {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setNewSession(p=>({...p,courseId:'',subject:''})); setCourseSearch(''); }}
                         style={{ background:'none', border:'none', cursor:'pointer', color:'var(--color-text-secondary)', fontSize:'1.1rem', lineHeight:1, padding:0 }}
-                      >✕</button>
+                      ><X size={14} /></button>
                     )}
                   </div>
 
@@ -587,7 +588,7 @@ function FacultySessions() {
                     const sel = courses.find(c => c.id === parseInt(newSession.courseId));
                     return sel ? (
                       <div style={{ marginTop:'0.4rem', padding:'0.4rem 0.75rem', backgroundColor:'rgba(49,156,181,0.12)', borderRadius:'6px', fontSize:'0.82rem', color:'var(--color-accent)', fontWeight:600 }}>
-                        ✅ {sel.name} ({sel.code}){sel.semester ? ` · Sem ${sel.semester}` : ''} — {sel.department_name}
+                        <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{sel.name} ({sel.code}){sel.semester ? ` · Sem ${sel.semester}` : ''} — {sel.department_name}
                       </div>
                     ) : null;
                   })()}
@@ -623,7 +624,7 @@ function FacultySessions() {
                           return Object.entries(bySem).map(([semLabel, items]) => (
                             <div key={semLabel}>
                               <div style={{ padding:'0.4rem 0.75rem', fontSize:'0.78rem', fontWeight:700, color:'var(--color-accent)', backgroundColor:'rgba(49,156,181,0.08)', letterSpacing:'0.05em', textTransform:'uppercase' }}>
-                                📅 {semLabel}
+                                <Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}
                               </div>
                               {items.map(c => (
                                 <div
@@ -789,7 +790,7 @@ function FacultySessions() {
             width: '100%', maxWidth: '420px',
             border: '1px solid var(--color-border)'
           }}>
-            <h2 style={{ margin: '0 0 1rem 0', color: '#6366f1' }}>🔒 Close Session</h2>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#6366f1' }}><Lock size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Close Session</h2>
             <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
               Close <strong>"{selectedSession.subject}"</strong>?<br />
               Students who haven't scanned QR will be <strong>auto-marked Absent</strong>.
@@ -806,7 +807,7 @@ function FacultySessions() {
                 onClick={handleCloseSession}
                 disabled={closeLoading}
                 style={{ backgroundColor: '#6366f1', color: 'white', border: 'none' }}
-              >{closeLoading ? 'Closing...' : '🔒 Close Session'}</button>
+              >{closeLoading ? 'Closing...' : <><Lock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Close Session</>}</button>
             </div>
           </div>
         </div>
@@ -826,7 +827,7 @@ function FacultySessions() {
             width: '100%', maxWidth: '440px',
             border: '1px solid var(--color-border)'
           }}>
-            <h2 style={{ margin: '0 0 0.5rem 0', color: '#f59e0b' }}>❌ Cancel Class</h2>
+            <h2 style={{ margin: '0 0 0.5rem 0', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><XCircle size={22} /> Cancel Class</h2>
             <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>
               Cancel <strong>"{selectedSession.subject}"</strong>?<br />
               Students who already scanned will be marked <strong>Excused</strong> —
@@ -859,7 +860,7 @@ function FacultySessions() {
                 onClick={handleCancelSession}
                 disabled={cancelLoading}
                 style={{ backgroundColor: '#f59e0b', color: 'white', border: 'none' }}
-              >{cancelLoading ? 'Cancelling...' : '❌ Cancel Class'}</button>
+              >{cancelLoading ? 'Cancelling...' : <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><XCircle size={16} /> Cancel Class</span>}</button>
             </div>
           </div>
         </div>
@@ -884,7 +885,7 @@ function FacultySessions() {
             maxWidth: '420px',
             border: '1px solid var(--color-border)'
           }}>
-            <h2 style={{ margin: '0 0 1rem 0', color: '#ef4444' }}>🗑️ Delete Session</h2>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Trash2 size={22} /> Delete Session</h2>
             <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
               Are you sure you want to delete the session <strong>"{selectedSession.subject}"</strong>? This action cannot be undone.
             </p>
@@ -909,7 +910,7 @@ function FacultySessions() {
                   border: 'none'
                 }}
               >
-                {deleteLoading ? 'Deleting...' : '🗑️ Delete'}
+                {deleteLoading ? 'Deleting...' : <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Trash2 size={16} /> Delete</span>}
               </button>
             </div>
           </div>

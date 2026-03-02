@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import jsQR from "jsqr";
+import { Camera, CameraIcon, Image, FolderOpen, Keyboard, ClipboardList, CheckCircle, Loader, AlertTriangle, XCircle, Check, BookOpenText } from 'lucide-react';
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import "../styles/dashboard.css";
@@ -204,7 +205,7 @@ function ScanQREnhanced() {
         setDeviceVerified(true);
 
         const distanceMsg = validateData.distance ? ` (${validateData.distance}m from class)` : "";
-        setMessage({ type: "success", text: `✓ QR verified${distanceMsg}. Click Accept to mark attendance.` });
+        setMessage({ type: "success", text: `QR verified${distanceMsg}. Click Accept to mark attendance.` });
       } else {
         const errorData = await sessionResponse.json();
         setMessage({ type: "error", text: errorData.message || "Could not fetch session info" });
@@ -253,7 +254,7 @@ function ScanQREnhanced() {
       });
 
       if (response.ok) {
-        setMessage({ type: "success", text: "✓ Attendance marked successfully!" });
+        setMessage({ type: "success", text: "Attendance marked successfully!" });
         setQrCode("");
         setSessionInfo(null);
         setTimeout(() => navigate("/student-dashboard"), 2000);
@@ -261,15 +262,15 @@ function ScanQREnhanced() {
         const errorData = await response.json();
         let errorMessage = errorData.message || "Failed to mark attendance";
         if (errorMessage.includes("duplicate") || errorMessage.includes("already")) {
-          errorMessage = "⚠️ You have already marked attendance for this session";
+          errorMessage = "You have already marked attendance for this session";
         } else if (errorMessage.includes("enrolled") || errorMessage.includes("course")) {
-          errorMessage = "⚠️ You are not enrolled in this course";
+          errorMessage = "You are not enrolled in this course";
         }
         setMessage({ type: "error", text: errorMessage });
       }
     } catch (error) {
       console.error("Error submitting attendance:", error);
-      setMessage({ type: "error", text: "❌ Failed to submit attendance. Please try again." });
+      setMessage({ type: "error", text: "Failed to submit attendance. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -365,7 +366,7 @@ function ScanQREnhanced() {
         transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div>
-          <h1 className="dashboard__title">📷 Scan QR Code</h1>
+          <h1 className="dashboard__title"><Camera size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Scan QR Code</h1>
           <p className="dashboard__subtitle">Scan or upload QR code to mark your attendance</p>
         </div>
         <div className="dashboard__buttons">
@@ -382,14 +383,14 @@ function ScanQREnhanced() {
 
       <main className="dashboard__content">
         {/* Scanning Options */}
-        <section className="dashboard__grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+        <section className="dashboard__grid scan-options-grid">
           {/* Camera Scan Card */}
           <section className="dashboard__card">
-            <h2 className="dashboard__card-title">📸 Camera Scan</h2>
+            <h2 className="dashboard__card-title"><CameraIcon size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Camera Scan</h2>
             <div style={{ marginTop: '1rem' }}>
               {!cameraActive ? (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📷</div>
+                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}><Camera size={56} /></div>
                   <p style={{ marginBottom: '1rem', color: '#666' }}>
                     Use your camera to scan QR code
                   </p>
@@ -427,9 +428,9 @@ function ScanQREnhanced() {
 
           {/* Upload Image Card */}
           <section className="dashboard__card">
-            <h2 className="dashboard__card-title">🖼️ Upload QR Image</h2>
+            <h2 className="dashboard__card-title"><Image size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Upload QR Image</h2>
             <div style={{ marginTop: '1rem', textAlign: 'center', padding: '2rem' }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📁</div>
+              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}><FolderOpen size={56} /></div>
               <p style={{ marginBottom: '1rem', color: '#666' }}>
                 Select QR code image from your device
               </p>
@@ -452,7 +453,7 @@ function ScanQREnhanced() {
 
           {/* Manual Entry Card */}
           <section className="dashboard__card">
-            <h2 className="dashboard__card-title">⌨️ Manual Entry</h2>
+            <h2 className="dashboard__card-title"><Keyboard size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Manual Entry</h2>
             <div style={{ marginTop: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
                 Enter QR Code
@@ -504,12 +505,11 @@ function ScanQREnhanced() {
         {/* Session Details Card */}
         {sessionInfo && (
           <section className="dashboard__card" style={{ marginTop: '2rem' }}>
-            <h2 className="dashboard__card-title">📋 Session Details</h2>
-            <div style={{ 
+            <h2 className="dashboard__card-title"><ClipboardList size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Session Details</h2>
+            <div className="session-details-grid" style={{ 
               marginTop: '1rem',
               display: 'grid',
               gap: '1rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))'
             }}>
               <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
                 <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Subject</div>
@@ -533,7 +533,7 @@ function ScanQREnhanced() {
                 </div>
               </div>
               <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #6ee7b7' }}>
-                <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}>✅ Present Count</div>
+                <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}><CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Present Count</div>
                 <div style={{ fontWeight: '700', fontSize: '1.5rem', color: '#059669' }}>
                   {sessionInfo.attendance?.present ?? 0}
                   <span style={{ fontSize: '0.875rem', fontWeight: '400', color: '#666', marginLeft: '0.5rem' }}>
@@ -577,7 +577,7 @@ function ScanQREnhanced() {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                <span style={{ fontSize: '1.5rem' }}>{locationVerified ? '✅' : '⏳'}</span>
+                <span style={{ fontSize: '1.5rem' }}>{locationVerified ? <CheckCircle size={24} color="#10b981" /> : <Loader size={24} color="#f59e0b" />}</span>
                 <span style={{ fontWeight: '500' }}>Location {locationVerified ? 'Verified' : 'Checking...'}</span>
               </div>
               <div style={{
@@ -590,7 +590,7 @@ function ScanQREnhanced() {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                <span style={{ fontSize: '1.5rem' }}>{deviceVerified ? '✅' : '⏳'}</span>
+                <span style={{ fontSize: '1.5rem' }}>{deviceVerified ? <CheckCircle size={24} color="#10b981" /> : <Loader size={24} color="#f59e0b" />}</span>
                 <span style={{ fontWeight: '500' }}>Device {deviceVerified ? 'Verified' : 'Checking...'}</span>
               </div>
             </div>
@@ -608,14 +608,14 @@ function ScanQREnhanced() {
                 fontWeight: 'bold'
               }}
             >
-              {loading ? "Submitting..." : "✓ Accept & Mark Attendance"}
+              {loading ? "Submitting..." : <><Check size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Accept & Mark Attendance</>}
             </button>
           </section>
         )}
 
         {/* Instructions Card */}
         <section className="dashboard__card" style={{ marginTop: '2rem' }}>
-          <h2 className="dashboard__card-title">📖 Instructions</h2>
+          <h2 className="dashboard__card-title"><BookOpenText size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Instructions</h2>
           <ul style={{ marginTop: '1rem', paddingLeft: '1.5rem', lineHeight: '2', color: '#666' }}>
             <li>Choose one of three methods to scan QR code: Camera, Upload Image, or Manual Entry</li>
             <li>Ensure you are within the class location for location verification</li>

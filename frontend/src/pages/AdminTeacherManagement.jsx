@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { X, Check, UserCheck, User, CheckCircle, Ban, Loader, ClipboardList, Plus, IdCard, Building, EyeOff, Eye } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { DEPARTMENTS } from "../config/dummyData";
@@ -31,7 +32,7 @@ const Toast = ({ toast, onClose }) => {
         gap: "0.75rem",
       }}
     >
-      <span>{toast.type === "error" ? "✗" : "✓"}</span>
+      <span>{toast.type === "error" ? <X size={16} /> : <Check size={16} />}</span>
       <span>{toast.message}</span>
       <button
         onClick={onClose}
@@ -239,7 +240,7 @@ export default function AdminTeacherManagement() {
       const data = await res.json();
       if (data.success) {
         showToast(
-          `✓ Teacher account created! ${data.data?.name} can log in immediately with their email and the password you set.`
+          `Teacher account created! ${data.data?.name} can log in immediately with their email and the password you set.`
         );
         setForm(EMPTY_FORM);
         setShowPassword(false);
@@ -305,7 +306,7 @@ export default function AdminTeacherManagement() {
             ← Back
           </button>
           <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: 700 }}>
-            👨‍🏫 Teacher Management
+            <UserCheck size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Teacher Management
           </h1>
         </div>
         <p style={{ margin: 0, opacity: 0.7 }}>
@@ -321,10 +322,10 @@ export default function AdminTeacherManagement() {
         transition={{ delay: 0.1 }}
       >
         {[
-          { label: "Total Registered", value: registeredTeachers.length, color: "#6366f1", icon: "👤" },
-          { label: "Active", value: registeredTeachers.filter((t) => t.is_active).length, color: "#10b981", icon: "✅" },
-          { label: "Deactivated", value: registeredTeachers.filter((t) => !t.is_active).length, color: "#ef4444", icon: "🚫" },
-          { label: "Pending Signup", value: pendingTeachers.length, color: "#f59e0b", icon: "⏳" },
+          { label: "Total Registered", value: registeredTeachers.length, color: "#6366f1", icon: <User size={20} /> },
+          { label: "Active", value: registeredTeachers.filter((t) => t.is_active).length, color: "#10b981", icon: <CheckCircle size={20} /> },
+          { label: "Deactivated", value: registeredTeachers.filter((t) => !t.is_active).length, color: "#ef4444", icon: <Ban size={20} /> },
+          { label: "Pending Signup", value: pendingTeachers.length, color: "#f59e0b", icon: <Loader size={20} /> },
         ].map((card) => (
           <div
             key={card.label}
@@ -348,9 +349,9 @@ export default function AdminTeacherManagement() {
       {/* ── Tabs ── */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
         {[
-          { key: "registered", label: "📋 Registered Teachers" },
-          { key: "pending", label: `⏳ Pending Signups (${pendingTeachers.length})` },
-          { key: "create", label: "➕ Create Teacher Account" },
+          { key: "registered", label: <><ClipboardList size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Registered Teachers</> },
+          { key: "pending", label: <><Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Pending Signups ({pendingTeachers.length})</> },
+          { key: "create", label: <><Plus size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Create Teacher Account</> },
         ].map((t) => (
           <button
             key={t.key}
@@ -463,7 +464,7 @@ export default function AdminTeacherManagement() {
                       </div>
                       <div style={{ fontSize: "0.82rem", opacity: 0.7 }}>{teacher.email}</div>
                       <div style={{ fontSize: "0.8rem", opacity: 0.6, marginTop: "0.15rem" }}>
-                        🪪 {teacher.teacher_id || "—"} &nbsp;|&nbsp; 🏛 {teacher.department || "N/A"}
+                        <IdCard size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{teacher.teacher_id || "—"} &nbsp;|&nbsp; <Building size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{teacher.department || "N/A"}
                       </div>
                     </div>
 
@@ -565,8 +566,8 @@ export default function AdminTeacherManagement() {
                       </div>
                       <div style={{ fontSize: "0.82rem", opacity: 0.7 }}>{teacher.email}</div>
                       <div style={{ fontSize: "0.8rem", opacity: 0.6, marginTop: "0.15rem" }}>
-                        🪪 Teacher ID: <strong>{teacher.teacher_id || "—"}</strong>
-                        &nbsp;|&nbsp; 🏛 {teacher.department || "N/A"}
+                        <IdCard size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Teacher ID: <strong>{teacher.teacher_id || "—"}</strong>
+                        &nbsp;|&nbsp; <Building size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{teacher.department || "N/A"}
                       </div>
                     </div>
                     <button
@@ -611,7 +612,7 @@ export default function AdminTeacherManagement() {
               }}
             >
               <h2 style={{ margin: "0 0 0.4rem", fontSize: "1.2rem" }}>
-                ➕ Create Teacher Account
+                <Plus size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Create Teacher Account
               </h2>
               <p style={{ margin: "0 0 1.5rem", opacity: 0.65, fontSize: "0.88rem" }}>
                 Creates a full teacher account instantly. The teacher can log in immediately
@@ -736,7 +737,7 @@ export default function AdminTeacherManagement() {
                         }}
                         title={showPassword ? "Hide password" : "Show password"}
                       >
-                        {showPassword ? "🙈" : "👁"}
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
@@ -778,7 +779,7 @@ export default function AdminTeacherManagement() {
                         }}
                         title={showConfirmPassword ? "Hide password" : "Show password"}
                       >
-                        {showConfirmPassword ? "🙈" : "👁"}
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                     {form.confirmPassword && form.password !== form.confirmPassword && (
@@ -801,7 +802,7 @@ export default function AdminTeacherManagement() {
                     lineHeight: 1.6,
                   }}
                 >
-                  ✅ The teacher account will be created immediately. Share the teacher's
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} /></span> The teacher account will be created immediately. Share the teacher's
                   <strong> email</strong> and <strong>initial password</strong> with them — they can log in
                   right away. To change their password later, the teacher can use <strong>Forgot Password</strong> on
                   the login page (OTP sent to their email).
@@ -825,7 +826,7 @@ export default function AdminTeacherManagement() {
                     marginTop: "0.25rem",
                   }}
                 >
-                  {formLoading ? "Creating Account…" : "✓ Create Teacher Account"}
+                  {formLoading ? "Creating Account…" : <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}><Check size={18} /> Create Teacher Account</span>}
                 </button>
               </form>
             </div>

@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { ClipboardList } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
@@ -208,7 +209,7 @@ function AdminActivityLogs() {
                   ? (
                     <tr><td colSpan={7}>
                       <div className="ap__empty">
-                        <div className="ap__empty-icon">📋</div>
+                        <div className="ap__empty-icon"><ClipboardList size={48} /></div>
                         <p className="ap__empty-title">No activity logs found</p>
                         <p className="ap__empty-text">Try clearing your filters or selecting a different date range.</p>
                       </div>

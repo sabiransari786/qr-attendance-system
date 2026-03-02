@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { X, Check, Loader, CheckCircle, XCircle, ClipboardList, Send, ScrollText, AlertTriangle, Circle, Inbox, Calendar, UserCheck } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 
@@ -28,7 +29,7 @@ const Toast = ({ toast, onClose }) => {
         maxWidth: "380px",
       }}
     >
-      <span>{toast.type === "error" ? "✗" : "✓"}</span>
+      <span>{toast.type === "error" ? <X size={14} /> : <Check size={14} />}</span>
       <span style={{ flex: 1 }}>{toast.message}</span>
       <button
         onClick={onClose}
@@ -41,9 +42,9 @@ const Toast = ({ toast, onClose }) => {
 };
 
 const STATUS_CONFIG = {
-  pending:  { label: "Pending",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  icon: "⏳" },
-  approved: { label: "Approved", color: "#10b981", bg: "rgba(16,185,129,0.12)",  icon: "✅" },
-  rejected: { label: "Rejected", color: "#ef4444", bg: "rgba(239,68,68,0.12)",   icon: "✗" },
+  pending:  { label: "Pending",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  icon: <Loader size={14} /> },
+  approved: { label: "Approved", color: "#10b981", bg: "rgba(16,185,129,0.12)",  icon: <CheckCircle size={14} /> },
+  rejected: { label: "Rejected", color: "#ef4444", bg: "rgba(239,68,68,0.12)",   icon: <XCircle size={14} /> },
 };
 
 function fmtDate(d) {
@@ -175,7 +176,7 @@ export default function StudentAttendanceRequest() {
           >
             ← Back
           </button>
-          <h1 style={{ margin: 0, fontSize: "1.7rem", fontWeight: 700 }}>📋 Generate Attendance Request</h1>
+          <h1 style={{ margin: 0, fontSize: "1.7rem", fontWeight: 700 }}><ClipboardList size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Generate Attendance Request</h1>
         </div>
         <p style={{ margin: 0, opacity: 0.65, fontSize: "0.9rem" }}>
           Couldn't scan QR due to network issues or other reasons? Send a request to your teacher for manual attendance.
@@ -185,8 +186,8 @@ export default function StudentAttendanceRequest() {
       {/* Tabs */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
         {[
-          { key: "new", label: "📨 New Request" },
-          { key: "history", label: `📜 My Requests (${myRequests.length})` },
+          { key: "new", label: <><Send size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />New Request</> },
+          { key: "history", label: <><ScrollText size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />My Requests ({myRequests.length})</> },
         ].map((t) => (
           <button
             key={t.key}
@@ -250,7 +251,7 @@ export default function StudentAttendanceRequest() {
                           opacity: 0.85,
                         }}
                       >
-                        ⚠️ No sessions available for requesting right now.
+                        <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />No sessions available for requesting right now.
                         Either your attendance is already marked, you already have a pending request,
                         or there are no sessions from the last 7 days.
                       </div>
@@ -265,7 +266,7 @@ export default function StudentAttendanceRequest() {
                         {sessions.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.subject} | {s.location} | {fmtDate(s.start_time)} | {s.faculty_name}
-                            {s.status === "active" ? " 🟢" : ""}
+                            {s.status === "active" ? <Circle size={10} style={{ fill: '#22c55e', color: '#22c55e', display: 'inline', verticalAlign: 'middle', marginLeft: '4px' }} /> : ""}
                           </option>
                         ))}
                       </select>
@@ -324,7 +325,7 @@ export default function StudentAttendanceRequest() {
                       cursor: submitting || sessions.length === 0 ? "not-allowed" : "pointer",
                     }}
                   >
-                    {submitting ? "Sending…" : "📨 Send Request to Teacher"}
+                    {submitting ? "Sending…" : <><Send size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Send Request to Teacher</>}
                   </button>
                 </form>
               )}
@@ -351,7 +352,7 @@ export default function StudentAttendanceRequest() {
                   fontSize: "0.95rem",
                 }}
               >
-                <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>📭</div>
+                <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}><Inbox size={48} /></div>
                 No requests submitted yet.
               </div>
             ) : (
@@ -391,7 +392,7 @@ export default function StudentAttendanceRequest() {
                       </div>
 
                       <div style={{ fontSize: "0.82rem", opacity: 0.7, marginBottom: "0.5rem" }}>
-                        📅 Session: {fmtDate(r.start_time)} &nbsp;|&nbsp; 👨‍🏫 {r.faculty_name}
+                        <Calendar size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Session: {fmtDate(r.start_time)} &nbsp;|&nbsp; <UserCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{r.faculty_name}
                       </div>
 
                       <div

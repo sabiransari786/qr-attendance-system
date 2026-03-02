@@ -13,6 +13,7 @@ import {
   cardHover,
   scaleIn,
 } from "../animations/animationConfig";
+import { Eye, Pencil, Trash2, Camera, ChevronUp, ChevronLeft, ChevronRight, ChevronDown, X, Loader, Check, BarChart3, Smartphone } from 'lucide-react';
 
 function StudentProfile() {
   const navigate = useNavigate();
@@ -504,7 +505,7 @@ function StudentProfile() {
                     whileHover={{ scale: 1.06, x: 4, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    👁️ View Photo
+                    <Eye size={14} /> View Photo
                   </motion.button>
                   <motion.button
                     className="photo-menu-item"
@@ -512,7 +513,7 @@ function StudentProfile() {
                     whileHover={{ scale: 1.06, x: 4, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    ✏️ Change Photo
+                    <Pencil size={14} /> Change Photo
                   </motion.button>
                   <motion.button
                     className="photo-menu-item photo-menu-item--danger"
@@ -520,7 +521,7 @@ function StudentProfile() {
                     whileHover={{ scale: 1.06, x: 4, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    🗑️ Remove Photo
+                    <Trash2 size={14} /> Remove Photo
                   </motion.button>
                 </motion.div>
               )}
@@ -532,7 +533,7 @@ function StudentProfile() {
               whileHover={{ scale: 1.15, transition: { type: 'spring', stiffness: 400, damping: 18 } }}
               whileTap={{ scale: 0.88 }}
               >
-                📷
+                <Camera size={20} />
               </motion.button>
             </motion.div>
             <motion.div className="profile-title" variants={fadeInUp}>
@@ -547,7 +548,7 @@ function StudentProfile() {
               <div className="photo-editor-content" onClick={(e) => e.stopPropagation()}>
                 <div className="photo-editor-header">
                   <h3>Adjust Your Photo</h3>
-                  <button className="close-btn" onClick={handleCancelEditor}>✕</button>
+                  <button className="close-btn" onClick={handleCancelEditor}><X size={14} /></button>
                 </div>
                 
                 <div className="photo-editor-preview">
@@ -580,13 +581,13 @@ function StudentProfile() {
                   <div className="control-group">
                     <label>Position</label>
                     <div className="position-controls">
-                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y - 10 }))}>⬆️</button>
+                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y - 10 }))}><ChevronUp size={18} /></button>
                       <div>
-                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x - 10 }))}>⬅️</button>
+                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x - 10 }))}><ChevronLeft size={18} /></button>
                         <button onClick={() => setPhotoPosition({ x: 0, y: 0 })}>⭕</button>
-                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x + 10 }))}>➡️</button>
+                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x + 10 }))}><ChevronRight size={18} /></button>
                       </div>
-                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y + 10 }))}>⬇️</button>
+                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y + 10 }))}><ChevronDown size={18} /></button>
                     </div>
                   </div>
                 </div>
@@ -607,7 +608,7 @@ function StudentProfile() {
           {showPhotoModal && photoPreview && (
             <div className="photo-view-modal" onClick={() => setShowPhotoModal(false)}>
               <div className="photo-view-content" onClick={(e) => e.stopPropagation()}>
-                <button className="close-btn" onClick={() => setShowPhotoModal(false)}>✕</button>
+                <button className="close-btn" onClick={() => setShowPhotoModal(false)}><X size={14} /></button>
                 <img src={photoPreview} alt={profileData.name} />
               </div>
             </div>
@@ -630,7 +631,7 @@ function StudentProfile() {
                 whileHover={{ scale: 1.05, boxShadow: '0 8px 24px rgba(49, 156, 181, 0.3)', transition: { type: 'spring', stiffness: 350, damping: 20 } }}
                 whileTap={{ scale: 0.95 }}
               >
-                {uploading ? "⏳ Uploading..." : "✓ Upload Photo"}
+                {uploading ? <><Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Uploading...</> : <><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Upload Photo</>}
               </motion.button>
             </motion.div>
           )}
@@ -763,7 +764,7 @@ function StudentProfile() {
                     whileHover="hover"
                     whileTap={buttonTap}
                   >
-                    ✓ Save Changes
+                    <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Save Changes
                   </motion.button>
                   <motion.button
                     className="action-btn action-btn--secondary"
@@ -783,7 +784,7 @@ function StudentProfile() {
                   whileHover="hover"
                   whileTap={buttonTap}
                 >
-                  ✏️ Edit Profile
+                  <Pencil size={14} /> Edit Profile
                 </motion.button>
               )}
             </motion.div>
@@ -817,13 +818,13 @@ function StudentProfile() {
                 className="link-btn"
                 onClick={() => navigate("/attendance-history")}
               >
-                📊 View Attendance
+                <BarChart3 size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> View Attendance
               </button>
               <button 
                 className="link-btn"
                 onClick={() => navigate("/scan-qr")}
               >
-                📱 Scan QR Code
+                <Smartphone size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Scan QR Code
               </button>
             </div>
           </div>

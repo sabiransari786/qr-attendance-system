@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle, ShieldAlert, CheckCircle, TrendingDown, Camera, Lock, Bell, Inbox, Trash2, Loader } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
@@ -58,7 +59,7 @@ function Notifications() {
       notifs.push({
         id: 'low-attendance',
         type: 'warning',
-        icon: '⚠️',
+        icon: <AlertTriangle size={20} />,
         title: 'Low Attendance Alert',
         message: `Your overall attendance is ${overallPercentage}%. You need at least 75% to avoid academic issues.`,
         actionText: 'View Details',
@@ -73,7 +74,7 @@ function Notifications() {
       notifs.push({
         id: 'critical-attendance',
         type: 'error',
-        icon: '🚨',
+        icon: <ShieldAlert size={20} />,
         title: 'Critical Attendance Alert',
         message: `URGENT: Your attendance is only ${overallPercentage}%. This may result in academic penalties.`,
         actionText: 'Take Action',
@@ -89,7 +90,7 @@ function Notifications() {
       notifs.push({
         id: `today-${idx}`,
         type: 'success',
-        icon: '✅',
+        icon: <CheckCircle size={20} />,
         title: 'Attendance Confirmed',
         message: `Your attendance for ${record.subject} has been marked as ${record.status}.`,
         timestamp: record.marked_at || new Date().toISOString(),
@@ -114,7 +115,7 @@ function Notifications() {
         notifs.push({
           id: `subject-${idx}`,
           type: 'warning',
-          icon: '📉',
+          icon: <TrendingDown size={20} />,
           title: `${subject} - Low Attendance`,
           message: `Only ${percentage}% attendance in this subject. Required: 75%.`,
           actionText: 'View Subject',
@@ -129,7 +130,7 @@ function Notifications() {
     notifs.push({
       id: 'qr-request-1',
       type: 'info',
-      icon: '📷',
+      icon: <Camera size={20} />,
       title: 'QR Code Available',
       message: 'A new QR code is available for Data Structures class.',
       actionText: 'Scan Now',
@@ -142,7 +143,7 @@ function Notifications() {
     notifs.push({
       id: 'suspicious-1',
       type: 'error',
-      icon: '🔒',
+      icon: <Lock size={20} />,
       title: 'Suspicious Activity Detected',
       message: 'Multiple login attempts detected from unknown device. Please verify your account.',
       actionText: 'Review Activity',
@@ -229,7 +230,7 @@ function Notifications() {
         transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div>
-          <h1 className="dashboard__title">🔔 Notifications</h1>
+          <h1 className="dashboard__title"><Bell size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Notifications</h1>
           <p className="dashboard__subtitle">
             {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
           </p>
@@ -287,11 +288,11 @@ function Notifications() {
         {/* Notifications List */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
-            ⏳ Loading notifications...
+            <Loader size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading notifications...
           </div>
         ) : filteredNotifications.length === 0 ? (
           <div className="dashboard__card" style={{ textAlign: 'center', padding: '3rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📭</div>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}><Inbox size={64} /></div>
             <h2 style={{ marginBottom: '0.5rem', color: '#666' }}>No Notifications</h2>
             <p style={{ color: '#999' }}>You're all caught up!</p>
           </div>
@@ -399,7 +400,7 @@ function Notifications() {
                           }}
                           title="Delete notification"
                         >
-                          🗑️
+                          <Trash2 size={20} />
                         </button>
                       </div>
                     </div>

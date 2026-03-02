@@ -213,7 +213,34 @@
 
 /* ===== Hero Grid ===== */
 .hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
   animation: slideUpBounce 0.8s ease-out;
+}
+
+/* ===== Notifications/Sessions Grid ===== */
+.notifications-sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+/* ===== Subjects Grid ===== */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+/* ===== Scan Options Grid ===== */
+.scan-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* ===== Session Details Grid ===== */
+.session-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .premium-card {
@@ -423,6 +450,8 @@
 /* ===== Statistics Grid ===== */
 .statistics-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
   animation: slideUpBounce 0.8s ease-out 0.2s both;
 }
 
@@ -973,6 +1002,35 @@
 }
 
 /* Theme-based card gradients now handled by CSS variables */
+
+/* ===== Mobile Grid Fixes ===== */
+@media (max-width: 768px) {
+  .notifications-sessions-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .subjects-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .scan-options-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .session-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .notifications-sessions-grid,
+  .subjects-grid,
+  .scan-options-grid,
+  .session-details-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.8rem !important;
+  }
+}
 
 /* ===== Print Styles ===== */
 @media print {

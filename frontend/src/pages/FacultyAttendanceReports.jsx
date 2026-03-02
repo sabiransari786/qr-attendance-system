@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { BarChart3, BookOpen, ClipboardList, MapPin, Clock, CheckCircle, Timer, XCircle, Loader } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
 import { fadeInUp, fadeInDown, staggerContainer } from '../animations/animationConfig';
@@ -226,7 +227,7 @@ function FacultyAttendanceReports() {
         transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div>
-          <h1 className="dashboard__title">📊 Attendance Reports</h1>
+          <h1 className="dashboard__title"><BarChart3 size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Attendance Reports</h1>
           <p className="dashboard__subtitle">Comprehensive attendance analysis and student tracking</p>
         </div>
         <motion.button
@@ -240,7 +241,7 @@ function FacultyAttendanceReports() {
       </motion.header>
 
       <main>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '3rem', minHeight: 'calc(100vh - 300px)' }}>
+        <div className="faculty-reports-layout" style={{ display: 'grid', gap: '2rem', minHeight: 'calc(100vh - 300px)' }}>
           {/* Sessions Sidebar */}
           <aside style={{
             backgroundColor: 'var(--color-surface)',
@@ -257,10 +258,10 @@ function FacultyAttendanceReports() {
               fontWeight: '700',
               color: 'var(--color-text)'
             }}>
-              📚 Sessions
+              <BookOpen size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Sessions
             </h3>
 
-            {loading && <p style={{ color: 'var(--color-text-secondary)' }}>⏳ Loading sessions...</p>}
+            {loading && <p style={{ color: 'var(--color-text-secondary)' }}><Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Loading sessions...</p>}
             {!loading && sessions.length === 0 && (
               <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>No sessions found</p>
             )}
@@ -318,7 +319,7 @@ function FacultyAttendanceReports() {
                 justifyContent: 'center',
                 minHeight: '400px'
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><ClipboardList size={48} /></div>
                 <h3 style={{ fontSize: '1.3rem', marginBottom: '0.5rem', color: 'var(--color-text)' }}>
                   Select a session
                 </h3>
@@ -344,7 +345,7 @@ function FacultyAttendanceReports() {
                     color: 'var(--color-text-secondary)',
                     fontSize: '0.95rem'
                   }}>
-                    📍 {selectedSession.location} • 🕐 {new Date(selectedSession.startTime).toLocaleDateString()}
+                    <MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{selectedSession.location} • <Clock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{new Date(selectedSession.startTime).toLocaleDateString()}
                   </p>
                 </div>
 
@@ -378,7 +379,7 @@ function FacultyAttendanceReports() {
                 </div>
 
                 {/* Stats Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <div className="stats-grid" style={{ gap: '1.5rem', marginBottom: '2.5rem' }}>
                   <div className="dashboard__card" style={{ padding: '1.5rem', textAlign: 'center' }}>
                     <div style={{ fontSize: '2.4rem', fontWeight: '800', color: 'var(--primary-accent)', marginBottom: '0.5rem' }}>
                       {stats.total}
@@ -464,7 +465,7 @@ function FacultyAttendanceReports() {
 
                   {loadingAttendance && (
                     <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '2rem' }}>
-                      ⏳ Loading attendance data...
+                      <Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Loading attendance data...
                     </p>
                   )}
 
@@ -520,7 +521,7 @@ function FacultyAttendanceReports() {
                                   border: '1px solid currentColor'
                                 }}>
                                   <span style={{ fontSize: '1.1em' }}>
-                                    {record.status === 'present' ? '✓' : record.status === 'late' ? '⏱' : '✕'}
+                                    {record.status === 'present' ? <CheckCircle size={14} /> : record.status === 'late' ? <Timer size={14} /> : <XCircle size={14} />}
                                   </span>
                                   {record.status || 'N/A'}
                                 </span>

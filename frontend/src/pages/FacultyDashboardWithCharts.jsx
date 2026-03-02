@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { UserCheck, Target, BookOpen, BarChart3, ShieldAlert, ClipboardList, CheckCircle, Clock, XCircle, Circle, Loader } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from "../animations/animationConfig";
@@ -138,7 +139,7 @@ function FacultyDashboardWithCharts() {
         transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       >
         <div>
-          <h1 className="dashboard__title">👨‍🏫 Faculty Dashboard</h1>
+          <h1 className="dashboard__title"><UserCheck size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Faculty Dashboard</h1>
           <p className="dashboard__subtitle">
             Welcome back, <strong>{user?.name}</strong>! View attendance analytics and manage your classes.
           </p>
@@ -149,7 +150,7 @@ function FacultyDashboardWithCharts() {
       <main className="dashboard__content">
         {loading ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-            ⏳ Loading dashboard data...
+            <Loader size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading dashboard data...
           </div>
         ) : (
           <>
@@ -176,7 +177,7 @@ function FacultyDashboardWithCharts() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  🎯
+                  <Target size={40} />
                 </div>
                 <h2 className="dashboard__card-title">Generate QR Code</h2>
                 <p className="dashboard__card-text">
@@ -203,12 +204,12 @@ function FacultyDashboardWithCharts() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  📚
+                  <BookOpen size={40} />
                 </div>
                 <h2 className="dashboard__card-title">Class Sessions</h2>
                 {loading ? (
                   <p className="dashboard__card-text" style={{ color: 'var(--color-text-secondary)' }}>
-                    ⏳ Loading sessions...
+                    <Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Loading sessions...
                   </p>
                 ) : (
                   <>
@@ -252,12 +253,12 @@ function FacultyDashboardWithCharts() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  📊
+                  <BarChart3 size={40} />
                 </div>
                 <h2 className="dashboard__card-title">Attendance Reports</h2>
                 {loading ? (
                   <p className="dashboard__card-text" style={{ color: 'var(--color-text-secondary)' }}>
-                    ⏳ Loading reports...
+                    <Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Loading reports...
                   </p>
                 ) : (
                   <p className="dashboard__card-text">
@@ -289,7 +290,7 @@ function FacultyDashboardWithCharts() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  🚨
+                  <ShieldAlert size={40} />
                 </div>
                 <h2 className="dashboard__card-title">Suspicious Activity</h2>
                 <p className="dashboard__card-text">
@@ -311,7 +312,7 @@ function FacultyDashboardWithCharts() {
                 whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(245,158,11,0.18)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
                 whileTap={{ scale: 0.97 }}
               >
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}>📋</div>
+                <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}><ClipboardList size={40} /></div>
                 <h2 className="dashboard__card-title">Attendance Requests</h2>
                 <p className="dashboard__card-text">
                   Review and approve manual attendance requests from students who couldn't scan the QR code.
@@ -325,7 +326,7 @@ function FacultyDashboardWithCharts() {
             {/* Statistics Cards */}
             <section className="dashboard__stats-grid">
               <div className="stat-card stat-card--primary">
-                <div className="stat-card__icon">📚</div>
+                <div className="stat-card__icon"><BookOpen size={28} /></div>
                 <div className="stat-card__content">
                   <div className="stat-card__label">Total Sessions</div>
                   <div className="stat-card__value">{stats.totalSessions}</div>
@@ -334,7 +335,7 @@ function FacultyDashboardWithCharts() {
               </div>
 
               <div className="stat-card stat-card--success">
-                <div className="stat-card__icon">✅</div>
+                <div className="stat-card__icon"><CheckCircle size={28} /></div>
                 <div className="stat-card__content">
                   <div className="stat-card__label">Present</div>
                   <div className="stat-card__value">{stats.totalPresent}</div>
@@ -343,7 +344,7 @@ function FacultyDashboardWithCharts() {
               </div>
 
               <div className="stat-card stat-card--warning">
-                <div className="stat-card__icon">⏰</div>
+                <div className="stat-card__icon"><Clock size={28} /></div>
                 <div className="stat-card__content">
                   <div className="stat-card__label">Late</div>
                   <div className="stat-card__value">{stats.totalLate}</div>
@@ -352,7 +353,7 @@ function FacultyDashboardWithCharts() {
               </div>
 
               <div className="stat-card stat-card--danger">
-                <div className="stat-card__icon">❌</div>
+                <div className="stat-card__icon"><XCircle size={28} /></div>
                 <div className="stat-card__content">
                   <div className="stat-card__label">Absent</div>
                   <div className="stat-card__value">{stats.totalAbsent}</div>
@@ -434,7 +435,7 @@ function FacultyDashboardWithCharts() {
             {/* Sessions Table */}
             {sessions.length > 0 && (
               <section className="dashboard__sessions">
-                <h2 className="section-title">📋 Your Sessions</h2>
+                <h2 className="section-title"><ClipboardList size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Your Sessions</h2>
                 <div className="table-responsive">
                   <table className="sessions-table">
                     <thead>
@@ -455,14 +456,14 @@ function FacultyDashboardWithCharts() {
                             <td>{session.location}</td>
                             <td>
                               <span className={`status-badge status-badge--${session.status}`}>
-                                {session.status === 'active' ? '🟢' : '🔴'} {session.status}
+                                {session.status === 'active' ? <Circle size={12} style={{ fill: '#22c55e', color: '#22c55e', display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> : <Circle size={12} style={{ fill: '#ef4444', color: '#ef4444', display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />} {session.status}
                               </span>
                             </td>
                             <td>{new Date(session.startTime).toLocaleString()}</td>
                             <td>
                               {sessionData && (
                                 <span className="attendance-summary">
-                                  ✅ {sessionData.present} | ⏰ {sessionData.late} | ❌ {sessionData.absent}
+                                  <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px', color: '#22c55e' }} />{sessionData.present} | <Clock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px', color: '#f59e0b' }} />{sessionData.late} | <XCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px', color: '#ef4444' }} />{sessionData.absent}
                                 </span>
                               )}
                             </td>
@@ -477,7 +478,7 @@ function FacultyDashboardWithCharts() {
 
             {sessions.length === 0 && !loading && (
               <section className="empty-state">
-                <div className="empty-state__icon">📚</div>
+                <div className="empty-state__icon"><BookOpen size={48} /></div>
                 <h3 className="empty-state__title">No Sessions Created Yet</h3>
                 <p className="empty-state__text">Create your first class session to get started with attendance tracking.</p>
                 <button className="empty-state__button" onClick={handleGenerateQR}>

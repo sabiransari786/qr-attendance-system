@@ -1,5 +1,6 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
+import { User } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { logout } from "../services/api";
 import { API_BASE_URL } from "../utils/constants";
@@ -179,7 +180,7 @@ function Navbar() {
                   />
                 ) : (
                   <span className="navbar__profile-placeholder">
-                    {user?.name?.charAt(0)?.toUpperCase() || '👤'}
+                    {user?.name?.charAt(0)?.toUpperCase() || <User size={16} />}
                   </span>
                 )}
                 <span>Profile</span>

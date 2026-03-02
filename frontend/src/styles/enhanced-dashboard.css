@@ -302,7 +302,43 @@
 /* ============================================================================
    RESPONSIVE DESIGN
    ============================================================================ */
+
+/* Faculty Reports Layout - Sidebar + Content */
+.faculty-reports-layout {
+  grid-template-columns: 1fr 3fr;
+}
+
+/* Suspicious Activity Cards */
+.suspicious-card {
+  grid-template-columns: 1fr auto;
+}
+
+.suspicious-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.5rem 1.5rem;
+}
+
 @media (max-width: 768px) {
+  .faculty-reports-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  .faculty-reports-layout aside {
+    position: static !important;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .suspicious-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .suspicious-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+
   .dashboard__stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;

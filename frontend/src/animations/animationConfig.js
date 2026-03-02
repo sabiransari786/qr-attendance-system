@@ -218,3 +218,35 @@ export const modalVariant = {
   visible: { opacity: 1, scale: 1, y: 0, transition: smoothSpring },
   exit:   { opacity: 0, scale: 0.92, y: 12, transition: { duration: 0.2 } },
 };
+
+// ─── Tilt Card Entrance ─────────────────────────────────────────────────────
+export const tiltCardEntrance = {
+  hidden: { 
+    opacity: 0, 
+    y: 40, 
+    scale: 0.9,
+    filter: 'blur(8px)',
+    rotateX: 8,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
+    rotateX: 0,
+    transition: { 
+      duration: 0.6, 
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
+
+export const tiltCardStagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1,
+    },
+  },
+};

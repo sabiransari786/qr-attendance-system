@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import { DEPARTMENTS } from "../config/dummyData";
+import { Eye, Pencil, Trash2, Camera, ChevronUp, ChevronLeft, ChevronRight, ChevronDown, X, Loader, Check, BarChart3, Users } from 'lucide-react';
 import "../styles/profile.css";
 
 function AdminProfile() {
@@ -456,13 +457,13 @@ function AdminProfile() {
               {showPhotoMenu && photoPreview && (
                 <div className="photo-menu">
                   <button className="photo-menu-item" onClick={handleViewPhoto}>
-                    👁️ View Photo
+                    <Eye size={14} /> View Photo
                   </button>
                   <button className="photo-menu-item" onClick={handleEditPhoto}>
-                    ✏️ Change Photo
+                    <Pencil size={14} /> Change Photo
                   </button>
                   <button className="photo-menu-item photo-menu-item--danger" onClick={handleRemovePhoto}>
-                    🗑️ Remove Photo
+                    <Trash2 size={14} /> Remove Photo
                   </button>
                 </div>
               )}
@@ -472,7 +473,7 @@ function AdminProfile() {
                 onClick={() => fileInputRef.current?.click()}
                 title="Upload profile photo"
               >
-                📷
+                <Camera size={20} />
               </button>
             </div>
             <div className="profile-title">
@@ -487,7 +488,7 @@ function AdminProfile() {
               <div className="photo-editor-content" onClick={(e) => e.stopPropagation()}>
                 <div className="photo-editor-header">
                   <h3>Adjust Your Photo</h3>
-                  <button className="close-btn" onClick={handleCancelEditor}>✕</button>
+                  <button className="close-btn" onClick={handleCancelEditor}><X size={14} /></button>
                 </div>
                 
                 <div className="photo-editor-preview">
@@ -520,13 +521,13 @@ function AdminProfile() {
                   <div className="control-group">
                     <label>Position</label>
                     <div className="position-controls">
-                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y - 10 }))}>⬆️</button>
+                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y - 10 }))}><ChevronUp size={18} /></button>
                       <div>
-                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x - 10 }))}>⬅️</button>
+                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x - 10 }))}><ChevronLeft size={18} /></button>
                         <button onClick={() => setPhotoPosition({ x: 0, y: 0 })}>⭕</button>
-                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x + 10 }))}>➡️</button>
+                        <button onClick={() => setPhotoPosition(p => ({ ...p, x: p.x + 10 }))}><ChevronRight size={18} /></button>
                       </div>
-                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y + 10 }))}>⬇️</button>
+                      <button onClick={() => setPhotoPosition(p => ({ ...p, y: p.y + 10 }))}><ChevronDown size={18} /></button>
                     </div>
                   </div>
                 </div>
@@ -547,7 +548,7 @@ function AdminProfile() {
           {showPhotoModal && photoPreview && (
             <div className="photo-view-modal" onClick={() => setShowPhotoModal(false)}>
               <div className="photo-view-content" onClick={(e) => e.stopPropagation()}>
-                <button className="close-btn" onClick={() => setShowPhotoModal(false)}>✕</button>
+                <button className="close-btn" onClick={() => setShowPhotoModal(false)}><X size={14} /></button>
                 <img src={photoPreview} alt={profileData.name} />
               </div>
             </div>
@@ -562,7 +563,7 @@ function AdminProfile() {
                 onClick={handleUploadPhoto}
                 disabled={uploading}
               >
-                {uploading ? "⏳ Uploading..." : "✓ Upload Photo"}
+                {uploading ? <><Loader size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Uploading...</> : <><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Upload Photo</>}
               </button>
             </div>
           )}
@@ -665,7 +666,7 @@ function AdminProfile() {
                     className="action-btn action-btn--success"
                     onClick={handleSave}
                   >
-                    ✓ Save Changes
+                    <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Save Changes
                   </button>
                   <button 
                     className="action-btn action-btn--secondary"
@@ -679,7 +680,7 @@ function AdminProfile() {
                   className="action-btn action-btn--primary"
                   onClick={handleEdit}
                 >
-                  ✏️ Edit Profile
+                  <Pencil size={14} /> Edit Profile
                 </button>
               )}
             </div>
@@ -711,7 +712,7 @@ function AdminProfile() {
                 className="link-btn"
                 onClick={() => navigate("/admin-dashboard")}
               >
-                📊 View Dashboard
+                <BarChart3 size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> View Dashboard
               </button>
               <button 
                 className="link-btn"
@@ -724,7 +725,7 @@ function AdminProfile() {
                   }, 100);
                 }}
               >
-                👥 Manage Users
+                <Users size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Manage Users
               </button>
             </div>
           </div>

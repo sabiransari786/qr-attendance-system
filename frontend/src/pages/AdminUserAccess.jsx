@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { X, Check, AlertTriangle, Users } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
@@ -162,7 +163,7 @@ function AdminUserAccess() {
           color: toast.type === "error" ? "#f87171" : "#4ade80",
           borderRadius: "12px", fontSize: "0.875rem", backdropFilter: "blur(16px)",
         }}>
-          {toast.type === "error" ? "✗" : "✓"} {toast.msg}
+          {toast.type === "error" ? <X size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> : <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />} {toast.msg}
         </div>
       )}
 
@@ -178,7 +179,7 @@ function AdminUserAccess() {
             </div>
           </div>
           <div className="ap__header-actions">
-            {isMockMode && <span className="ap__mock-note">⚠ Mock data</span>}
+            {isMockMode && <span className="ap__mock-note"><AlertTriangle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Mock data</span>}
             <button className="ap__btn ap__btn--outline" onClick={fetchUsers} disabled={loading}>↻ Refresh</button>
             <button className="ap__btn ap__btn--primary" onClick={() => navigate("/admin/approvals")}>+ Add User</button>
           </div>
@@ -249,7 +250,7 @@ function AdminUserAccess() {
                   ? (
                     <tr><td colSpan={6}>
                       <div className="ap__empty">
-                        <div className="ap__empty-icon">👥</div>
+                        <div className="ap__empty-icon"><Users size={48} /></div>
                         <p className="ap__empty-title">No users found</p>
                         <p className="ap__empty-text">Adjust your filters or add a new user.</p>
                       </div>

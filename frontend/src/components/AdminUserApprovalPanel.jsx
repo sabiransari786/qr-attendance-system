@@ -1,4 +1,5 @@
 import { useState, useContext } from "react";
+import { X, CheckCircle, Loader } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import Toast from "./Toast";
@@ -208,7 +209,7 @@ function AdminUserApprovalPanel({ isOpen, onClose }) {
           onClick={onClose}
           aria-label="Close approval panel"
         >
-          ✕
+          <X size={18} />
         </button>
       </div>
 
@@ -454,7 +455,7 @@ function AdminUserApprovalPanel({ isOpen, onClose }) {
                   </td>
                   <td>
                     <span className={`admin-approval-panel__status ${user.is_registered ? "admin-approval-panel__status--registered" : "admin-approval-panel__status--pending"}`}>
-                      {user.is_registered ? "✓ Registered" : "⏳ Pending"}
+                      {user.is_registered ? <><CheckCircle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Registered</> : <><Loader size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Pending</>}
                     </span>
                   </td>
                   <td>

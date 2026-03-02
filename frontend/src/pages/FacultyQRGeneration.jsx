@@ -12,6 +12,7 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { BookOpen, Building } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { QRCodeCanvas } from 'qrcode.react';
 import { API_BASE_URL } from '../utils/constants';
@@ -383,10 +384,10 @@ function FacultyQRGeneration() {
                 return (
                   <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', backgroundColor: 'rgba(49,156,181,0.1)', borderRadius: '8px', border: '1px solid rgba(49,156,181,0.3)', fontSize: '0.9rem' }}>
                     {sel.course?.name && (
-                      <span style={{ marginRight: '1rem' }}>📚 <strong>{sel.course.name}</strong> ({sel.course.code})</span>
+                      <span style={{ marginRight: '1rem' }}><BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /><strong>{sel.course.name}</strong> ({sel.course.code})</span>
                     )}
                     {sel.department?.name && (
-                      <span style={{ color: 'var(--color-text-secondary)' }}>🏫 {sel.department.name}</span>
+                      <span style={{ color: 'var(--color-text-secondary)' }}><Building size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{sel.department.name}</span>
                     )}
                   </div>
                 );

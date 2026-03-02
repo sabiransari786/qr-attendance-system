@@ -1,5 +1,12 @@
 /* Home Page - Responsive Theme */
 
+/* Dashboard button inside hero actions for logged-in users */
+.home__hero-action--dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .home {
   display: flex;
   flex-direction: column;
@@ -620,6 +627,7 @@
 
 .attendee-card {
   width: 300px;
+  max-width: 100%;
   height: 400px;
   perspective: 1000px;
   position: relative;
