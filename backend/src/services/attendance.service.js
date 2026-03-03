@@ -359,8 +359,8 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
             const studentDeptId = students[0].dept_id;
             if (!studentDeptId || Number(studentDeptId) !== Number(session.department_id)) {
                 const err = new Error(
-                    `Branch mismatch: Yeh session aapki branch ka nahi hai. ` +
-                    `Aap sirf apni branch (${students[0].department || 'unset'}) ke sessions mein attendance mark kar sakte ho.`
+                    `Branch mismatch: This session does not belong to your branch. ` +
+                    `You can only mark attendance for sessions in your own branch (${students[0].department || 'unset'}).`
                 );
                 err.statusCode = 403;
                 throw err;
@@ -378,9 +378,9 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
             const courseSemNum = Number(session.course_semester);
             if (!studentSemNum || studentSemNum !== courseSemNum) {
                 const err = new Error(
-                    `Semester mismatch: Yeh session Semester-${courseSemNum} ka hai. ` +
-                    `Aap abhi Semester-${students[0].semester || 'unknown'} mein hain. ` +
-                    `Aap sirf apne current semester ki classes attend kar sakte ho.`
+                    `Semester mismatch: This session is for Semester ${courseSemNum}. ` +
+                    `You are currently in Semester ${students[0].semester || 'unknown'}. ` +
+                    `You can only attend classes of your current semester.`
                 );
                 err.statusCode = 403;
                 throw err;

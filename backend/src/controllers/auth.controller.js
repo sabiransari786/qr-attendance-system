@@ -130,7 +130,7 @@ const login = async (req, res, next) => {
             // 400 Bad Request - Client ne required data nahi bheja
             return res.status(400).json({
                 success: false,
-                message: 'Email is required. Apna email address enter karo.'
+                message: 'Email is required. Please enter your email address.'
             });
         }
 
@@ -139,7 +139,7 @@ const login = async (req, res, next) => {
             // 400 Bad Request - Password missing hai
             return res.status(400).json({
                 success: false,
-                message: 'Password is required. Apna password enter karo.'
+                message: 'Password is required. Please enter your password.'
             });
         }
 
@@ -271,7 +271,7 @@ const logout = async (req, res, next) => {
 
         return res.status(200).json({
             success: true,
-            message: 'Logout successful! Aapka token frontend pe remove ho gaya hai.'
+            message: 'Logout successful! Your session token has been removed.'
         });
 
     } catch (error) {
@@ -416,7 +416,7 @@ const register = async (req, res, next) => {
         if (!name || name.trim() === '') {
             return res.status(400).json({
                 success: false,
-                message: 'Name is required. Apna naam enter karo.'
+                message: 'Name is required. Please enter your full name.'
             });
         }
 
@@ -424,7 +424,7 @@ const register = async (req, res, next) => {
         if (!email || email.trim() === '') {
             return res.status(400).json({
                 success: false,
-                message: 'Email is required. Apna email address enter karo.'
+                message: 'Email is required. Please enter your email address.'
             });
         }
 
@@ -432,7 +432,7 @@ const register = async (req, res, next) => {
         if (!password || password.trim() === '') {
             return res.status(400).json({
                 success: false,
-                message: 'Password is required. Strong password enter karo.'
+                message: 'Password is required. Please enter a strong password.'
             });
         }
 
@@ -440,7 +440,7 @@ const register = async (req, res, next) => {
         if (!contact_number || contact_number.trim() === '') {
             return res.status(400).json({
                 success: false,
-                message: 'Contact number is required. 10-digit number enter karo.'
+                message: 'Contact number is required. Please enter a valid 10-digit number.'
             });
         }
 
@@ -457,7 +457,7 @@ const register = async (req, res, next) => {
         if (userRole !== 'admin' && (!req.body.department || req.body.department.trim() === '')) {
             return res.status(400).json({
                 success: false,
-                message: 'Department/Branch is required. Apni branch select karo.'
+                message: 'Department/Branch is required. Please select your branch.'
             });
         }
 
@@ -500,7 +500,7 @@ const register = async (req, res, next) => {
         // User data return karo (password exclude hoga - service ne handle kiya hoga)
         return res.status(201).json({
             success: true,
-            message: 'Registration successful! Ab aap login kar sakte ho.',
+            message: 'Registration successful! You can now login with your credentials.',
             data: newUser
         });
 

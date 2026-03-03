@@ -1,0 +1,342 @@
+/* ============================================================================
+   ADMIN DASHBOARD PREMIUM — Landing page for admin panel
+   Glass-morphism, gradient accents, color-coded icons, responsive
+   ============================================================================ */
+
+/* ── Welcome Section ─────────────────────────────────────────────────────── */
+.adp__welcome {
+  margin-bottom: 2.5rem;
+}
+
+.adp__welcome-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: 0.6rem;
+  opacity: 0.9;
+}
+
+.adp__welcome-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--color-text, #e2e8f0) 0%, rgba(49,156,181,0.9) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .adp__welcome-title {
+  background: linear-gradient(135deg, #1a2332 0%, #1a7a94 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.adp__welcome-sub {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  max-width: 620px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Stats Grid Override ─────────────────────────────────────────────────── */
+.adp__stats-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+/* ── Stat Card Icon ──────────────────────────────────────────────────────── */
+.adp__stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.adp__stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  background: var(--icon-bg, rgba(49,156,181,0.12));
+  color: var(--icon-color, var(--color-primary));
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s ease;
+}
+
+.ap__stat:hover .adp__stat-icon {
+  transform: scale(1.12) rotate(-4deg);
+  box-shadow: 0 6px 20px var(--icon-bg, rgba(49,156,181,0.2));
+}
+
+/* ── Section Header ──────────────────────────────────────────────────────── */
+.adp__section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.adp__section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.adp__section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(49,156,181,0.3), transparent 90%);
+}
+
+/* ── Navigation Cards Grid ───────────────────────────────────────────────── */
+.adp__nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.adp__nav-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(49, 156, 181, 0.16);
+  border-radius: 18px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  backdrop-filter: blur(12px);
+}
+
+/* Colored top accent bar */
+.adp__nav-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-accent, linear-gradient(90deg, #319cb5, #6f78ff));
+  border-radius: 18px 18px 0 0;
+}
+
+/* Radial glow on hover */
+.adp__nav-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 10% 20%, var(--card-accent, #319cb5), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  border-radius: 18px;
+}
+
+.adp__nav-card:hover::after {
+  opacity: 0.06;
+}
+
+.adp__nav-card:hover {
+  border-color: rgba(49, 156, 181, 0.35);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(49, 156, 181, 0.08);
+}
+
+[data-theme="light"] .adp__nav-card {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(49, 156, 181, 0.14);
+  box-shadow: 0 2px 12px rgba(49, 156, 181, 0.06);
+}
+
+[data-theme="light"] .adp__nav-card:hover {
+  box-shadow: 0 20px 48px rgba(49, 156, 181, 0.14);
+  border-color: rgba(49, 156, 181, 0.3);
+}
+
+[data-theme="light"] .adp__nav-card:hover::after {
+  opacity: 0.08;
+}
+
+/* Nav Card Icon */
+.adp__nav-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--icon-bg, rgba(49,156,181,0.12));
+  color: var(--icon-color, var(--color-primary));
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease;
+}
+
+.adp__nav-card:hover .adp__nav-icon {
+  transform: scale(1.12);
+  box-shadow: 0 6px 20px var(--icon-bg, rgba(49,156,181,0.18));
+}
+
+/* Nav Card Body */
+.adp__nav-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.adp__nav-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 0.35rem;
+}
+
+.adp__nav-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  margin: 0 0 0.85rem;
+}
+
+.adp__nav-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--card-accent, #319cb5);
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  transition: gap 0.3s cubic-bezier(0.16,1,0.3,1), transform 0.3s ease, box-shadow 0.3s ease;
+  letter-spacing: 0.01em;
+}
+
+.adp__nav-card:hover .adp__nav-arrow {
+  gap: 0.7rem;
+  transform: translateX(2px);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--card-accent, #319cb5) 35%, transparent);
+}
+
+/* ── Profile Banner ──────────────────────────────────────────────────────── */
+.adp__profile-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(49, 156, 181, 0.14);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.28s ease;
+  backdrop-filter: blur(12px);
+}
+
+.adp__profile-banner:hover {
+  background: rgba(49, 156, 181, 0.06);
+  border-color: rgba(49, 156, 181, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .adp__profile-banner {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(49, 156, 181, 0.12);
+  box-shadow: 0 1px 6px rgba(49, 156, 181, 0.04);
+}
+
+[data-theme="light"] .adp__profile-banner:hover {
+  box-shadow: 0 8px 24px rgba(49, 156, 181, 0.1);
+}
+
+.adp__profile-banner-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(49, 156, 181, 0.12);
+  color: var(--color-primary);
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.adp__profile-banner:hover .adp__profile-banner-icon {
+  transform: scale(1.08);
+}
+
+.adp__profile-banner-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.adp__profile-banner-sub {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  margin: 0.15rem 0 0;
+}
+
+.adp__profile-banner-arrow {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.adp__profile-banner:hover .adp__profile-banner-arrow {
+  transform: translateX(4px);
+  color: var(--color-primary);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .adp__stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .adp__nav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .adp__welcome-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .adp__stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .adp__welcome-title {
+    font-size: 1.5rem;
+  }
+
+  .adp__nav-card {
+    padding: 1.25rem;
+  }
+
+  .adp__nav-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .adp__profile-banner {
+    padding: 1rem;
+  }
+}

@@ -1,417 +1,237 @@
-import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, ShieldAlert, CheckCircle, TrendingDown, Camera, Lock, Bell, Inbox, Trash2, Loader } from 'lucide-react';
-import { AuthContext } from "../context/AuthContext";
-import { API_BASE_URL } from "../utils/constants";
-import { fadeInUp, staggerContainer } from "../animations/animationConfig";
-import "../styles/dashboard.css";
-import "../styles/enhanced-dashboard.css";
+/**
+ * Notifications — ap__* unified design
+ */
+
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  AlertTriangle, ShieldAlert, CheckCircle, TrendingDown, Camera,
+  Lock, Bell, Inbox, Trash2, ArrowLeft, Eye, ChevronRight,
+} from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../utils/constants';
+import '../styles/dashboard.css';
+import '../styles/admin-pages.css';
+
+const TYPE_STYLES = {
+  success: { accent: '#319cb5', bg: 'rgba(49,156,181,0.07)', icon: 'rgba(49,156,181,0.12)' },
+  warning: { accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)', icon: 'rgba(245,158,11,0.12)' },
+  error:   { accent: '#ef4444', bg: 'rgba(239,68,68,0.06)',   icon: 'rgba(239,68,68,0.12)' },
+  info:    { accent: '#3b82f6', bg: 'rgba(59,130,246,0.06)',  icon: 'rgba(59,130,246,0.12)' },
+};
+
+const FILTER_TABS = [
+  { key: 'all', label: 'All' },
+  { key: 'alerts', label: 'Alerts' },
+  { key: 'warnings', label: 'Warnings' },
+  { key: 'success', label: 'Success' },
+  { key: 'errors', label: 'Errors' },
+];
 
 function Notifications() {
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
   const [notifications, setNotifications] = useState([]);
-  const [filter, setFilter] = useState('all'); // all, alerts, warnings, success
+  const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchNotifications();
-    }
-  }, [user]);
+  useEffect(() => { if (user?.id) fetchNotifications(); }, [user]);
 
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const token = sessionStorage.getItem("authToken");
-      
-      // Fetch attendance data to generate notifications
-      const response = await fetch(`${API_BASE_URL}/attendance/student/${user.id}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const records = data.data || [];
-        const generatedNotifications = generateNotifications(records);
-        setNotifications(generatedNotifications);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
-    }
+      const token = sessionStorage.getItem('authToken');
+      const res = await fetch(`${API_BASE_URL}/attendance/student/${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) { const data = await res.json(); setNotifications(generateNotifications(data.data || [])); }
+    } catch (err) { console.error('Error fetching notifications:', err); }
+    finally { setLoading(false); }
   };
 
   const generateNotifications = (records) => {
     const notifs = [];
     const today = new Date().toISOString().split('T')[0];
-    
-    // Calculate overall attendance
-    const totalClasses = records.length;
-    const presentClasses = records.filter(r => r.status === 'present').length;
-    const overallPercentage = totalClasses > 0 ? Math.round((presentClasses / totalClasses) * 100) : 0;
+    const total = records.length;
+    const present = records.filter((r) => r.status === 'present').length;
+    const pct = total > 0 ? Math.round((present / total) * 100) : 0;
 
-    // Low attendance warning
-    if (overallPercentage < 75 && overallPercentage > 0) {
-      notifs.push({
-        id: 'low-attendance',
-        type: 'warning',
-        icon: <AlertTriangle size={20} />,
-        title: 'Low Attendance Alert',
-        message: `Your overall attendance is ${overallPercentage}%. You need at least 75% to avoid academic issues.`,
-        actionText: 'View Details',
-        actionLink: '/attendance-history',
-        timestamp: new Date().toISOString(),
-        unread: true
-      });
-    }
+    if (pct < 75 && pct > 0)
+      notifs.push({ id: 'low', type: 'warning', icon: <AlertTriangle size={18} />, title: 'Low Attendance Alert',
+        message: `Your overall attendance is ${pct}%. You need at least 75% to avoid academic issues.`,
+        actionText: 'View Details', actionLink: '/attendance-history', timestamp: new Date().toISOString(), unread: true });
 
-    // Critical attendance warning
-    if (overallPercentage < 60 && overallPercentage > 0) {
-      notifs.push({
-        id: 'critical-attendance',
-        type: 'error',
-        icon: <ShieldAlert size={20} />,
-        title: 'Critical Attendance Alert',
-        message: `URGENT: Your attendance is only ${overallPercentage}%. This may result in academic penalties.`,
-        actionText: 'Take Action',
-        actionLink: '/attendance-history',
-        timestamp: new Date().toISOString(),
-        unread: true
-      });
-    }
+    if (pct < 60 && pct > 0)
+      notifs.push({ id: 'critical', type: 'error', icon: <ShieldAlert size={18} />, title: 'Critical Attendance Alert',
+        message: `Your attendance is only ${pct}%. This may result in academic penalties.`,
+        actionText: 'Take Action', actionLink: '/attendance-history', timestamp: new Date().toISOString(), unread: true });
 
-    // Recent attendance marked
-    const todayRecords = records.filter(r => r.date?.startsWith(today));
-    todayRecords.forEach((record, idx) => {
-      notifs.push({
-        id: `today-${idx}`,
-        type: 'success',
-        icon: <CheckCircle size={20} />,
-        title: 'Attendance Confirmed',
-        message: `Your attendance for ${record.subject} has been marked as ${record.status}.`,
-        timestamp: record.marked_at || new Date().toISOString(),
-        unread: false
-      });
+    records.filter((r) => r.date?.startsWith(today)).forEach((r, i) => {
+      notifs.push({ id: `today-${i}`, type: 'success', icon: <CheckCircle size={18} />, title: 'Attendance Confirmed',
+        message: `Your attendance for ${r.subject} has been marked as ${r.status}.`,
+        timestamp: r.marked_at || new Date().toISOString(), unread: false });
     });
 
-    // Subject-wise warnings
-    const subjectMap = {};
-    records.forEach(record => {
-      const subject = record.subject || 'Unknown';
-      if (!subjectMap[subject]) {
-        subjectMap[subject] = { total: 0, present: 0 };
-      }
-      subjectMap[subject].total++;
-      if (record.status === 'present') subjectMap[subject].present++;
+    const subMap = {};
+    records.forEach((r) => { const s = r.subject || 'Unknown'; if (!subMap[s]) subMap[s] = { t: 0, p: 0 }; subMap[s].t++; if (r.status === 'present') subMap[s].p++; });
+    Object.keys(subMap).forEach((s, i) => {
+      const sp = Math.round((subMap[s].p / subMap[s].t) * 100);
+      if (sp < 75)
+        notifs.push({ id: `sub-${i}`, type: 'warning', icon: <TrendingDown size={18} />, title: `${s} — Low Attendance`,
+          message: `Only ${sp}% in this subject. Required: 75%.`, actionText: 'View Subject', actionLink: '/attendance-history',
+          timestamp: new Date(Date.now() - i * 3600000).toISOString(), unread: true });
     });
 
-    Object.keys(subjectMap).forEach((subject, idx) => {
-      const percentage = Math.round((subjectMap[subject].present / subjectMap[subject].total) * 100);
-      if (percentage < 75) {
-        notifs.push({
-          id: `subject-${idx}`,
-          type: 'warning',
-          icon: <TrendingDown size={20} />,
-          title: `${subject} - Low Attendance`,
-          message: `Only ${percentage}% attendance in this subject. Required: 75%.`,
-          actionText: 'View Subject',
-          actionLink: '/attendance-history',
-          timestamp: new Date(Date.now() - idx * 3600000).toISOString(),
-          unread: true
-        });
-      }
-    });
+    notifs.push({ id: 'qr-1', type: 'info', icon: <Camera size={18} />, title: 'QR Code Available',
+      message: 'A new QR code is available for Data Structures class.', actionText: 'Scan Now', actionLink: '/scan-qr',
+      timestamp: new Date(Date.now() - 1800000).toISOString(), unread: true });
 
-    // Mock: QR request alerts
-    notifs.push({
-      id: 'qr-request-1',
-      type: 'info',
-      icon: <Camera size={20} />,
-      title: 'QR Code Available',
-      message: 'A new QR code is available for Data Structures class.',
-      actionText: 'Scan Now',
-      actionLink: '/scan-qr',
-      timestamp: new Date(Date.now() - 1800000).toISOString(),
-      unread: true
-    });
-
-    // Mock: Suspicious activity notice
-    notifs.push({
-      id: 'suspicious-1',
-      type: 'error',
-      icon: <Lock size={20} />,
-      title: 'Suspicious Activity Detected',
+    notifs.push({ id: 'sus-1', type: 'error', icon: <Lock size={18} />, title: 'Suspicious Activity Detected',
       message: 'Multiple login attempts detected from unknown device. Please verify your account.',
-      actionText: 'Review Activity',
-      actionLink: '/student-profile',
-      timestamp: new Date(Date.now() - 86400000).toISOString(),
-      unread: false
-    });
+      actionText: 'Review Activity', actionLink: '/student-profile',
+      timestamp: new Date(Date.now() - 86400000).toISOString(), unread: false });
 
-    // Sort by timestamp (newest first)
     return notifs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   };
 
-  const getFilteredNotifications = () => {
+  const getFiltered = () => {
     if (filter === 'all') return notifications;
-    
-    const typeMap = {
-      'alerts': ['info'],
-      'warnings': ['warning'],
-      'success': ['success'],
-      'errors': ['error']
-    };
-    
-    return notifications.filter(n => typeMap[filter]?.includes(n.type));
+    const map = { alerts: ['info'], warnings: ['warning'], success: ['success'], errors: ['error'] };
+    return notifications.filter((n) => map[filter]?.includes(n.type));
   };
 
-  const markAsRead = (notificationId) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, unread: false } : n)
-    );
+  const markAsRead = (id) => setNotifications((p) => p.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+  const markAllAsRead = () => setNotifications((p) => p.map((n) => ({ ...n, unread: false })));
+  const deleteNotification = (id) => setNotifications((p) => p.filter((n) => n.id !== id));
+
+  const fmtTs = (ts) => {
+    const d = Date.now() - new Date(ts).getTime();
+    const m = Math.floor(d / 60000);
+    if (m < 1) return 'Just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(d / 3600000);
+    if (h < 24) return `${h}h ago`;
+    const dd = Math.floor(d / 86400000);
+    if (dd < 7) return `${dd}d ago`;
+    return new Date(ts).toLocaleDateString();
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
-
-  const deleteNotification = (notificationId) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-  };
-
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString();
-  };
-
-  const getNotificationStyle = (type) => {
-    const styles = {
-      success: { bg: '#d1fae5', border: '#10b981', text: '#065f46' },
-      warning: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
-      error: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
-      info: { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' }
-    };
-    return styles[type] || styles.info;
-  };
-
-  const filteredNotifications = getFilteredNotifications();
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const list = getFiltered();
+  const unread = notifications.filter((n) => n.unread).length;
 
   return (
-    <motion.div
-      className="dashboard"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="dashboard__objects" aria-hidden="true">
-        <span className="dashboard__object dashboard__object--sphere" />
-        <span className="dashboard__object dashboard__object--torus" />
+    <div className="ap">
+      <div className="ap__objects" aria-hidden="true">
+        <span className="ap__object ap__object--a" />
+        <span className="ap__object ap__object--b" />
+        <span className="ap__object ap__object--c" />
       </div>
 
-      <motion.header
-        className="dashboard__header"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div>
-          <h1 className="dashboard__title"><Bell size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Notifications</h1>
-          <p className="dashboard__subtitle">
-            {unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
-          </p>
-        </div>
-        <div className="dashboard__buttons">
-          {unreadCount > 0 && (
-            <motion.button
-              className="dashboard__button dashboard__button--primary"
-              onClick={markAllAsRead}
-              whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
-              whileTap={{ scale: 0.96 }}
-            >
-              Mark All as Read
-            </motion.button>
+      <div className="ap__inner" style={{ maxWidth: 800 }}>
+        {/* Header */}
+        <header className="ap__header">
+          <div className="ap__header-left">
+            <button className="ap__back-btn" onClick={() => navigate('/student-dashboard')}>
+              <ArrowLeft size={18} /> Back
+            </button>
+            <p className="ap__eyebrow">Student &bull; Alerts</p>
+            <h1 className="ap__title"><Bell size={24} style={{ verticalAlign: 'middle', marginRight: 8 }} />Notifications</h1>
+            <p className="ap__subtitle">{unread > 0 ? `${unread} unread notification${unread > 1 ? 's' : ''}` : 'All caught up!'}</p>
+          </div>
+          {unread > 0 && (
+            <button className="ap__btn ap__btn--outline" onClick={markAllAsRead} style={{ gap: 6 }}>
+              <Eye size={15} /> Mark All Read
+            </button>
           )}
-          <motion.button
-            className="dashboard__button dashboard__button--secondary"
-            onClick={() => navigate("/student-dashboard")}
-            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
-            whileTap={{ scale: 0.96 }}
-          >
-            ← Back to Dashboard
-          </motion.button>
-        </div>
-      </motion.header>
+        </header>
 
-      <main className="dashboard__content">
         {/* Filter Tabs */}
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap'
-        }}>
-          {['all', 'alerts', 'warnings', 'success', 'errors'].map(f => (
+        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+          {FILTER_TABS.map((t) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                border: filter === f ? '2px solid #667eea' : '2px solid #e5e7eb',
-                background: filter === f ? '#667eea' : 'white',
-                color: filter === f ? 'white' : '#666',
-                fontWeight: filter === f ? '600' : '400',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
+              key={t.key}
+              className={`ap__btn ${filter === t.key ? 'ap__btn--primary' : 'ap__btn--ghost'}`}
+              onClick={() => setFilter(t.key)}
+              style={{ padding: '0.45rem 1rem', fontSize: '0.84rem' }}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {t.label}
             </button>
           ))}
         </div>
 
-        {/* Notifications List */}
+        {/* Content */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
-            <Loader size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading notifications...
+          <div className="ap__panel" style={{ textAlign: 'center', padding: '3rem' }}>
+            <div className="spinner" style={{ margin: '0 auto 1rem' }} />
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Loading notifications…</p>
           </div>
-        ) : filteredNotifications.length === 0 ? (
-          <div className="dashboard__card" style={{ textAlign: 'center', padding: '3rem' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}><Inbox size={64} /></div>
-            <h2 style={{ marginBottom: '0.5rem', color: '#666' }}>No Notifications</h2>
-            <p style={{ color: '#999' }}>You're all caught up!</p>
+        ) : list.length === 0 ? (
+          <div className="ap__empty">
+            <span className="ap__empty-icon"><Inbox size={42} /></span>
+            <p className="ap__empty-title">No Notifications</p>
+            <p className="ap__empty-text">You're all caught up!</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {filteredNotifications.map(notification => {
-              const style = getNotificationStyle(notification.type);
-              return (
-                <div
-                  key={notification.id}
-                  className="dashboard__card"
-                  style={{
-                    background: style.bg,
-                    borderLeft: `4px solid ${style.border}`,
-                    position: 'relative',
-                    opacity: notification.unread ? 1 : 0.8
-                  }}
-                >
-                  {notification.unread && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '1rem',
-                      right: '1rem',
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      background: '#ef4444'
-                    }} />
-                  )}
-                  
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ fontSize: '2rem', flexShrink: 0 }}>
-                      {notification.icon}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '0.5rem',
-                        color: style.text 
-                      }}>
-                        {notification.title}
-                      </h3>
-                      <p style={{ 
-                        marginBottom: '0.75rem',
-                        color: style.text,
-                        lineHeight: '1.6'
-                      }}>
-                        {notification.message}
-                      </p>
-                      <div style={{
-                        display: 'flex',
-                        gap: '1rem',
-                        alignItems: 'center',
-                        flexWrap: 'wrap'
-                      }}>
-                        <span style={{ 
-                          fontSize: '0.875rem', 
-                          color: '#666' 
-                        }}>
-                          {formatTimestamp(notification.timestamp)}
-                        </span>
-                        {notification.actionText && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+            <AnimatePresence mode="popLayout">
+              {list.map((n, idx) => {
+                const ts = TYPE_STYLES[n.type] || TYPE_STYLES.info;
+                return (
+                  <motion.div
+                    key={n.id} layout
+                    className="ap__panel"
+                    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                    animate={{ opacity: n.unread ? 1 : 0.78, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 60, scale: 0.95 }}
+                    transition={{ duration: 0.32, delay: idx * 0.04 }}
+                    style={{ borderLeft: `3px solid ${ts.accent}`, padding: '1rem 1.2rem', position: 'relative' }}
+                  >
+                    {n.unread && (
+                      <span style={{ position: 'absolute', top: 14, right: 14, width: 8, height: 8, borderRadius: '50%', background: ts.accent, boxShadow: `0 0 8px ${ts.accent}55` }} />
+                    )}
+
+                    <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: ts.icon, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: ts.accent }}>
+                        {n.icon}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{n.title}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{fmtTs(n.timestamp)}</span>
+                        </div>
+                        <p style={{ margin: '0 0 0.65rem', fontSize: '0.85rem', lineHeight: 1.55, color: 'var(--color-text-secondary)' }}>{n.message}</p>
+                        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          {n.actionText && (
+                            <button className="ap__btn ap__btn--primary" onClick={() => navigate(n.actionLink)} style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem', gap: 4 }}>
+                              {n.actionText} <ChevronRight size={13} />
+                            </button>
+                          )}
+                          {n.unread && (
+                            <button className="ap__btn ap__btn--ghost" onClick={() => markAsRead(n.id)} style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}>
+                              Mark read
+                            </button>
+                          )}
                           <button
-                            onClick={() => navigate(notification.actionLink)}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              background: style.border,
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '0.875rem',
-                              fontWeight: '500',
-                              cursor: 'pointer'
-                            }}
+                            className="ap__btn ap__btn--ghost"
+                            onClick={() => deleteNotification(n.id)}
+                            title="Delete"
+                            style={{ marginLeft: 'auto', padding: '0.35rem', opacity: 0.5 }}
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.5')}
                           >
-                            {notification.actionText} →
+                            <Trash2 size={15} />
                           </button>
-                        )}
-                        {notification.unread && (
-                          <button
-                            onClick={() => markAsRead(notification.id)}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              background: 'transparent',
-                              color: style.text,
-                              border: `1px solid ${style.border}`,
-                              borderRadius: '6px',
-                              fontSize: '0.875rem',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Mark as Read
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteNotification(notification.id)}
-                          style={{
-                            marginLeft: 'auto',
-                            padding: '0.5rem',
-                            background: 'transparent',
-                            color: '#999',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '1.25rem'
-                          }}
-                          title="Delete notification"
-                        >
-                          <Trash2 size={20} />
-                        </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
-      </main>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 

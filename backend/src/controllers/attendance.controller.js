@@ -113,7 +113,7 @@ const markAttendance = async (req, res, next) => {
             // 400 Bad Request - Client ne required data nahi bheja
             return res.status(400).json({
                 success: false,
-                message: 'Session ID is required. Kaunsi class ki attendance mark karni hai?'
+                message: 'Session ID is required. Please specify which class to mark attendance for.'
             });
         }
 
@@ -207,7 +207,7 @@ const getAttendanceBySession = async (req, res, next) => {
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
-                message: 'Session ID is required. Kaunsi session ki attendance chahiye?'
+                message: 'Session ID is required. Please specify which session attendance you need.'
             });
         }
 
@@ -297,7 +297,7 @@ const getAttendanceByStudent = async (req, res, next) => {
         if (!studentId) {
             return res.status(400).json({
                 success: false,
-                message: 'Student ID is required. Kis student ki attendance chahiye?'
+                message: 'Student ID is required. Please specify which student\'s attendance you need.'
             });
         }
 
@@ -389,7 +389,7 @@ const getAttendanceReport = async (req, res, next) => {
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
-                message: 'Session ID is required. Kis session ka report chahiye?'
+                message: 'Session ID is required. Please specify which session report you need.'
             });
         }
 

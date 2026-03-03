@@ -1,176 +1,108 @@
-import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { XCircle, CheckCircle, Loader, ClipboardList, AlertTriangle, Inbox, BookOpen, MapPin, Calendar, X, Check } from 'lucide-react';
-import { AuthContext } from "../context/AuthContext";
-import { API_BASE_URL } from "../utils/constants";
+/**
+ * Faculty Attendance Requests — ap__* unified design
+ */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Toast
-// ─────────────────────────────────────────────────────────────────────────────
+import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  XCircle, CheckCircle, Loader, ClipboardList, AlertTriangle,
+  Inbox, BookOpen, MapPin, Calendar, X, Check, ArrowLeft, Search,
+} from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../utils/constants';
+import '../styles/dashboard.css';
+import '../styles/admin-pages.css';
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
 const Toast = ({ toast, onClose }) => {
   if (!toast) return null;
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: "2rem",
-        right: "2rem",
-        zIndex: 9999,
-        background: toast.type === "error" ? "#ef4444" : "#10b981",
-        color: "#fff",
-        padding: "0.85rem 1.5rem",
-        borderRadius: "10px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-        fontSize: "0.95rem",
-        display: "flex",
-        alignItems: "center",
-        gap: "0.75rem",
-        maxWidth: "420px",
-      }}
-    >
-      <span>{toast.type === "error" ? <X size={16} /> : <Check size={16} />}</span>
+    <div style={{
+      position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999,
+      background: toast.type === 'error' ? '#ef4444' : '#10b981', color: '#fff',
+      padding: '0.85rem 1.5rem', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+      fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.75rem', maxWidth: 420,
+    }}>
+      {toast.type === 'error' ? <X size={16} /> : <Check size={16} />}
       <span style={{ flex: 1 }}>{toast.message}</span>
-      <button
-        onClick={onClose}
-        style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "1.1rem" }}
-      >
-        ×
-      </button>
+      <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.1rem' }}>×</button>
     </div>
   );
 };
 
-const STATUS_TABS = ["pending", "approved", "rejected", "all"];
-const STATUS_COLORS = {
-  pending:  { color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", icon: <Loader size={14} /> },
-  approved: { color: "#10b981", bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.35)", icon: <CheckCircle size={14} /> },
-  rejected: { color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.35)",  icon: <XCircle size={14} /> },
-  all:      { color: "#8b5cf6", bg: "rgba(139,92,246,0.10)", border: "rgba(139,92,246,0.3)",  icon: <ClipboardList size={14} /> },
-};
-
-function fmtDate(d) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Reject modal
-// ─────────────────────────────────────────────────────────────────────────────
+/* ── Reject Modal ─────────────────────────────────────────────────────── */
 function RejectModal({ request, onConfirm, onClose }) {
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState('');
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1rem",
-      }}
-      onClick={onClose}
-    >
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
       <motion.div
         initial={{ scale: 0.92, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#1e1e2e",
-          border: "1px solid rgba(239,68,68,0.4)",
-          borderRadius: "16px",
-          padding: "2rem",
-          width: "100%",
-          maxWidth: 440,
-        }}
+        className="ap__panel"
+        style={{ width: '100%', maxWidth: 440 }}
       >
-        <h3 style={{ margin: "0 0 0.4rem", color: "#ef4444" }}><XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Reject Request</h3>
-        <p style={{ margin: "0 0 1rem", opacity: 0.7, fontSize: "0.88rem" }}>
-          Rejecting attendance request for <strong>{request.student_name}</strong> — <em>{request.subject}</em>
-        </p>
-        <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.85rem", opacity: 0.8 }}>
-          Reason for rejection (optional)
-        </label>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g. You were not present during the session."
-          rows={3}
-          maxLength={500}
-          style={{
-            width: "100%",
-            padding: "0.65rem 0.9rem",
-            borderRadius: "8px",
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: "rgba(255,255,255,0.07)",
-            color: "inherit",
-            fontSize: "0.9rem",
-            outline: "none",
-            boxSizing: "border-box",
-            resize: "vertical",
-            marginBottom: "1rem",
-          }}
-        />
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "0.55rem 1.2rem",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: "transparent",
-              color: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(note)}
-            style={{
-              padding: "0.55rem 1.4rem",
-              borderRadius: "8px",
-              border: "none",
-              background: "#ef4444",
-              color: "#fff",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            Reject
-          </button>
+        <div className="ap__panel-header">
+          <h2 className="ap__panel-title" style={{ color: '#ef4444' }}><XCircle size={18} /> Reject Request</h2>
+        </div>
+        <div style={{ padding: '1.25rem' }}>
+          <p style={{ margin: '0 0 1rem', color: 'var(--color-text-secondary)', fontSize: '0.88rem' }}>
+            Rejecting request for <strong>{request.student_name}</strong> — <em>{request.subject}</em>
+          </p>
+          <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Reason (optional)</label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="e.g. You were not present during the session."
+            rows={3}
+            maxLength={500}
+            className="ap__search"
+            style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', minHeight: 80 }}
+          />
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <button className="ap__btn ap__btn--outline" onClick={onClose}>Cancel</button>
+            <button className="ap__btn ap__btn--danger" onClick={() => onConfirm(note)}>Reject</button>
+          </div>
         </div>
       </motion.div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Component
-// ─────────────────────────────────────────────────────────────────────────────
+/* ── Status helpers ───────────────────────────────────────────────────── */
+const STATUS_TABS = ['pending', 'approved', 'rejected', 'all'];
+const badgeClass = (s) => {
+  if (s === 'approved') return 'ap__badge ap__badge--active';
+  if (s === 'rejected') return 'ap__badge ap__badge--error';
+  if (s === 'pending')  return 'ap__badge ap__badge--warn';
+  return 'ap__badge ap__badge--inactive';
+};
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+/* ── Main ─────────────────────────────────────────────────────────────── */
 export default function FacultyAttendanceRequests() {
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
 
-  const [statusTab, setStatusTab] = useState("pending");
+  const [statusTab, setStatusTab] = useState('pending');
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [toast, setToast] = useState(null);
-  const [rejectTarget, setRejectTarget] = useState(null); // request obj for modal
-  const [search, setSearch] = useState("");
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [search, setSearch] = useState('');
 
-  const showToast = (msg, type = "success") => {
+  const showToast = (msg, type = 'success') => {
     setToast({ message: msg, type });
     setTimeout(() => setToast(null), 5000);
   };
 
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
   const fetchRequests = async (status = statusTab) => {
     setLoading(true);
@@ -179,313 +111,222 @@ export default function FacultyAttendanceRequests() {
       const data = await res.json();
       if (data.success) setRequests(data.data || []);
     } catch {
-      showToast("Failed to load requests", "error");
+      showToast('Failed to load requests', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchRequests(statusTab);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusTab]);
+  useEffect(() => { fetchRequests(statusTab); }, [statusTab]);
 
   const handleApprove = async (id) => {
     setActionLoading(`approve-${id}`);
     try {
-      const res = await fetch(`${API_BASE_URL}/attendance/manual-request/${id}/approve`, {
-        method: "PATCH",
-        headers,
-      });
+      const res = await fetch(`${API_BASE_URL}/attendance/manual-request/${id}/approve`, { method: 'PATCH', headers });
       const data = await res.json();
-      if (data.success) {
-        showToast("Attendance approved and marked as Present!");
-        fetchRequests();
-      } else {
-        showToast(data.message || "Failed to approve", "error");
-      }
-    } catch {
-      showToast("Server error", "error");
-    } finally {
-      setActionLoading(null);
-    }
+      if (data.success) { showToast('Attendance approved and marked as Present!'); fetchRequests(); }
+      else showToast(data.message || 'Failed to approve', 'error');
+    } catch { showToast('Server error', 'error'); }
+    finally { setActionLoading(null); }
   };
 
   const handleReject = async (id, note) => {
     setRejectTarget(null);
     setActionLoading(`reject-${id}`);
     try {
-      const res = await fetch(`${API_BASE_URL}/attendance/manual-request/${id}/reject`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ note }),
-      });
+      const res = await fetch(`${API_BASE_URL}/attendance/manual-request/${id}/reject`, { method: 'PATCH', headers, body: JSON.stringify({ note }) });
       const data = await res.json();
-      if (data.success) {
-        showToast("Request rejected.");
-        fetchRequests();
-      } else {
-        showToast(data.message || "Failed to reject", "error");
-      }
-    } catch {
-      showToast("Server error", "error");
-    } finally {
-      setActionLoading(null);
-    }
+      if (data.success) { showToast('Request rejected.'); fetchRequests(); }
+      else showToast(data.message || 'Failed to reject', 'error');
+    } catch { showToast('Server error', 'error'); }
+    finally { setActionLoading(null); }
   };
 
   const filtered = requests.filter(
-    (r) =>
-      !search ||
-      r.student_name?.toLowerCase().includes(search.toLowerCase()) ||
-      r.student_roll?.toLowerCase().includes(search.toLowerCase()) ||
-      r.subject?.toLowerCase().includes(search.toLowerCase())
+    (r) => !search || r.student_name?.toLowerCase().includes(search.toLowerCase()) || r.student_roll?.toLowerCase().includes(search.toLowerCase()) || r.subject?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const pendingCount = requests.filter((r) => r.status === 'pending').length;
 
+  /* ── render ─────────────────────────────────────────────────────────── */
   return (
-    <div style={{ minHeight: "100vh", padding: "5rem 1rem 3rem" }}>
+    <div className="ap">
+      <div className="ap__objects" aria-hidden="true">
+        <span className="ap__object ap__object--a" />
+        <span className="ap__object ap__object--b" />
+        <span className="ap__object ap__object--c" />
+      </div>
+
       <Toast toast={toast} onClose={() => setToast(null)} />
       {rejectTarget && (
-        <RejectModal
-          request={rejectTarget}
-          onConfirm={(note) => handleReject(rejectTarget.id, note)}
-          onClose={() => setRejectTarget(null)}
-        />
+        <RejectModal request={rejectTarget} onConfirm={(note) => handleReject(rejectTarget.id, note)} onClose={() => setRejectTarget(null)} />
       )}
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        style={{ maxWidth: 900, margin: "0 auto 2rem" }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.4rem" }}>
-          <button
-            onClick={() => navigate("/faculty-dashboard")}
-            style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "inherit",
-              borderRadius: "8px",
-              padding: "0.4rem 0.9rem",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-            }}
-          >
-            ← Back
-          </button>
-          <div>
-            <h1 style={{ margin: 0, fontSize: "1.7rem", fontWeight: 700 }}>
-              <ClipboardList size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Student Attendance Requests
+      <div className="ap__inner">
+        {/* Header */}
+        <header className="ap__header">
+          <div className="ap__header-left">
+            <button className="ap__back-btn" onClick={() => navigate('/faculty-dashboard')}>
+              <ArrowLeft size={18} /> Back
+            </button>
+            <p className="ap__eyebrow">Faculty &bull; Requests</p>
+            <h1 className="ap__title">
+              <ClipboardList size={26} style={{ verticalAlign: 'middle', marginRight: 8 }} />
+              Student Attendance Requests
             </h1>
-            {pendingCount > 0 && statusTab !== "pending" && (
-              <span style={{ fontSize: "0.8rem", color: "#f59e0b" }}>
-                <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{pendingCount} pending request{pendingCount > 1 ? "s" : ""} awaiting review
-              </span>
-            )}
-          </div>
-        </div>
-        <p style={{ margin: 0, opacity: 0.6, fontSize: "0.88rem" }}>
-          Students who couldn't scan the QR code can request manual attendance. Review and approve or reject below.
-        </p>
-      </motion.div>
-
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        {/* Tabs + Search row */}
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center", marginBottom: "1.5rem" }}>
-          {STATUS_TABS.map((s) => {
-            const cfg = STATUS_COLORS[s];
-            const count = s === "all" ? requests.length : requests.filter((r) => r.status === s).length;
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusTab(s)}
-                style={{
-                  padding: "0.5rem 1.1rem",
-                  borderRadius: "8px",
-                  border: `1px solid ${statusTab === s ? cfg.color : "rgba(255,255,255,0.15)"}`,
-                  background: statusTab === s ? cfg.bg : "rgba(255,255,255,0.05)",
-                  color: statusTab === s ? cfg.color : "inherit",
-                  cursor: "pointer",
-                  fontWeight: statusTab === s ? 700 : 400,
-                  fontSize: "0.88rem",
-                  textTransform: "capitalize",
-                }}
-              >
-                {cfg.icon} {s} {loading ? "" : `(${count})`}
-              </button>
-            );
-          })}
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search student / subject…"
-            style={{
-              marginLeft: "auto",
-              padding: "0.5rem 0.9rem",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: "rgba(255,255,255,0.07)",
-              color: "inherit",
-              fontSize: "0.88rem",
-              outline: "none",
-              minWidth: 200,
-            }}
-          />
-        </div>
-
-        {/* List */}
-        {loading ? (
-          <p style={{ opacity: 0.6, textAlign: "center", padding: "2rem" }}>Loading…</p>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "4rem", opacity: 0.45 }}>
-            <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}><Inbox size={48} /></div>
-            <p style={{ fontSize: "0.95rem" }}>
-              {search ? "No requests match your search." : `No ${statusTab === "all" ? "" : statusTab} requests.`}
+            <p className="ap__subtitle">
+              Review and approve or reject manual attendance requests
+              {pendingCount > 0 && statusTab !== 'pending' && (
+                <span style={{ marginLeft: 12, color: '#f59e0b', fontWeight: 600, fontSize: '0.85rem' }}>
+                  <AlertTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+                  {pendingCount} pending
+                </span>
+              )}
             </p>
           </div>
-        ) : (
-          <AnimatePresence>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
-              {filtered.map((r) => {
-                const cfg = STATUS_COLORS[r.status] || STATUS_COLORS.pending;
-                const isApproving = actionLoading === `approve-${r.id}`;
-                const isRejecting = actionLoading === `reject-${r.id}`;
+        </header>
 
-                return (
-                  <motion.div
-                    key={r.id}
-                    layout
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    style={{
-                      background: cfg.bg,
-                      border: `1px solid ${cfg.border}`,
-                      borderRadius: "14px",
-                      padding: "1.2rem 1.4rem",
-                    }}
-                  >
-                    {/* Header row */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.7rem" }}>
-                      <div>
-                        <span style={{ fontWeight: 700, fontSize: "1rem" }}>{r.student_name}</span>
-                        {r.student_roll && (
-                          <span style={{ marginLeft: "0.5rem", fontSize: "0.78rem", opacity: 0.6 }}>
-                            ({r.student_roll})
-                          </span>
-                        )}
-                        <div style={{ fontSize: "0.8rem", opacity: 0.6, marginTop: "0.1rem" }}>{r.student_email}</div>
-                      </div>
-                      <span
-                        style={{
-                          padding: "0.2rem 0.75rem",
-                          borderRadius: "20px",
-                          background: `${cfg.color}22`,
-                          color: cfg.color,
-                          fontWeight: 600,
-                          fontSize: "0.78rem",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {cfg.icon} {r.status}
-                      </span>
-                    </div>
+        {/* Stats */}
+        <div className="ap__stats">
+          {STATUS_TABS.map((s) => {
+            const count = s === 'all' ? requests.length : requests.filter((r) => r.status === s).length;
+            return (
+              <div
+                key={s}
+                className="ap__stat"
+                onClick={() => setStatusTab(s)}
+                style={{ cursor: 'pointer', outline: statusTab === s ? '2px solid var(--accent)' : 'none', outlineOffset: -2, borderRadius: 12 }}
+              >
+                <span className="ap__stat-label" style={{ textTransform: 'capitalize' }}>{s}</span>
+                <span className="ap__stat-value">{loading ? '…' : count}</span>
+              </div>
+            );
+          })}
+        </div>
 
-                    {/* Session info */}
-                    <div style={{ fontSize: "0.83rem", opacity: 0.75, marginBottom: "0.65rem" }}>
-                      <BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /><strong>{r.subject}</strong> &nbsp;|&nbsp; <MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{r.location} &nbsp;|&nbsp; <Calendar size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{fmtDate(r.start_time)}
-                    </div>
-
-                    {/* Reason */}
-                    <div
-                      style={{
-                        padding: "0.6rem 0.9rem",
-                        background: "rgba(0,0,0,0.12)",
-                        borderRadius: "8px",
-                        fontSize: "0.87rem",
-                        marginBottom: "0.7rem",
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      <span style={{ fontSize: "0.75rem", opacity: 0.6 }}>Student's reason: </span>
-                      <br />
-                      {r.reason}
-                    </div>
-
-                    {r.rejection_note && (
-                      <div
-                        style={{
-                          padding: "0.5rem 0.9rem",
-                          background: "rgba(239,68,68,0.08)",
-                          borderLeft: "3px solid #ef4444",
-                          borderRadius: "6px",
-                          fontSize: "0.83rem",
-                          marginBottom: "0.7rem",
-                        }}
-                      >
-                        <span style={{ opacity: 0.6, fontSize: "0.75rem" }}>Your rejection note: </span>
-                        {r.rejection_note}
-                      </div>
-                    )}
-
-                    {/* Footer + Actions */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", opacity: 0.5 }}>
-                        Submitted: {fmtDate(r.created_at)}
-                        {r.reviewed_at && ` · Reviewed: ${fmtDate(r.reviewed_at)}`}
-                      </span>
-
-                      {r.status === "pending" && (
-                        <div style={{ display: "flex", gap: "0.6rem" }}>
-                          <button
-                            onClick={() => setRejectTarget(r)}
-                            disabled={isRejecting || isApproving}
-                            style={{
-                              padding: "0.45rem 1.1rem",
-                              borderRadius: "8px",
-                              border: "1px solid rgba(239,68,68,0.5)",
-                              background: "rgba(239,68,68,0.12)",
-                              color: "#ef4444",
-                              cursor: "pointer",
-                              fontWeight: 600,
-                              fontSize: "0.85rem",
-                              opacity: isRejecting || isApproving ? 0.5 : 1,
-                            }}
-                          >
-                            {isRejecting ? "…" : <><X size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Reject</>}
-                          </button>
-                          <button
-                            onClick={() => handleApprove(r.id)}
-                            disabled={isApproving || isRejecting}
-                            style={{
-                              padding: "0.45rem 1.1rem",
-                              borderRadius: "8px",
-                              border: "none",
-                              background:
-                                isApproving || isRejecting
-                                  ? "rgba(16,185,129,0.35)"
-                                  : "linear-gradient(135deg,#10b981,#059669)",
-                              color: "#fff",
-                              cursor: isApproving || isRejecting ? "not-allowed" : "pointer",
-                              fontWeight: 700,
-                              fontSize: "0.85rem",
-                            }}
-                          >
-                            {isApproving ? "Approving…" : <><Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Approve</>}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
+        {/* Table Panel */}
+        <div className="ap__panel">
+          {/* Search */}
+          <div className="ap__filters" style={{ padding: '1rem 1.25rem' }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
+              <input className="ap__search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search student / subject…" style={{ paddingLeft: 36 }} />
             </div>
-          </AnimatePresence>
-        )}
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+              <strong>{filtered.length}</strong> request{filtered.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {/* Loading */}
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <Loader size={24} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />
+              <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>Loading…</p>
+            </div>
+          )}
+
+          {/* Empty */}
+          {!loading && filtered.length === 0 && (
+            <div className="ap__empty">
+              <Inbox size={48} className="ap__empty-icon" />
+              <p className="ap__empty-title">{search ? 'No requests match your search' : `No ${statusTab === 'all' ? '' : statusTab} requests`}</p>
+              <p className="ap__empty-text">
+                {search ? 'Try a different search term.' : 'All caught up!'}
+              </p>
+            </div>
+          )}
+
+          {/* Table */}
+          {!loading && filtered.length > 0 && (
+            <div className="ap__table-wrap">
+              <table className="ap__table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Session Info</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th style={{ width: 160 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {filtered.map((r) => {
+                      const isApproving = actionLoading === `approve-${r.id}`;
+                      const isRejecting = actionLoading === `reject-${r.id}`;
+                      return (
+                        <motion.tr
+                          key={r.id}
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <td>
+                            <div className="ap__user-name">{r.student_name}</div>
+                            {r.student_roll && <div className="ap__user-sub">{r.student_roll}</div>}
+                            {r.student_email && <div className="ap__user-sub">{r.student_email}</div>}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: '0.85rem' }}>
+                              <span><BookOpen size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /><strong>{r.subject}</strong></span>
+                              <span style={{ color: 'var(--color-text-secondary)' }}><MapPin size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />{r.location}</span>
+                              <span style={{ color: 'var(--color-text-secondary)' }}><Calendar size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />{fmtDate(r.start_time)}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ maxWidth: 240, fontSize: '0.85rem', lineHeight: 1.4 }}>
+                              {r.reason}
+                              {r.rejection_note && (
+                                <div style={{ marginTop: 6, padding: '0.4rem 0.6rem', background: 'rgba(239,68,68,0.08)', borderLeft: '3px solid #ef4444', borderRadius: 4, fontSize: '0.8rem' }}>
+                                  <span style={{ opacity: 0.6, fontSize: '0.72rem' }}>Rejection note: </span>{r.rejection_note}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <span className={badgeClass(r.status)} style={{ textTransform: 'capitalize' }}>{r.status}</span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', fontSize: '0.83rem' }}>
+                            {fmtDate(r.created_at)}
+                            {r.reviewed_at && (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>Reviewed: {fmtDate(r.reviewed_at)}</div>
+                            )}
+                          </td>
+                          <td>
+                            {r.status === 'pending' ? (
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                  className="ap__btn ap__btn--danger"
+                                  onClick={() => setRejectTarget(r)}
+                                  disabled={isRejecting || isApproving}
+                                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.7rem' }}
+                                >
+                                  {isRejecting ? '…' : <><X size={13} /> Reject</>}
+                                </button>
+                                <button
+                                  className="ap__btn ap__btn--primary"
+                                  onClick={() => handleApprove(r.id)}
+                                  disabled={isApproving || isRejecting}
+                                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.7rem' }}
+                                >
+                                  {isApproving ? '…' : <><Check size={13} /> Approve</>}
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>—</span>
+                            )}
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

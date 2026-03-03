@@ -34,6 +34,10 @@ import FacultyAttendanceRequests from "../pages/FacultyAttendanceRequests";
 import TermsAndConditions from "../pages/TermsAndConditions";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import CookiePolicy from "../pages/CookiePolicy";
+import StudentGuide from "../pages/StudentGuide";
+import SecurityInfo from "../pages/SecurityInfo";
+import Support from "../pages/Support";
+import Feedback from "../pages/Feedback";
 
 // Components
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -68,6 +72,10 @@ function AppRoutes() {
       <Route path="/terms" element={<TermsAndConditions />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/cookies" element={<CookiePolicy />} />
+      <Route path="/student-guide" element={<StudentGuide />} />
+      <Route path="/security" element={<SecurityInfo />} />
+      <Route path="/support" element={<Support />} />
+      <Route path="/feedback" element={<Feedback />} />
 
       {/* Protected Routes - Role-based dashboards */}
       <Route

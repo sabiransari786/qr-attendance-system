@@ -16,12 +16,12 @@
 
 [data-theme="light"] .dashboard {
   background:
-    radial-gradient(circle at 12% 12%, rgba(156, 214, 255, 0.35), transparent 40%),
-    radial-gradient(circle at 85% 20%, rgba(196, 228, 255, 0.35), transparent 42%),
-    radial-gradient(circle at 22% 85%, rgba(214, 237, 255, 0.35), transparent 40%),
-    linear-gradient(135deg, #f7fbff 0%, #eef6ff 45%, #e6f1ff 75%, #f3f9ff 100%);
+    radial-gradient(circle at 10% 8%, rgba(219, 234, 254, 0.55), transparent 38%),
+    radial-gradient(circle at 88% 18%, rgba(191, 219, 254, 0.35), transparent 40%),
+    radial-gradient(circle at 20% 85%, rgba(224, 242, 254, 0.25), transparent 38%),
+    linear-gradient(168deg, #eff6ff 0%, #f8fafc 45%, #ffffff 100%);
   background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
-  animation: dashboard-bg-float 18s ease-in-out infinite;
+  animation: dashboard-bg-float 22s ease-in-out infinite;
 }
 
 @keyframes dashboard-bg-float {
@@ -1557,7 +1557,7 @@
 .percentage-value.critical { color: #ef4444; }
 
 .attendance-progress {
-  background: #e5e7eb;
+  background: var(--progress-bar-bg);
   height: 12px;
   border-radius: 10px;
   overflow: hidden;
@@ -2473,18 +2473,21 @@
 }
 
 .summary-card.present {
-  background: #d1fae5;
-  border-color: #34d399;
+  background: var(--status-present-bg);
+  border-color: var(--status-present-border);
+  color: var(--status-present-text);
 }
 
 .summary-card.absent {
-  background: #fee2e2;
-  border-color: #f87171;
+  background: var(--status-absent-bg);
+  border-color: var(--status-absent-border);
+  color: var(--status-absent-text);
 }
 
 .summary-card.late {
-  background: #fef3c7;
-  border-color: #fbbf24;
+  background: var(--status-late-bg);
+  border-color: var(--status-late-border);
+  color: var(--status-late-text);
 }
 
 .summary-label {
@@ -2548,18 +2551,18 @@
 }
 
 .status-badge.status-present {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--status-present-bg);
+  color: var(--status-present-text);
 }
 
 .status-badge.status-absent {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--status-absent-bg);
+  color: var(--status-absent-text);
 }
 
 .status-badge.status-late {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--status-late-bg);
+  color: var(--status-late-text);
 }
 
 /* ============================================ */
@@ -2601,7 +2604,7 @@
 .progress-bar-container {
   max-width: 400px;
   margin: 0 auto;
-  background: #e5e7eb;
+  background: var(--progress-bar-bg);
   height: 14px;
   border-radius: 10px;
   overflow: hidden;
@@ -2610,10 +2613,10 @@
 .warning-message {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
+  background: var(--status-warning-bg);
+  border: 1px solid var(--status-warning-border);
   border-radius: 8px;
-  color: #92400e;
+  color: var(--status-warning-text);
   font-weight: 600;
 }
 
@@ -2635,18 +2638,18 @@
 }
 
 .stat-card.present {
-  background: #d1fae5;
-  border-color: #34d399;
+  background: var(--status-present-bg);
+  border-color: var(--status-present-border);
 }
 
 .stat-card.absent {
-  background: #fee2e2;
-  border-color: #f87171;
+  background: var(--status-absent-bg);
+  border-color: var(--status-absent-border);
 }
 
 .stat-card.late {
-  background: #fef3c7;
-  border-color: #fbbf24;
+  background: var(--status-late-bg);
+  border-color: var(--status-late-border);
 }
 
 .stat-icon {
@@ -2750,13 +2753,13 @@
 }
 
 .recommendation-item.warning {
-  background: #fef3c7;
-  border-color: #fbbf24;
+  background: var(--status-warning-bg);
+  border-color: var(--status-warning-border);
 }
 
 .recommendation-item.success {
-  background: #d1fae5;
-  border-color: #34d399;
+  background: var(--status-success-bg);
+  border-color: var(--status-success-border);
 }
 
 .recommendation-icon {

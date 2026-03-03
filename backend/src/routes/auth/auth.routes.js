@@ -256,7 +256,7 @@ router.patch('/admin/students/:id/promote', authMiddleware, requireAdmin, async 
       await conn.rollback();
       return res.status(400).json({
         success: false,
-        message: `Student ka semester '${student.semester}' promote nahi ho sakta.`
+        message: `Student's semester '${student.semester}' cannot be promoted.`
       });
     }
 
@@ -267,7 +267,7 @@ router.patch('/admin/students/:id/promote', authMiddleware, requireAdmin, async 
       await conn.commit();
       return res.status(200).json({
         success: true,
-        message: `${student.name} ko graduate kar diya gaya! 🎓`,
+        message: `${student.name} has been graduated! 🎓`,
         data: { newSemester: 'graduated', graduated: true }
       });
     }
@@ -301,13 +301,13 @@ router.patch('/admin/students/:id/promote', authMiddleware, requireAdmin, async 
     await conn.commit();
     return res.status(200).json({
       success: true,
-      message: `${student.name} ko ${newSemester} semester mein promote kiya gaya! 🎉`,
+      message: `${student.name} has been promoted to ${newSemester} semester! 🎉`,
       data: { newSemester, graduated: false }
     });
   } catch (error) {
     await conn.rollback();
     console.error('Promote error:', error);
-    return res.status(500).json({ success: false, message: 'Promote karne mein error aaya.' });
+    return res.status(500).json({ success: false, message: 'An error occurred while promoting the student.' });
   } finally {
     conn.release();
   }
@@ -696,6 +696,87 @@ router.delete('/admin/approved-users/:id', authMiddleware, requireAdmin, async (
     return res.status(500).json({
       success: false,
       message: 'Failed to delete approved user',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/auth/admin/approved-users/bulk
+ * Bulk add approved users via CSV-like JSON array
+ * 
+ * Request Body:
+ * {
+ *   "users": [
+ *     { "name": "John Doe", "email": "john@example.com", "contactNumber": "9876543210", "role": "student", "studentId": "STU001", "department": "CSE", "semester": 4 },
+ *     ...
+ *   ]
+ * }
+ * 
+ * Response: { success, total, added, failed, results: [{ row, status, name, email, error? }] }
+ */
+router.post('/admin/approved-users/bulk', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { users } = req.body;
+
+    if (!Array.isArray(users) || users.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a non-empty "users" array.'
+      });
+    }
+
+    if (users.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum 500 users allowed per bulk upload.'
+      });
+    }
+
+    const results = [];
+    let addedCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < users.length; i++) {
+      const row = i + 1;
+      const userData = users[i];
+      try {
+        const created = await authService.addApprovedUser(userData);
+        addedCount++;
+        results.push({ row, status: 'success', name: created.name, email: created.email });
+      } catch (err) {
+        failedCount++;
+        results.push({
+          row,
+          status: 'failed',
+          name: userData.name || '—',
+          email: userData.email || '—',
+          error: err.message || 'Unknown error'
+        });
+      }
+    }
+
+    req.activityLogContext = {
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      action: 'ADMIN_BULK_APPROVE_USERS',
+      entityType: 'approvedUser',
+      entityId: `bulk-${addedCount}`
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: `Bulk upload complete: ${addedCount} added, ${failedCount} failed out of ${users.length}.`,
+      total: users.length,
+      added: addedCount,
+      failed: failedCount,
+      results
+    });
+  } catch (error) {
+    console.error('Error in bulk approved users:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Bulk upload failed.',
       error: error.message
     });
   }

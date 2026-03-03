@@ -1,12 +1,19 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import jsQR from "jsqr";
-import { Camera, CameraIcon, Image, FolderOpen, Keyboard, ClipboardList, CheckCircle, Loader, AlertTriangle, XCircle, Check, BookOpenText } from 'lucide-react';
-import { API_BASE_URL } from "../utils/constants";
-import { fadeInUp, staggerContainer } from "../animations/animationConfig";
-import "../styles/dashboard.css";
-import "../styles/enhanced-dashboard.css";
+/**
+ * Scan QR Enhanced — ap__* unified design
+ */
+
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import jsQR from 'jsqr';
+import {
+  Camera, CameraIcon, Image, FolderOpen, Keyboard, ClipboardList,
+  CheckCircle, Loader, AlertTriangle, XCircle, Check, BookOpenText,
+  ArrowLeft,
+} from 'lucide-react';
+import { API_BASE_URL } from '../utils/constants';
+import '../styles/dashboard.css';
+import '../styles/admin-pages.css';
 
 function ScanQREnhanced() {
   const navigate = useNavigate();
@@ -15,618 +22,345 @@ function ScanQREnhanced() {
   const streamRef = useRef(null);
   const animationRef = useRef(null);
   const fileInputRef = useRef(null);
-  
-  const [qrCode, setQrCode] = useState("");
+
+  const [qrCode, setQrCode] = useState('');
   const [sessionInfo, setSessionInfo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [message, setMessage] = useState({ type: '', text: '' });
   const [cameraActive, setCameraActive] = useState(false);
   const [scannedCode, setScannedCode] = useState(null);
-  const [facingMode, setFacingMode] = useState("environment");
+  const [facingMode, setFacingMode] = useState('environment');
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [locationVerified, setLocationVerified] = useState(false);
   const [deviceVerified, setDeviceVerified] = useState(false);
 
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
+  useEffect(() => () => stopCamera(), []);
 
-  // Timer for remaining time
   useEffect(() => {
-    if (sessionInfo && sessionInfo.qr_expiry_time) {
+    if (sessionInfo?.qr_expiry_time) {
       const interval = setInterval(() => {
-        const expiry = new Date(sessionInfo.qr_expiry_time);
-        const now = new Date();
-        const diff = Math.max(0, Math.floor((expiry - now) / 1000));
+        const diff = Math.max(0, Math.floor((new Date(sessionInfo.qr_expiry_time) - new Date()) / 1000));
         setTimeRemaining(diff);
-        
-        if (diff <= 0) {
-          setMessage({ type: "error", text: "QR Code has expired" });
-          setSessionInfo(null);
-        }
+        if (diff <= 0) { setMessage({ type: 'error', text: 'QR Code has expired' }); setSessionInfo(null); }
       }, 1000);
-      
       return () => clearInterval(interval);
     }
   }, [sessionInfo]);
 
-  const formatTimeRemaining = (seconds) => {
-    if (!seconds) return "00:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const fmtTime = (sec) => {
+    if (!sec) return '00:00';
+    return `${Math.floor(sec / 60).toString().padStart(2, '0')}:${(sec % 60).toString().padStart(2, '0')}`;
   };
 
-  const handleQrInputChange = (e) => {
-    setQrCode(e.target.value);
-    setMessage({ type: "", text: "" });
-  };
+  /* ── QR input ──────────────────────────────────────────────── */
+  const handleQrInputChange = (e) => { setQrCode(e.target.value); setMessage({ type: '', text: '' }); };
 
-  const handleImageUpload = async (e) => {
+  /* ── Image upload ──────────────────────────────────────────── */
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setLoading(true);
-    setMessage({ type: "info", text: "Processing image..." });
-
-    try {
-      const img = new Image();
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-        
-        if (code) {
-          setQrCode(code.data);
-          verifyQrCode(code.data);
-        } else {
-          setMessage({ type: "error", text: "No QR code found in image" });
-          setLoading(false);
-        }
-      };
-
-      img.onerror = () => {
-        setMessage({ type: "error", text: "Failed to load image" });
-        setLoading(false);
-      };
-
-      img.src = URL.createObjectURL(file);
-    } catch (error) {
-      console.error("Error processing image:", error);
-      setMessage({ type: "error", text: "Failed to process image" });
-      setLoading(false);
-    }
+    setMessage({ type: 'info', text: 'Processing image…' });
+    const img = new window.Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    img.onload = () => {
+      canvas.width = img.width; canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) { setQrCode(code.data); verifyQrCode(code.data); }
+      else { setMessage({ type: 'error', text: 'No QR code found in image' }); setLoading(false); }
+    };
+    img.onerror = () => { setMessage({ type: 'error', text: 'Failed to load image' }); setLoading(false); };
+    img.src = URL.createObjectURL(file);
   };
 
-  const verifyLocation = async () => {
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        resolve({ verified: false, latitude: 0, longitude: 0, message: "Geolocation not supported" });
-        return;
-      }
+  /* ── Location ──────────────────────────────────────────────── */
+  const verifyLocation = () => new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve({ verified: false, latitude: 0, longitude: 0 }); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setLocationVerified(true); resolve({ verified: true, latitude: pos.coords.latitude, longitude: pos.coords.longitude }); },
+      () => { resolve({ verified: false, latitude: 0, longitude: 0 }); },
+      { timeout: 8000 }
+    );
+  });
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocationVerified(true);
-          resolve({ verified: true, latitude, longitude, message: "Location verified" });
-        },
-        (error) => {
-          console.error("Location error:", error);
-          // Allow attendance even if location fails - server will validate
-          resolve({ verified: false, latitude: 0, longitude: 0, message: "Unable to get location" });
-        },
-        { timeout: 8000 }
-      );
-    });
-  };
-
-  const verifyDevice = async () => {
-    // Get or create device ID
+  /* ── Device ────────────────────────────────────────────────── */
+  const verifyDevice = () => {
     let deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) {
-      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('deviceId', deviceId);
-    }
-    
+    if (!deviceId) { deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('deviceId', deviceId); }
     setDeviceVerified(true);
     return { verified: true, deviceId };
   };
 
+  /* ── Verify QR ─────────────────────────────────────────────── */
   const verifyQrCode = async (code = null) => {
-    const codeToVerify = code || qrCode;
-    
-    if (!codeToVerify.trim()) {
-      setMessage({ type: "error", text: "Please enter or scan a QR code" });
-      return;
-    }
-
+    const c = code || qrCode;
+    if (!c.trim()) { setMessage({ type: 'error', text: 'Please enter or scan a QR code' }); return; }
     setLoading(true);
-    setMessage({ type: "info", text: "Getting your location..." });
-
+    setMessage({ type: 'info', text: 'Getting your location…' });
     try {
-      const token = sessionStorage.getItem("authToken");
-
-      // Step 1: Get student location
-      const locationResult = await verifyLocation();
-      const lat = locationResult.latitude || 0;
-      const lng = locationResult.longitude || 0;
-
-      setMessage({ type: "info", text: "Validating QR code..." });
-
-      // Step 2: Validate via QR request system (handles expiry + location check)
-      const validateResponse = await fetch(`${API_BASE_URL}/qr-request/validate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          request_id: codeToVerify,
-          student_latitude: lat,
-          student_longitude: lng
-        })
+      const token = sessionStorage.getItem('authToken');
+      const loc = await verifyLocation();
+      setMessage({ type: 'info', text: 'Validating QR code…' });
+      const valRes = await fetch(`${API_BASE_URL}/qr-request/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ request_id: c, student_latitude: loc.latitude || 0, student_longitude: loc.longitude || 0 }),
       });
+      const valData = await valRes.json();
+      if (!valData.valid) { setMessage({ type: 'error', text: valData.reason || 'Invalid QR code' }); setLoading(false); return; }
 
-      const validateData = await validateResponse.json();
-
-      if (!validateData.valid) {
-        setMessage({ type: "error", text: validateData.reason || "Invalid QR code" });
-        setLoading(false);
-        return;
-      }
-
-      // Step 3: Fetch session info using session_id from validate response
-      const sessionResponse = await fetch(`${API_BASE_URL}/session/${validateData.session_id}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        const session = sessionData.data;
-
-        if (session.status !== "active") {
-          setMessage({ type: "error", text: "Session is not active" });
-          setLoading(false);
-          return;
-        }
-
-        // Store requestId inside sessionInfo for submitAttendance
-        setSessionInfo({ ...session, requestId: codeToVerify });
+      const sessRes = await fetch(`${API_BASE_URL}/session/${valData.session_id}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (sessRes.ok) {
+        const sessData = await sessRes.json();
+        const session = sessData.data;
+        if (session.status !== 'active') { setMessage({ type: 'error', text: 'Session is not active' }); setLoading(false); return; }
+        setSessionInfo({ ...session, requestId: c });
         setLocationVerified(true);
         setDeviceVerified(true);
-
-        const distanceMsg = validateData.distance ? ` (${validateData.distance}m from class)` : "";
-        setMessage({ type: "success", text: `QR verified${distanceMsg}. Click Accept to mark attendance.` });
+        const distMsg = valData.distance ? ` (${valData.distance}m from class)` : '';
+        setMessage({ type: 'success', text: `QR verified${distMsg}. Click Accept to mark attendance.` });
       } else {
-        const errorData = await sessionResponse.json();
-        setMessage({ type: "error", text: errorData.message || "Could not fetch session info" });
+        const err = await sessRes.json();
+        setMessage({ type: 'error', text: err.message || 'Could not fetch session info' });
         setSessionInfo(null);
       }
-    } catch (error) {
-      console.error("Error verifying QR code:", error);
-      setMessage({ type: "error", text: "Failed to verify QR code. Please try again." });
-      setSessionInfo(null);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setMessage({ type: 'error', text: 'Failed to verify QR code.' }); setSessionInfo(null); }
+    finally { setLoading(false); }
   };
 
+  /* ── Submit ────────────────────────────────────────────────── */
   const submitAttendance = async () => {
     if (!sessionInfo) return;
-
     setLoading(true);
-    setMessage({ type: "info", text: "Marking attendance..." });
-
+    setMessage({ type: 'info', text: 'Marking attendance…' });
     try {
-      const token = sessionStorage.getItem("authToken");
-      const requestId = sessionInfo.requestId;
-
-      // 1. Record acceptance for live count (non-critical)
-      if (requestId && token) {
-        try {
-          await fetch(`${API_BASE_URL}/qr-request/${requestId}/accept`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-        } catch (_) { /* non-critical, ignore */ }
-      }
-
-      // 2. Mark attendance in the attendance table
-      const response = await fetch(`${API_BASE_URL}/attendance/mark`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          sessionId: sessionInfo.id,
-          timestamp: Date.now()
-        })
+      const token = sessionStorage.getItem('authToken');
+      if (sessionInfo.requestId) { try { await fetch(`${API_BASE_URL}/qr-request/${sessionInfo.requestId}/accept`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); } catch {} }
+      const res = await fetch(`${API_BASE_URL}/attendance/mark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ sessionId: sessionInfo.id, timestamp: Date.now() }),
       });
-
-      if (response.ok) {
-        setMessage({ type: "success", text: "Attendance marked successfully!" });
-        setQrCode("");
-        setSessionInfo(null);
-        setTimeout(() => navigate("/student-dashboard"), 2000);
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Attendance marked successfully!' });
+        setQrCode(''); setSessionInfo(null);
+        setTimeout(() => navigate('/student-dashboard'), 2000);
       } else {
-        const errorData = await response.json();
-        let errorMessage = errorData.message || "Failed to mark attendance";
-        if (errorMessage.includes("duplicate") || errorMessage.includes("already")) {
-          errorMessage = "You have already marked attendance for this session";
-        } else if (errorMessage.includes("enrolled") || errorMessage.includes("course")) {
-          errorMessage = "You are not enrolled in this course";
-        }
-        setMessage({ type: "error", text: errorMessage });
+        const err = await res.json();
+        let msg = err.message || 'Failed to mark attendance';
+        if (msg.includes('duplicate') || msg.includes('already')) msg = 'Already marked for this session';
+        if (msg.includes('enrolled') || msg.includes('course')) msg = 'Not enrolled in this course';
+        setMessage({ type: 'error', text: msg });
       }
-    } catch (error) {
-      console.error("Error submitting attendance:", error);
-      setMessage({ type: "error", text: "Failed to submit attendance. Please try again." });
-    } finally {
-      setLoading(false);
-    }
+    } catch { setMessage({ type: 'error', text: 'Failed to submit attendance.' }); }
+    finally { setLoading(false); }
   };
 
+  /* ── Camera ────────────────────────────────────────────────── */
   const activateCamera = async () => {
     try {
       setCameraActive(true);
-      setMessage({ type: "info", text: "Starting camera..." });
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false
-      });
-
+      setMessage({ type: 'info', text: 'Starting camera…' });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
       streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        scanQRFromCamera();
-      }
-
-      setMessage({ type: "success", text: "Camera active. Point at QR code..." });
-    } catch (error) {
-      console.error("Camera error:", error);
-      setMessage({ type: "error", text: "Failed to access camera" });
-      setCameraActive(false);
-    }
+      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); scanQRFromCamera(); }
+      setMessage({ type: 'success', text: 'Camera active. Point at QR code…' });
+    } catch { setMessage({ type: 'error', text: 'Failed to access camera' }); setCameraActive(false); }
   };
 
   const scanQRFromCamera = () => {
     if (!videoRef.current || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    const ctx = canvas.getContext('2d');
-
+    const canvas = canvasRef.current; const video = videoRef.current; const ctx = canvas.getContext('2d');
     const scan = () => {
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-        
-        if (code) {
-          setScannedCode(code.data);
-          setQrCode(code.data);
-          stopCamera();
-          verifyQrCode(code.data);
-          return;
-        }
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(data.data, data.width, data.height);
+        if (code) { setScannedCode(code.data); setQrCode(code.data); stopCamera(); verifyQrCode(code.data); return; }
       }
-      
       animationRef.current = requestAnimationFrame(scan);
     };
-
     scan();
   };
 
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    if (videoRef.current) videoRef.current.srcObject = null;
     setCameraActive(false);
   };
 
+  /* ── Render ────────────────────────────────────────────────── */
   return (
-    <motion.div
-      className="dashboard"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="dashboard__objects" aria-hidden="true">
-        <span className="dashboard__object dashboard__object--sphere" />
-        <span className="dashboard__object dashboard__object--torus" />
+    <div className="ap">
+      <div className="ap__objects" aria-hidden="true">
+        <span className="ap__object ap__object--a" />
+        <span className="ap__object ap__object--b" />
+        <span className="ap__object ap__object--c" />
       </div>
 
-      <motion.header
-        className="dashboard__header"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div>
-          <h1 className="dashboard__title"><Camera size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />Scan QR Code</h1>
-          <p className="dashboard__subtitle">Scan or upload QR code to mark your attendance</p>
-        </div>
-        <div className="dashboard__buttons">
-          <motion.button
-            className="dashboard__button dashboard__button--secondary"
-            onClick={() => navigate("/student-dashboard")}
-            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
-            whileTap={{ scale: 0.96 }}
-          >
-            ← Back to Dashboard
-          </motion.button>
-        </div>
-      </motion.header>
+      <div className="ap__inner">
+        {/* Header */}
+        <header className="ap__header">
+          <div className="ap__header-left">
+            <button className="ap__back-btn" onClick={() => navigate('/student-dashboard')}>
+              <ArrowLeft size={18} /> Back
+            </button>
+            <p className="ap__eyebrow">Student &bull; Attendance</p>
+            <h1 className="ap__title"><Camera size={26} style={{ verticalAlign: 'middle', marginRight: 8 }} />Scan QR Code</h1>
+            <p className="ap__subtitle">Scan or upload QR code to mark your attendance</p>
+          </div>
+        </header>
 
-      <main className="dashboard__content">
-        {/* Scanning Options */}
-        <section className="dashboard__grid scan-options-grid">
-          {/* Camera Scan Card */}
-          <section className="dashboard__card">
-            <h2 className="dashboard__card-title"><CameraIcon size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Camera Scan</h2>
-            <div style={{ marginTop: '1rem' }}>
+        {/* Scanning Options — 3 panels */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+          {/* Camera */}
+          <div className="ap__panel">
+            <div className="ap__panel-header">
+              <h2 className="ap__panel-title"><CameraIcon size={18} /> Camera Scan</h2>
+              <span className="ap__badge ap__badge--active">Live</span>
+            </div>
+            <div style={{ padding: '1.25rem' }}>
               {!cameraActive ? (
-                <div style={{ textAlign: 'center', padding: '2rem' }}>
-                  <div style={{ fontSize: '4rem', marginBottom: '1rem' }}><Camera size={56} /></div>
-                  <p style={{ marginBottom: '1rem', color: '#666' }}>
-                    Use your camera to scan QR code
-                  </p>
-                  <button
-                    className="dashboard__button dashboard__button--primary"
-                    onClick={activateCamera}
-                    style={{ width: '100%' }}
-                  >
-                    Activate Camera
-                  </button>
+                <div style={{ textAlign: 'center' }}>
+                  <Camera size={48} style={{ color: 'var(--accent)', marginBottom: 12 }} />
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>Use your camera to scan QR code</p>
+                  <button className="ap__btn ap__btn--primary" onClick={activateCamera} style={{ width: '100%' }}>Activate Camera</button>
                 </div>
               ) : (
-                <div>
-                  <video 
-                    ref={videoRef} 
-                    style={{ 
-                      width: '100%', 
-                      borderRadius: '8px',
-                      background: '#000'
-                    }}
-                    playsInline
-                  />
-                  <button
-                    className="dashboard__button dashboard__button--secondary"
-                    onClick={stopCamera}
-                    style={{ width: '100%', marginTop: '1rem' }}
-                  >
-                    Stop Camera
-                  </button>
-                </div>
+                <>
+                  <video ref={videoRef} style={{ width: '100%', borderRadius: 10, background: '#000' }} playsInline />
+                  <button className="ap__btn ap__btn--outline" onClick={stopCamera} style={{ width: '100%', marginTop: '0.75rem' }}>Stop Camera</button>
+                </>
               )}
               <canvas ref={canvasRef} style={{ display: 'none' }} />
             </div>
-          </section>
-
-          {/* Upload Image Card */}
-          <section className="dashboard__card">
-            <h2 className="dashboard__card-title"><Image size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Upload QR Image</h2>
-            <div style={{ marginTop: '1rem', textAlign: 'center', padding: '2rem' }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}><FolderOpen size={56} /></div>
-              <p style={{ marginBottom: '1rem', color: '#666' }}>
-                Select QR code image from your device
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                style={{ display: 'none' }}
-              />
-              <button
-                className="dashboard__button dashboard__button--primary"
-                onClick={() => fileInputRef.current?.click()}
-                style={{ width: '100%' }}
-              >
-                Choose Image
-              </button>
-            </div>
-          </section>
-
-          {/* Manual Entry Card */}
-          <section className="dashboard__card">
-            <h2 className="dashboard__card-title"><Keyboard size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Manual Entry</h2>
-            <div style={{ marginTop: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                Enter QR Code
-              </label>
-              <input
-                type="text"
-                value={qrCode}
-                onChange={handleQrInputChange}
-                placeholder="Enter QR code manually"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  marginBottom: '1rem'
-                }}
-              />
-              <button
-                className="dashboard__button dashboard__button--primary"
-                onClick={() => verifyQrCode()}
-                disabled={loading || !qrCode.trim()}
-                style={{ width: '100%' }}
-              >
-                {loading ? "Verifying..." : "Verify Code"}
-              </button>
-            </div>
-          </section>
-        </section>
-
-        {/* Messages */}
-        {message.text && (
-          <div style={{
-            padding: '1rem',
-            borderRadius: '8px',
-            marginTop: '1rem',
-            background: message.type === 'error' ? '#fee2e2' : 
-                       message.type === 'success' ? '#d1fae5' :
-                       message.type === 'warning' ? '#fef3c7' : '#dbeafe',
-            color: message.type === 'error' ? '#991b1b' : 
-                   message.type === 'success' ? '#065f46' :
-                   message.type === 'warning' ? '#92400e' : '#1e40af',
-            fontWeight: '500'
-          }}>
-            {message.text}
           </div>
+
+          {/* Upload */}
+          <div className="ap__panel">
+            <div className="ap__panel-header">
+              <h2 className="ap__panel-title"><Image size={18} /> Upload QR</h2>
+              <span className="ap__badge ap__badge--inactive">Upload</span>
+            </div>
+            <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+              <FolderOpen size={48} style={{ color: 'var(--accent)', marginBottom: 12 }} />
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>Select QR code image from your device</p>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+              <button className="ap__btn ap__btn--primary" onClick={() => fileInputRef.current?.click()} style={{ width: '100%' }}>Choose Image</button>
+            </div>
+          </div>
+
+          {/* Manual */}
+          <div className="ap__panel">
+            <div className="ap__panel-header">
+              <h2 className="ap__panel-title"><Keyboard size={18} /> Manual Entry</h2>
+              <span className="ap__badge ap__badge--inactive">Type</span>
+            </div>
+            <div style={{ padding: '1.25rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Enter QR Code</label>
+              <input className="ap__search" value={qrCode} onChange={handleQrInputChange} placeholder="Enter QR code manually" style={{ marginBottom: '0.85rem' }} />
+              <button className="ap__btn ap__btn--primary" onClick={() => verifyQrCode()} disabled={loading || !qrCode.trim()} style={{ width: '100%' }}>
+                {loading ? 'Verifying…' : 'Verify Code'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Message */}
+        {message.text && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{
+            marginTop: '1.25rem', padding: '0.85rem 1.2rem', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem',
+            background: message.type === 'error' ? 'rgba(239,68,68,0.1)' : message.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(49,156,181,0.08)',
+            border: `1px solid ${message.type === 'error' ? 'rgba(239,68,68,0.3)' : message.type === 'success' ? 'rgba(16,185,129,0.3)' : 'rgba(49,156,181,0.2)'}`,
+            color: message.type === 'error' ? '#ef4444' : message.type === 'success' ? '#10b981' : 'var(--accent)',
+          }}>
+            {message.type === 'error' && <XCircle size={18} />}
+            {message.type === 'success' && <CheckCircle size={18} />}
+            {message.type === 'info' && <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />}
+            {message.text}
+          </motion.div>
         )}
 
-        {/* Session Details Card */}
+        {/* Session Details */}
         {sessionInfo && (
-          <section className="dashboard__card" style={{ marginTop: '2rem' }}>
-            <h2 className="dashboard__card-title"><ClipboardList size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Session Details</h2>
-            <div className="session-details-grid" style={{ 
-              marginTop: '1rem',
-              display: 'grid',
-              gap: '1rem',
-            }}>
-              <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
-                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Subject</div>
-                <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{sessionInfo.subject}</div>
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.25rem' }}>
+            <div className="ap__panel">
+              <div className="ap__panel-header">
+                <h2 className="ap__panel-title"><ClipboardList size={18} /> Session Details</h2>
+                <span className="ap__badge ap__badge--active">Verified</span>
               </div>
-              <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
-                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Faculty</div>
-                <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{sessionInfo.faculty?.name || sessionInfo.faculty_name || 'N/A'}</div>
-              </div>
-              <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
-                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Location</div>
-                <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>{sessionInfo.location}</div>
-              </div>
-              <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px' }}>
-                <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Date & Time</div>
-                <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>
-                  {new Date(sessionInfo.startTime || sessionInfo.start_time).toLocaleString('en-IN', {
-                    day: '2-digit', month: 'short', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit', hour12: true
-                  })}
+              <div style={{ padding: '1.25rem' }}>
+                {/* Info grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {[
+                    { label: 'Subject', value: sessionInfo.subject },
+                    { label: 'Faculty', value: sessionInfo.faculty?.name || sessionInfo.faculty_name || 'N/A' },
+                    { label: 'Location', value: sessionInfo.location },
+                    { label: 'Date & Time', value: new Date(sessionInfo.startTime || sessionInfo.start_time).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) },
+                  ].map((item, i) => (
+                    <div key={i} style={{ padding: '0.75rem', background: 'rgba(49,156,181,0.06)', borderRadius: 10, border: '1px solid rgba(49,156,181,0.12)' }}>
+                      <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, color: 'var(--color-text-secondary)', letterSpacing: '0.04em', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.value}</div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #6ee7b7' }}>
-                <div style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '0.25rem' }}><CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Present Count</div>
-                <div style={{ fontWeight: '700', fontSize: '1.5rem', color: '#059669' }}>
-                  {sessionInfo.attendance?.present ?? 0}
-                  <span style={{ fontSize: '0.875rem', fontWeight: '400', color: '#666', marginLeft: '0.5rem' }}>
-                    marked present
-                  </span>
+
+                {/* Timer */}
+                {timeRemaining !== null && (
+                  <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: timeRemaining < 60 ? 'rgba(239,68,68,0.08)' : 'rgba(49,156,181,0.06)', border: `1px solid ${timeRemaining < 60 ? 'rgba(239,68,68,0.2)' : 'rgba(49,156,181,0.15)'}`, textAlign: 'center', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>Time Remaining</span>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'monospace', color: timeRemaining < 60 ? '#ef4444' : 'var(--accent)' }}>{fmtTime(timeRemaining)}</div>
+                  </div>
+                )}
+
+                {/* Verification */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div style={{ padding: '0.75rem', borderRadius: 10, background: locationVerified ? 'rgba(16,185,129,0.06)' : 'rgba(49,156,181,0.04)', border: `1px solid ${locationVerified ? 'rgba(16,185,129,0.2)' : 'rgba(49,156,181,0.1)'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {locationVerified ? <CheckCircle size={20} color="#10b981" /> : <Loader size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />}
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Location {locationVerified ? 'Verified' : 'Checking…'}</span>
+                  </div>
+                  <div style={{ padding: '0.75rem', borderRadius: 10, background: deviceVerified ? 'rgba(16,185,129,0.06)' : 'rgba(49,156,181,0.04)', border: `1px solid ${deviceVerified ? 'rgba(16,185,129,0.2)' : 'rgba(49,156,181,0.1)'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {deviceVerified ? <CheckCircle size={20} color="#10b981" /> : <Loader size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />}
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Device {deviceVerified ? 'Verified' : 'Checking…'}</span>
+                  </div>
                 </div>
+
+                <button className="ap__btn ap__btn--primary" onClick={submitAttendance} disabled={loading || !sessionInfo || timeRemaining === 0} style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', fontWeight: 700, gap: 8 }}>
+                  {loading ? 'Submitting…' : <><Check size={18} /> Accept & Mark Attendance</>}
+                </button>
               </div>
             </div>
-
-            {/* Time Remaining */}
-            {timeRemaining !== null && (
-              <div style={{
-                marginTop: '1rem',
-                padding: '1.5rem',
-                background: timeRemaining < 60 ? '#fee2e2' : '#dbeafe',
-                borderRadius: '8px',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem', color: '#666' }}>
-                  Time Remaining
-                </div>
-                <div style={{ 
-                  fontSize: '2.5rem', 
-                  fontWeight: 'bold',
-                  color: timeRemaining < 60 ? '#ef4444' : '#3b82f6'
-                }}>
-                  {formatTimeRemaining(timeRemaining)}
-                </div>
-              </div>
-            )}
-
-            {/* Verification Status */}
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{
-                flex: 1,
-                minWidth: '150px',
-                padding: '0.75rem',
-                background: locationVerified ? '#d1fae5' : '#fef3c7',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <span style={{ fontSize: '1.5rem' }}>{locationVerified ? <CheckCircle size={24} color="#10b981" /> : <Loader size={24} color="#f59e0b" />}</span>
-                <span style={{ fontWeight: '500' }}>Location {locationVerified ? 'Verified' : 'Checking...'}</span>
-              </div>
-              <div style={{
-                flex: 1,
-                minWidth: '150px',
-                padding: '0.75rem',
-                background: deviceVerified ? '#d1fae5' : '#fef3c7',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <span style={{ fontSize: '1.5rem' }}>{deviceVerified ? <CheckCircle size={24} color="#10b981" /> : <Loader size={24} color="#f59e0b" />}</span>
-                <span style={{ fontWeight: '500' }}>Device {deviceVerified ? 'Verified' : 'Checking...'}</span>
-              </div>
-            </div>
-
-            {/* Accept Button */}
-            <button
-              className="dashboard__button dashboard__button--primary"
-              onClick={submitAttendance}
-              disabled={loading || !sessionInfo || timeRemaining === 0}
-              style={{ 
-                width: '100%',
-                marginTop: '1.5rem',
-                padding: '1rem',
-                fontSize: '1.125rem',
-                fontWeight: 'bold'
-              }}
-            >
-              {loading ? "Submitting..." : <><Check size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Accept & Mark Attendance</>}
-            </button>
-          </section>
+          </motion.div>
         )}
 
-        {/* Instructions Card */}
-        <section className="dashboard__card" style={{ marginTop: '2rem' }}>
-          <h2 className="dashboard__card-title"><BookOpenText size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Instructions</h2>
-          <ul style={{ marginTop: '1rem', paddingLeft: '1.5rem', lineHeight: '2', color: '#666' }}>
-            <li>Choose one of three methods to scan QR code: Camera, Upload Image, or Manual Entry</li>
-            <li>Ensure you are within the class location for location verification</li>
-            <li>QR code expires after the set time - scan before expiry</li>
-            <li>Only one device can be used per session to mark attendance</li>
-            <li>You cannot mark attendance twice for the same session</li>
-            <li>After successful verification, click "Accept" to confirm attendance</li>
-          </ul>
-        </section>
-      </main>
-    </motion.div>
+        {/* Instructions */}
+        <div className="ap__panel" style={{ marginTop: '1.25rem' }}>
+          <div className="ap__panel-header">
+            <h2 className="ap__panel-title"><BookOpenText size={18} /> Instructions</h2>
+          </div>
+          <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+            {[
+              { icon: <CameraIcon size={14} />, text: 'Choose: Camera, Upload Image, or Manual Entry' },
+              { icon: <CheckCircle size={14} />, text: 'Ensure you are within the class location for verification' },
+              { icon: <AlertTriangle size={14} />, text: 'QR code expires after set time — scan before expiry' },
+              { icon: <XCircle size={14} />, text: 'Only one device can be used per session' },
+              { icon: <ClipboardList size={14} />, text: 'Cannot mark attendance twice for the same session' },
+              { icon: <Check size={14} />, text: 'After verification, click "Accept" to confirm' },
+            ].map((t, i) => (
+              <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', fontSize: '0.85rem' }}>
+                <span style={{ width: 26, height: 26, borderRadius: 7, background: 'rgba(49,156,181,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--accent)' }}>{t.icon}</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{t.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

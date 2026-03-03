@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "../styles/footer.css";
 
 function Footer() {
@@ -11,11 +12,12 @@ function Footer() {
         </div>
 
         <nav className="footer__nav">
-          <a href="#">Overview</a>
-          <a href="#">Sessions</a>
-          <a href="#">Security</a>
-          <a href="#">Support</a>
-          <a href="#">Feedback</a>
+          <Link to="/">Overview</Link>
+          <Link to="/">Sessions</Link>
+          <Link to="/security">Security</Link>
+          <Link to="/support">Support</Link>
+          <Link to="/feedback">Feedback</Link>
+          <Link to="/student-guide">Student Guide</Link>
         </nav>
 
         <div className="footer__social">
@@ -41,8 +43,8 @@ function Footer() {
       <div className="footer__bottom">
         <span className="footer__copy">&copy; 2026 QR Attendance. All rights reserved.</span>
         <div className="footer__bottom-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
         </div>
       </div>
     </footer>

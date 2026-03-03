@@ -150,7 +150,7 @@ const createSession = async (req, res, next) => {
             // 401 Unauthorized - User authenticated nahi hai
             return res.status(401).json({
                 success: false,
-                message: 'Authentication required. Faculty login karna padega session create karne ke liye.'
+                message: 'Authentication required. Please login as faculty to create a session.'
             });
         }
 
@@ -159,7 +159,7 @@ const createSession = async (req, res, next) => {
             // 400 Bad Request - Client ne required data nahi bheja
             return res.status(400).json({
                 success: false,
-                message: 'Subject is required. Kaunsi subject ki class hai?'
+                message: 'Subject is required. Please specify which subject this class is for.'
             });
         }
 
@@ -234,7 +234,7 @@ const createSession = async (req, res, next) => {
         // Session details aur QR code data dono bhej rahe hain
         return res.status(201).json({
             success: true,
-            message: 'Session created successfully! QR code generate ho gaya hai.',
+            message: 'Session created successfully! QR code has been generated.',
             data: createdSession  // Isme session details + QR code data hoga
         });
 
@@ -309,7 +309,7 @@ const closeSession = async (req, res, next) => {
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
-                message: 'Session ID is required. Kaunsi session close karni hai?'
+                message: 'Session ID is required. Please specify which session to close.'
             });
         }
 
@@ -332,7 +332,7 @@ const closeSession = async (req, res, next) => {
         // 200 OK - Session successfully close ho gayi
         return res.status(200).json({
             success: true,
-            message: 'Session closed successfully! Ab attendance mark nahi ho sakti.',
+            message: 'Session closed successfully! Attendance can no longer be marked.',
             data: closedSession
         });
 
@@ -504,7 +504,7 @@ const getSessionById = async (req, res, next) => {
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
-                message: 'Session ID is required. Kaunsi session ki details chahiye?'
+                message: 'Session ID is required. Please specify which session details you need.'
             });
         }
 

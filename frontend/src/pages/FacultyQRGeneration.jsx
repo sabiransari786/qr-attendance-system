@@ -1,23 +1,16 @@
 /**
- * Faculty QR Generation Page
- * 
- * Allows faculty members to:
- * - Select an active session
- * - Configure attendance options (value, duration, radius)
- * - Generate QR code with geolocation validation
- * - View live attendance count
- * - Manage previous QRs
+ * Faculty QR Generation Page — ap__* unified design
  */
 
 import { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Building } from 'lucide-react';
+import { QrCode, BookOpen, Building, MapPin, Clock, Users, ArrowLeft, AlertCircle, RefreshCw, Loader } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { QRCodeCanvas } from 'qrcode.react';
 import { API_BASE_URL } from '../utils/constants';
-import { fadeInUp, staggerContainer } from '../animations/animationConfig';
-import '../styles/qr-generation.css';
+import '../styles/dashboard.css';
+import '../styles/admin-pages.css';
 
 function FacultyQRGeneration() {
   const navigate = useNavigate();
@@ -25,293 +18,179 @@ function FacultyQRGeneration() {
   const user = authContext?.user;
   const token = authContext?.token;
 
-  // =========================================================================
-  // STATE MANAGEMENT
-  // =========================================================================
-
-  // Sessions
+  /* ── state ─────────────────────────────────────────────────────────── */
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [loadingSessions, setLoadingSessions] = useState(true);
 
-  // QR Generation Options
-  const [attendanceValue, setAttendanceValue] = useState(1); // manual input 1-10
-  const [duration, setDuration] = useState(1); // minutes
+  const [attendanceValue, setAttendanceValue] = useState(1);
+  const [duration, setDuration] = useState(1);
   const [customDuration, setCustomDuration] = useState('');
-  const [radius, setRadius] = useState(20); // meters
+  const [radius, setRadius] = useState(20);
   const [customRadius, setCustomRadius] = useState('');
   const [useCustomDuration, setUseCustomDuration] = useState(false);
   const [useCustomRadius, setUseCustomRadius] = useState(false);
 
-  // Location
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
 
-  // QR Code
   const [qrData, setQrData] = useState(null);
-  const [generateLoading, setGenerateLoading] = useState(false);
   const [generateError, setGenerateError] = useState(null);
   const [expiryTime, setExpiryTime] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
-  // Live Attendance
   const [attendanceCount, setAttendanceCount] = useState(0);
-  const [pollingActive, setPollingActive] = useState(false);
   const pollingInterval = useRef(null);
 
-  // UI State
   const [showConfig, setShowConfig] = useState(true);
   const [showQRDisplay, setShowQRDisplay] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
 
-  // =========================================================================
-  // AUTHENTICATION CHECKS
-  // =========================================================================
-
+  /* ── auth guard ────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (!user || user.role !== 'faculty') {
-      navigate('/unauthorized');
-    }
+    if (!user || user.role !== 'faculty') navigate('/unauthorized');
   }, [user, navigate]);
 
-  // =========================================================================
-  // FETCH ACTIVE SESSIONS
-  // =========================================================================
-
+  /* ── fetch sessions ────────────────────────────────────────────────── */
   useEffect(() => {
     const fetchSessions = async () => {
       try {
         setLoadingSessions(true);
-        const response = await fetch(`${API_BASE_URL}/session`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        const res = await fetch(`${API_BASE_URL}/session`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         let data = [];
-        try {
-          data = await response.json();
-        } catch (e) {
-          console.error('Error parsing response');
-        }
-
-        // Filter active sessions for this faculty
-        const facultySessions = (data.data || data || []).filter(
-          s => s.status === 'active' && s.facultyId === user?.id
+        try { data = await res.json(); } catch {}
+        const mine = (data.data || data || []).filter(
+          (s) => s.status === 'active' && s.facultyId === user?.id
         );
-        setSessions(facultySessions);
-
-        if (facultySessions.length > 0) {
-          setSelectedSessionId(facultySessions[0].id);
-        }
-      } catch (error) {
-        console.error('Error fetching sessions:', error);
+        setSessions(mine);
+        if (mine.length > 0) setSelectedSessionId(mine[0].id);
+      } catch (err) {
+        console.error('Error fetching sessions:', err);
         setGenerateError('Failed to load sessions');
       } finally {
         setLoadingSessions(false);
       }
     };
-
-    if (token && user?.id) {
-      fetchSessions();
-    }
+    if (token && user?.id) fetchSessions();
   }, [token, user?.id]);
 
-  // =========================================================================
-  // COUNTDOWN TIMER LOGIC
-  // =========================================================================
-
+  /* ── countdown timer ───────────────────────────────────────────────── */
   useEffect(() => {
-    if (!expiryTime) {
-      setTimeRemaining(null);
-      return;
-    }
-
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const expiry = new Date(expiryTime).getTime();
-      const remaining = Math.max(0, expiry - now);
-
-      if (remaining === 0) {
+    if (!expiryTime) { setTimeRemaining(null); return; }
+    const tick = () => {
+      const rem = Math.max(0, new Date(expiryTime).getTime() - Date.now());
+      if (rem === 0) {
         setTimeRemaining('EXPIRED');
         setQrData(null);
         clearInterval(pollingInterval.current);
       } else {
-        const minutes = Math.floor(remaining / 60000);
-        const seconds = Math.floor((remaining % 60000) / 1000);
-        setTimeRemaining(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+        const m = Math.floor(rem / 60000);
+        const s = Math.floor((rem % 60000) / 1000);
+        setTimeRemaining(`${m}:${s.toString().padStart(2, '0')}`);
       }
     };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
   }, [expiryTime]);
 
-  // =========================================================================
-  // GEOLOCATION REQUESTS
-  // =========================================================================
-
+  /* ── geolocation ───────────────────────────────────────────────────── */
   const requestGeolocation = async () => {
     setLocationLoading(true);
     setLocationError(null);
-
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by your browser');
       setLocationLoading(false);
       return null;
     }
-
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
           setCurrentLocation({ latitude, longitude });
           setLocationLoading(false);
           resolve({ latitude, longitude });
         },
-        (error) => {
-          let errorMsg = 'Failed to get location';
-          if (error.code === error.PERMISSION_DENIED) {
-            errorMsg = 'Location permission denied. Please enable location services.';
-          } else if (error.code === error.TIMEOUT) {
-            errorMsg = 'Location request timed out';
-          }
-          setLocationError(errorMsg);
+        (err) => {
+          let msg = 'Failed to get location';
+          if (err.code === err.PERMISSION_DENIED) msg = 'Location permission denied. Please enable location services.';
+          else if (err.code === err.TIMEOUT) msg = 'Location request timed out';
+          setLocationError(msg);
           setLocationLoading(false);
           resolve(null);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   };
 
-  // =========================================================================
-  // GENERATE QR CODE
-  // =========================================================================
-
+  /* ── generate QR ───────────────────────────────────────────────────── */
   const handleGenerateQR = async () => {
     setGenerateError(null);
-
-    // Validate selection
-    if (!selectedSessionId) {
-      setGenerateError('Please select a session');
-      return;
-    }
-
-    // Request location
+    if (!selectedSessionId) { setGenerateError('Please select a session'); return; }
     const coords = await requestGeolocation();
-    if (!coords) {
-      return;
-    }
+    if (!coords) return;
 
-    // Prepare data
     setGeneratingQR(true);
-    const durationValue = useCustomDuration ? parseInt(customDuration) : duration;
-    const radiusValue = useCustomRadius ? parseInt(customRadius) : radius;
+    const durationVal = useCustomDuration ? parseInt(customDuration) : duration;
+    const radiusVal = useCustomRadius ? parseInt(customRadius) : radius;
 
-    if (!Number.isInteger(durationValue) || durationValue < 1) {
-      setGenerateError('Please enter a valid duration');
-      setGeneratingQR(false);
-      return;
-    }
-
-    if (!Number.isInteger(radiusValue) || radiusValue < 1) {
-      setGenerateError('Please enter a valid radius');
-      setGeneratingQR(false);
-      return;
-    }
+    if (!Number.isInteger(durationVal) || durationVal < 1) { setGenerateError('Please enter a valid duration'); setGeneratingQR(false); return; }
+    if (!Number.isInteger(radiusVal) || radiusVal < 1) { setGenerateError('Please enter a valid radius'); setGeneratingQR(false); return; }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/qr-request/generate`, {
+      const res = await fetch(`${API_BASE_URL}/qr-request/generate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           session_id: selectedSessionId,
           attendance_value: parseInt(attendanceValue),
           latitude: coords.latitude,
           longitude: coords.longitude,
-          radius_meters: radiusValue,
-          duration_minutes: durationValue
-        })
+          radius_meters: radiusVal,
+          duration_minutes: durationVal,
+        }),
       });
-
       let data;
-      try {
-        data = await response.json();
-      } catch (e) {
-        console.error('Error parsing response');
-        throw new Error('Invalid response from server');
-      }
+      try { data = await res.json(); } catch { throw new Error('Invalid response from server'); }
+      if (!res.ok) throw new Error(data.message || 'Failed to generate QR');
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to generate QR');
-      }
-
-      // Success!
       setQrData(data.request_id);
       setExpiryTime(data.expires_at);
       setShowConfig(false);
       setShowQRDisplay(true);
       setAttendanceCount(0);
-
-      // Start polling for attendance count
       startAttendancePolling(data.request_id);
-    } catch (error) {
-      setGenerateError(error.message || 'Failed to generate QR code');
+    } catch (err) {
+      setGenerateError(err.message || 'Failed to generate QR code');
     } finally {
       setGeneratingQR(false);
     }
   };
 
-  // =========================================================================
-  // ATTENDANCE POLLING
-  // =========================================================================
-
+  /* ── attendance polling ────────────────────────────────────────────── */
   const startAttendancePolling = (requestId) => {
-    setPollingActive(true);
-
-    // Poll every 2 seconds
     pollingInterval.current = setInterval(async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/qr-request/${requestId}/attendance-count`, {
-          headers: { "Authorization": `Bearer ${token}` }
+        const res = await fetch(`${API_BASE_URL}/qr-request/${requestId}/attendance-count`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        const data = await response.json();
+        const data = await res.json();
         setAttendanceCount(data.count || 0);
-      } catch (error) {
-        console.error('Error polling attendance:', error);
-      }
+      } catch {}
     }, 2000);
   };
 
   const stopAttendancePolling = () => {
-    if (pollingInterval.current) {
-      clearInterval(pollingInterval.current);
-    }
-    setPollingActive(false);
+    if (pollingInterval.current) clearInterval(pollingInterval.current);
   };
 
-  useEffect(() => {
-    return () => {
-      if (pollingInterval.current) {
-        clearInterval(pollingInterval.current);
-      }
-    };
-  }, []);
+  useEffect(() => () => { if (pollingInterval.current) clearInterval(pollingInterval.current); }, []);
 
-  // =========================================================================
-  // REGENERATE QR
-  // =========================================================================
-
+  /* ── regenerate ────────────────────────────────────────────────────── */
   const handleRegenerateQR = () => {
     stopAttendancePolling();
     setQrData(null);
@@ -320,252 +199,306 @@ function FacultyQRGeneration() {
     setTimeRemaining(null);
   };
 
-  // =========================================================================
-  // RENDER
-  // =========================================================================
+  /* ── helpers ────────────────────────────────────────────────────────── */
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId);
 
+  /* ── render ─────────────────────────────────────────────────────────── */
   return (
-    <motion.div
-      className="qr-generation-container"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="qr__objects" aria-hidden="true">
-        <span className="qr__object qr__object--sphere" />
-        <span className="qr__object qr__object--ring" />
-        <span className="qr__object qr__object--cube" />
+    <div className="ap">
+      <div className="ap__objects" aria-hidden="true">
+        <span className="ap__object ap__object--a" />
+        <span className="ap__object ap__object--b" />
+        <span className="ap__object ap__object--c" />
       </div>
-      <motion.div
-        className="qr-generation-wrapper"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, delay: 0.1 }}
-      >
-        <motion.h1
-          className="qr-generation-title"
-          initial={{ opacity: 0, y: -16 }}
+
+      <div className="ap__inner" style={{ maxWidth: 720 }}>
+        {/* Header */}
+        <motion.header
+          className="ap__header"
+          initial={{ opacity: 0, y: -18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.4 }}
         >
-          QR Code Generation for Attendance
-        </motion.h1>
-        
-        {/* Configuration Panel */}
+          <div className="ap__header-left">
+            <button className="ap__back-btn" onClick={() => navigate('/faculty-dashboard')}>
+              <ArrowLeft size={18} /> Back
+            </button>
+            <p className="ap__eyebrow">Faculty &bull; QR Attendance</p>
+            <h1 className="ap__title"><QrCode size={26} style={{ verticalAlign: 'middle', marginRight: 8 }} />Generate QR Code</h1>
+            <p className="ap__subtitle">Select a session, configure options, and generate a scannable QR code</p>
+          </div>
+        </motion.header>
+
+        {/* ── Config Panel ─────────────────────────────────────────── */}
         {showConfig && (
-          <div className="qr-config-panel">
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+          >
             {/* Session Selection */}
-            <div className="config-section">
-              <h2>Select Session</h2>
-              {loadingSessions ? (
-                <p>Loading sessions...</p>
-              ) : sessions.length === 0 ? (
-                <p className="error-message">No active sessions found</p>
-              ) : (
-                <select 
-                  value={selectedSessionId || ''}
-                  onChange={(e) => setSelectedSessionId(parseInt(e.target.value))}
-                  className="form-select"
-                >
-                  <option value="">-- Select a session --</option>
-                  {sessions.map(session => (
-                    <option key={session.id} value={session.id}>
-                      {session.subject}
-                      {session.course?.name ? ` [${session.course.name}]` : ''}
-                      {' '}- {session.location} (ID: {session.id})
-                    </option>
-                  ))}
-                </select>
-              )}
-              {/* Show course/department badge for selected session */}
-              {selectedSessionId && (() => {
-                const sel = sessions.find(s => s.id === selectedSessionId);
-                if (!sel) return null;
-                return (
-                  <div style={{ marginTop: '0.75rem', padding: '0.6rem 1rem', backgroundColor: 'rgba(49,156,181,0.1)', borderRadius: '8px', border: '1px solid rgba(49,156,181,0.3)', fontSize: '0.9rem' }}>
-                    {sel.course?.name && (
-                      <span style={{ marginRight: '1rem' }}><BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /><strong>{sel.course.name}</strong> ({sel.course.code})</span>
-                    )}
-                    {sel.department?.name && (
-                      <span style={{ color: 'var(--color-text-secondary)' }}><Building size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{sel.department.name}</span>
-                    )}
+            <div className="ap__panel">
+              <div className="ap__panel-header">
+                <h2 className="ap__panel-title"><BookOpen size={18} /> Select Session</h2>
+              </div>
+              <div style={{ padding: '1.25rem' }}>
+                {loadingSessions ? (
+                  <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '1.5rem 0' }}>
+                    <Loader size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6, animation: 'spin 1s linear infinite' }} />
+                    Loading sessions…
+                  </p>
+                ) : sessions.length === 0 ? (
+                  <div className="ap__empty">
+                    <BookOpen size={40} className="ap__empty-icon" />
+                    <p className="ap__empty-title">No Active Sessions</p>
+                    <p className="ap__empty-text">Create a session first from the Sessions page.</p>
                   </div>
-                );
-              })()}
-            </div>
+                ) : (
+                  <>
+                    <select
+                      className="ap__select"
+                      value={selectedSessionId || ''}
+                      onChange={(e) => setSelectedSessionId(parseInt(e.target.value))}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">-- Select a session --</option>
+                      {sessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.subject}{s.course?.name ? ` [${s.course.name}]` : ''} - {s.location} (ID: {s.id})
+                        </option>
+                      ))}
+                    </select>
 
-            {/* Attendance Points Section */}
-            <div className="config-section">
-              <h2>Attendance Points (Present)</h2>
-              <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>
-                Enter points between 1-10. All marked as Present (P).
-              </p>
-              <input 
-                type="number" 
-                min="1" 
-                max="10"
-                value={attendanceValue}
-                onChange={(e) => setAttendanceValue(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                className="form-input"
-                placeholder="Enter value 1-10"
-              />
-            </div>
-
-            {/* QR Validity Duration */}
-            <div className="config-section">
-              <h2>QR Validity Duration</h2>
-              <div className="radio-group">
-                {[1, 2, 5].map(min => (
-                  <label key={min} className="radio-option">
-                    <input 
-                      type="radio" 
-                      value={min}
-                      checked={!useCustomDuration && duration === min}
-                      onChange={() => {
-                        setDuration(min);
-                        setUseCustomDuration(false);
-                      }}
-                    />
-                    <span className="label-text">{min} Minute{min > 1 ? 's' : ''}</span>
-                  </label>
-                ))}
-                <label className="radio-option">
-                  <input 
-                    type="radio" 
-                    checked={useCustomDuration}
-                    onChange={() => setUseCustomDuration(true)}
-                  />
-                  <span className="label-text">Custom</span>
-                </label>
+                    {selectedSession && (
+                      <div style={{ marginTop: '0.85rem', padding: '0.7rem 1rem', background: 'rgba(49,156,181,0.08)', borderRadius: 8, border: '1px solid rgba(49,156,181,0.25)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.88rem' }}>
+                        {selectedSession.course?.name && (
+                          <span><BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /><strong>{selectedSession.course.name}</strong> ({selectedSession.course.code})</span>
+                        )}
+                        {selectedSession.department?.name && (
+                          <span style={{ color: 'var(--color-text-secondary)' }}><Building size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />{selectedSession.department.name}</span>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              {useCustomDuration && (
-                <input 
-                  type="number" 
-                  min="1" 
-                  value={customDuration}
-                  onChange={(e) => setCustomDuration(e.target.value)}
-                  placeholder="Enter minutes"
-                  className="form-input"
+            </div>
+
+            {/* Attendance Points */}
+            <div className="ap__panel">
+              <div className="ap__panel-header">
+                <h2 className="ap__panel-title"><Users size={18} /> Attendance Points</h2>
+              </div>
+              <div style={{ padding: '1.25rem' }}>
+                <p style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary)', marginBottom: '0.85rem' }}>
+                  Enter points between 1–10. All marked as Present (P).
+                </p>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={attendanceValue}
+                  onChange={(e) => setAttendanceValue(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                  className="ap__search"
+                  style={{ maxWidth: 140, textAlign: 'center', fontSize: '1.1rem', fontWeight: 700 }}
+                  placeholder="1-10"
                 />
-              )}
+              </div>
             </div>
 
-            {/* Location Radius */}
-            <div className="config-section">
-              <h2>Allowed Location Radius</h2>
-              <div className="radio-group">
-                {[10, 20, 50].map(r => (
-                  <label key={r} className="radio-option">
-                    <input 
-                      type="radio" 
-                      value={r}
-                      checked={!useCustomRadius && radius === r}
-                      onChange={() => {
-                        setRadius(r);
-                        setUseCustomRadius(false);
-                      }}
-                    />
-                    <span className="label-text">{r} Meters</span>
-                  </label>
-                ))}
-                <label className="radio-option">
-                  <input 
-                    type="radio" 
-                    checked={useCustomRadius}
-                    onChange={() => setUseCustomRadius(true)}
+            {/* Duration */}
+            <div className="ap__panel">
+              <div className="ap__panel-header">
+                <h2 className="ap__panel-title"><Clock size={18} /> QR Validity Duration</h2>
+              </div>
+              <div style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: useCustomDuration ? '0.85rem' : 0 }}>
+                  {[1, 2, 5].map((min) => (
+                    <button
+                      key={min}
+                      type="button"
+                      className={!useCustomDuration && duration === min ? 'ap__btn ap__btn--primary' : 'ap__btn ap__btn--outline'}
+                      onClick={() => { setDuration(min); setUseCustomDuration(false); }}
+                      style={{ minWidth: 90 }}
+                    >
+                      {min} Min{min > 1 ? 's' : ''}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={useCustomDuration ? 'ap__btn ap__btn--primary' : 'ap__btn ap__btn--outline'}
+                    onClick={() => setUseCustomDuration(true)}
+                    style={{ minWidth: 90 }}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {useCustomDuration && (
+                  <input
+                    type="number"
+                    min="1"
+                    value={customDuration}
+                    onChange={(e) => setCustomDuration(e.target.value)}
+                    placeholder="Enter minutes"
+                    className="ap__search"
+                    style={{ maxWidth: 180 }}
                   />
-                  <span className="label-text">Custom</span>
-                </label>
+                )}
               </div>
-              {useCustomRadius && (
-                <input 
-                  type="number" 
-                  min="1" 
-                  value={customRadius}
-                  onChange={(e) => setCustomRadius(e.target.value)}
-                  placeholder="Enter meters"
-                  className="form-input"
-                />
-              )}
             </div>
 
-            {/* Error Message */}
-            {generateError && (
-              <div className="alert alert-error">
-                {generateError}
+            {/* Radius */}
+            <div className="ap__panel">
+              <div className="ap__panel-header">
+                <h2 className="ap__panel-title"><MapPin size={18} /> Allowed Location Radius</h2>
               </div>
-            )}
+              <div style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: useCustomRadius ? '0.85rem' : 0 }}>
+                  {[10, 20, 50].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      className={!useCustomRadius && radius === r ? 'ap__btn ap__btn--primary' : 'ap__btn ap__btn--outline'}
+                      onClick={() => { setRadius(r); setUseCustomRadius(false); }}
+                      style={{ minWidth: 90 }}
+                    >
+                      {r}m
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className={useCustomRadius ? 'ap__btn ap__btn--primary' : 'ap__btn ap__btn--outline'}
+                    onClick={() => setUseCustomRadius(true)}
+                    style={{ minWidth: 90 }}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {useCustomRadius && (
+                  <input
+                    type="number"
+                    min="1"
+                    value={customRadius}
+                    onChange={(e) => setCustomRadius(e.target.value)}
+                    placeholder="Enter meters"
+                    className="ap__search"
+                    style={{ maxWidth: 180 }}
+                  />
+                )}
+              </div>
+            </div>
 
-            {/* Location Error */}
-            {locationError && (
-              <div className="alert alert-error">
-                {locationError}
+            {/* Errors */}
+            {(generateError || locationError) && (
+              <div style={{ padding: '0.9rem 1.2rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 10, color: '#ef4444', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertCircle size={18} /> {generateError || locationError}
               </div>
             )}
 
             {/* Generate Button */}
-            <button 
+            <button
+              className="ap__btn ap__btn--primary"
               onClick={handleGenerateQR}
               disabled={generatingQR || locationLoading || !selectedSessionId}
-              className="btn btn-primary btn-large"
+              style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', fontWeight: 700, gap: 8 }}
             >
-              {generatingQR ? 'Generating QR...' : 'Generate QR Code'}
+              {generatingQR ? (
+                <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> Generating QR…</>
+              ) : (
+                <><QrCode size={18} /> Generate QR Code</>
+              )}
             </button>
-          </div>
+          </motion.div>
         )}
 
-        {/* QR Display Panel */}
+        {/* ── QR Display ───────────────────────────────────────────── */}
         {showQRDisplay && qrData && (
-          <div className="qr-display-panel">
-            <div className="qr-header">
-              <h2>Active QR Code</h2>
-              <div className={`status-badge ${timeRemaining === 'EXPIRED' ? 'expired' : 'active'}`}>
-                {timeRemaining === 'EXPIRED' ? 'EXPIRED' : timeRemaining}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+          >
+            {/* Status Bar */}
+            <div className="ap__stats" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+              <div className="ap__stat">
+                <span className="ap__stat-label">Status</span>
+                <span className="ap__stat-value" style={{ color: timeRemaining === 'EXPIRED' ? '#ef4444' : '#10b981' }}>
+                  {timeRemaining === 'EXPIRED' ? 'Expired' : 'Active'}
+                </span>
+              </div>
+              <div className="ap__stat">
+                <span className="ap__stat-label">Time Remaining</span>
+                <span className="ap__stat-value" style={{ fontFamily: 'monospace', fontSize: '1.5rem' }}>
+                  {timeRemaining || '--:--'}
+                </span>
+              </div>
+              <div className="ap__stat">
+                <span className="ap__stat-label">Students Attended</span>
+                <span className="ap__stat-value">{attendanceCount}</span>
               </div>
             </div>
 
-            {/* QR Code Display */}
-            <div className="qr-code-container">
-              <QRCodeCanvas 
-                value={qrData}
-                size={300}
-                level="H"
-                includeMargin={true}
-              />
-            </div>
+            {/* QR Code Panel */}
+            <div className="ap__panel">
+              <div className="ap__panel-header">
+                <h2 className="ap__panel-title"><QrCode size={18} /> Active QR Code</h2>
+                <span className={timeRemaining === 'EXPIRED' ? 'ap__badge ap__badge--error' : 'ap__badge ap__badge--active'}>
+                  {timeRemaining === 'EXPIRED' ? 'EXPIRED' : timeRemaining}
+                </span>
+              </div>
+              <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                <div style={{ background: '#fff', padding: '1rem', borderRadius: 12 }}>
+                  <QRCodeCanvas value={qrData} size={280} level="H" includeMargin={true} />
+                </div>
 
-            {/* Attendance Count */}
-            <div className="attendance-info">
-              <h3>Live Attendance Count</h3>
-              <div className="attendance-count">
-                <div className="count-number">{attendanceCount}</div>
-                <div className="count-label">Students Attended</div>
+                {/* Live attendance count */}
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>Live Attendance Count</p>
+                  <div style={{ fontSize: '3rem', fontWeight: 800, background: 'linear-gradient(135deg, #319cb5, #67d4ed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    {attendanceCount}
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>Students Attended</p>
+                </div>
               </div>
             </div>
 
             {/* Location Info */}
             {currentLocation && (
-              <div className="location-info">
-                <p>
-                  <strong>Faculty Location:</strong><br/>
-                  Lat: {currentLocation.latitude.toFixed(6)}<br/>
-                  Lng: {currentLocation.longitude.toFixed(6)}<br/>
-                  Radius: {radius}m
-                </p>
+              <div className="ap__panel">
+                <div className="ap__panel-header">
+                  <h2 className="ap__panel-title"><MapPin size={18} /> Faculty Location</h2>
+                </div>
+                <div style={{ padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', fontSize: '0.88rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Latitude</span>
+                    <p style={{ margin: '0.25rem 0 0', fontWeight: 600, fontFamily: 'monospace' }}>{currentLocation.latitude.toFixed(6)}</p>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Longitude</span>
+                    <p style={{ margin: '0.25rem 0 0', fontWeight: 600, fontFamily: 'monospace' }}>{currentLocation.longitude.toFixed(6)}</p>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>Radius</span>
+                    <p style={{ margin: '0.25rem 0 0', fontWeight: 600 }}>{radius}m</p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Regenerate Button */}
-            <button 
+            {/* Regenerate */}
+            <button
+              className="ap__btn ap__btn--outline"
               onClick={handleRegenerateQR}
-              className="btn btn-secondary"
+              style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', gap: 8 }}
             >
-              Regenerate QR Code
+              <RefreshCw size={18} /> Regenerate QR Code
             </button>
-          </div>
+          </motion.div>
         )}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 

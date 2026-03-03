@@ -51,7 +51,8 @@ function Home() {
               QR Attendance Platform
             </motion.span>
             <motion.h2 className="home__hero-title" variants={fadeInUp}>
-              Attendance, But Make It Effortless
+              Simple for Students,<br />
+              <span className="home__hero-title-highlight">Powerful for Institutions.</span>
             </motion.h2>
             <motion.p className="home__hero-description" variants={fadeInUp}>
               A secure and efficient solution for managing student attendance in academic institutions.

@@ -1,11 +1,12 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, MapPin, Clock, Circle, Pencil, Trash2, Lock, XCircle, Search, X, CheckCircle, Calendar, Loader, Plus } from 'lucide-react';
+import { BookOpen, MapPin, Clock, Circle, Pencil, Trash2, Lock, XCircle, Search, X, CheckCircle, Calendar, Loader, Plus, ArrowLeft } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
-import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from '../animations/animationConfig';
+import { fadeInUp, staggerContainer } from '../animations/animationConfig';
 import '../styles/dashboard.css';
+import '../styles/admin-pages.css';
 
 function FacultySessions() {
   const navigate = useNavigate();
@@ -34,887 +35,337 @@ function FacultySessions() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [selectedSession, setSelectedSession] = useState(null);
-  const [newSession, setNewSession] = useState({
-    subject: '',
-    location: '',
-    startTime: '',
-    duration: 60,
-    courseId: ''
-  });
+  const [newSession, setNewSession] = useState({ subject: '', location: '', startTime: '', duration: 60, courseId: '' });
   const [courseSearch, setCourseSearch] = useState('');
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
-  const [editSession, setEditSession] = useState({
-    subject: '',
-    location: '',
-    startTime: '',
-    duration: 60
-  });
+  const [editSession, setEditSession] = useState({ subject: '', location: '', startTime: '', duration: 60 });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     const fetchSessions = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/session`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
+        const response = await fetch(`${API_BASE_URL}/session`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
           const data = await response.json();
           const allSessions = data.data || [];
-          const facultySessions = allSessions.filter(s => s.facultyId === user?.id);
-          setSessions(facultySessions);
-        } else {
-          setError('Failed to fetch sessions');
-        }
-      } catch (err) {
-        console.error('Error fetching sessions:', err);
-        setError('Error loading sessions');
-      } finally {
-        setLoading(false);
-      }
+          setSessions(allSessions.filter(s => s.facultyId === user?.id));
+        } else { setError('Failed to fetch sessions'); }
+      } catch (err) { console.error('Error fetching sessions:', err); setError('Error loading sessions'); }
+      finally { setLoading(false); }
     };
-
-    if (token) {
-      fetchSessions();
-    }
+    if (token) fetchSessions();
   }, [token, user?.id]);
 
-  // Fetch faculty's courses from API
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/faculty/my-courses`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setCourses(data.data || []);
-        }
-      } catch (err) {
-        console.error('Error fetching courses:', err);
-      }
+        const response = await fetch(`${API_BASE_URL}/faculty/my-courses`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (response.ok) { const data = await response.json(); setCourses(data.data || []); }
+      } catch (err) { console.error('Error fetching courses:', err); }
     };
     if (token) fetchCourses();
   }, [token]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = (dateString) => new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  const handleGenerateQR = (sessionId) => {
-    navigate(`/faculty/qr-generation?sessionId=${sessionId}`);
-  };
+  const handleGenerateQR = (sessionId) => navigate(`/faculty/qr-generation?sessionId=${sessionId}`);
 
   const handleOpenEdit = (session) => {
     const date = new Date(session.startTime);
     const localIso = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    setEditSession({
-      subject: session.subject,
-      location: session.location,
-      startTime: localIso,
-      duration: session.duration || 60
-    });
-    setSelectedSession(session);
-    setEditError(null);
-    setShowEditModal(true);
+    setEditSession({ subject: session.subject, location: session.location, startTime: localIso, duration: session.duration || 60 });
+    setSelectedSession(session); setEditError(null); setShowEditModal(true);
   };
 
   const handleEditSession = async (e) => {
-    e.preventDefault();
-    setEditLoading(true);
-    setEditError(null);
-
+    e.preventDefault(); setEditLoading(true); setEditError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          subject: editSession.subject.trim(),
-          location: editSession.location.trim(),
-          startTime: editSession.startTime,
-          duration: parseInt(editSession.duration)
-        })
-      });
-
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: editSession.subject.trim(), location: editSession.location.trim(), startTime: editSession.startTime, duration: parseInt(editSession.duration) }) });
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update session');
-      }
-
-      setSessions((prev) =>
-        prev.map((s) => (s.id === selectedSession.id ? data.data : s))
-      );
-      setShowEditModal(false);
-      setSelectedSession(null);
-    } catch (err) {
-      setEditError(err.message || 'Failed to update session');
-    } finally {
-      setEditLoading(false);
-    }
+      if (!response.ok) throw new Error(data.message || 'Failed to update session');
+      setSessions(prev => prev.map(s => s.id === selectedSession.id ? data.data : s));
+      setShowEditModal(false); setSelectedSession(null);
+    } catch (err) { setEditError(err.message); } finally { setEditLoading(false); }
   };
 
-  const handleOpenDelete = (session) => {
-    setSelectedSession(session);
-    setDeleteError(null);
-    setShowDeleteModal(true);
-  };
-
-  // ── Close Session ──────────────────────────────────────────────────────────
-  const handleOpenClose = (session) => {
-    setSelectedSession(session);
-    setCloseError(null);
-    setShowCloseModal(true);
-  };
+  const handleOpenDelete = (session) => { setSelectedSession(session); setDeleteError(null); setShowDeleteModal(true); };
+  const handleOpenClose = (session) => { setSelectedSession(session); setCloseError(null); setShowCloseModal(true); };
+  const handleOpenCancel = (session) => { setSelectedSession(session); setCancelReason(''); setCancelError(null); setShowCancelModal(true); };
 
   const handleCloseSession = async () => {
-    setCloseLoading(true);
-    setCloseError(null);
+    setCloseLoading(true); setCloseError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}/close`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}/close`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to close session');
-      setSessions((prev) =>
-        prev.map((s) => s.id === selectedSession.id ? { ...s, status: 'closed' } : s)
-      );
-      setShowCloseModal(false);
-      setSelectedSession(null);
-    } catch (err) {
-      setCloseError(err.message || 'Failed to close session');
-    } finally {
-      setCloseLoading(false);
-    }
-  };
-
-  // ── Cancel Session (HFR23) ─────────────────────────────────────────────────
-  const handleOpenCancel = (session) => {
-    setSelectedSession(session);
-    setCancelReason('');
-    setCancelError(null);
-    setShowCancelModal(true);
+      setSessions(prev => prev.map(s => s.id === selectedSession.id ? { ...s, status: 'closed' } : s));
+      setShowCloseModal(false); setSelectedSession(null);
+    } catch (err) { setCloseError(err.message); } finally { setCloseLoading(false); }
   };
 
   const handleCancelSession = async () => {
-    setCancelLoading(true);
-    setCancelError(null);
+    setCancelLoading(true); setCancelError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}/cancel`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ reason: cancelReason.trim() || 'Cancelled by faculty' })
-      });
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}/cancel`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ reason: cancelReason.trim() || 'Cancelled by faculty' }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to cancel session');
-      setSessions((prev) =>
-        prev.map((s) => s.id === selectedSession.id ? { ...s, status: 'cancelled' } : s)
-      );
-      setShowCancelModal(false);
-      setSelectedSession(null);
-    } catch (err) {
-      setCancelError(err.message || 'Failed to cancel session');
-    } finally {
-      setCancelLoading(false);
-    }
+      setSessions(prev => prev.map(s => s.id === selectedSession.id ? { ...s, status: 'cancelled' } : s));
+      setShowCancelModal(false); setSelectedSession(null);
+    } catch (err) { setCancelError(err.message); } finally { setCancelLoading(false); }
   };
 
   const handleDeleteSession = async () => {
-    setDeleteLoading(true);
-    setDeleteError(null);
-
+    setDeleteLoading(true); setDeleteError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete session');
-      }
-
-      setSessions((prev) => prev.filter((s) => s.id !== selectedSession.id));
-      setShowDeleteModal(false);
-      setSelectedSession(null);
-    } catch (err) {
-      setDeleteError(err.message || 'Failed to delete session');
-    } finally {
-      setDeleteLoading(false);
-    }
+      if (!response.ok) throw new Error(data.message || 'Failed to delete session');
+      setSessions(prev => prev.filter(s => s.id !== selectedSession.id));
+      setShowDeleteModal(false); setSelectedSession(null);
+    } catch (err) { setDeleteError(err.message); } finally { setDeleteLoading(false); }
   };
 
   const handleOpenCreate = () => {
     const now = new Date();
     const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    setNewSession({
-      subject: '',
-      location: '',
-      startTime: localIso,
-      duration: 60,
-      courseId: ''
-    });
-    setCourseSearch('');
-    setShowCourseDropdown(false);
-    setCreateError(null);
-    setShowCreateModal(true);
+    setNewSession({ subject: '', location: '', startTime: localIso, duration: 60, courseId: '' });
+    setCourseSearch(''); setShowCourseDropdown(false); setCreateError(null); setShowCreateModal(true);
   };
 
   const handleCreateSession = async (e) => {
-    e.preventDefault();
-    setCreateLoading(true);
-    setCreateError(null);
-
+    e.preventDefault(); setCreateLoading(true); setCreateError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          subject: newSession.subject.trim(),
-          location: newSession.location.trim(),
-          startTime: newSession.startTime,
-          duration: parseInt(newSession.duration),
-          courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined
-        })
-      });
-
+      const response = await fetch(`${API_BASE_URL}/session`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: newSession.subject.trim(), location: newSession.location.trim(), startTime: newSession.startTime, duration: parseInt(newSession.duration), courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined }) });
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create session');
-      }
-
-      const createdSession = data.data;
-      setSessions((prev) => [createdSession, ...prev]);
+      if (!response.ok) throw new Error(data.message || 'Failed to create session');
+      setSessions(prev => [data.data, ...prev]);
       setShowCreateModal(false);
-    } catch (err) {
-      setCreateError(err.message || 'Failed to create session');
-    } finally {
-      setCreateLoading(false);
-    }
+    } catch (err) { setCreateError(err.message); } finally { setCreateLoading(false); }
   };
 
-  const handleBack = () => {
-    navigate('/faculty-dashboard');
-  };
+  const filtered = sessions.filter(s => {
+    const matchSearch = s.subject?.toLowerCase().includes(searchTerm.toLowerCase()) || s.location?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus = statusFilter === 'all' || s.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const statusCounts = { all: sessions.length, active: sessions.filter(s => s.status === 'active').length, closed: sessions.filter(s => s.status === 'closed').length, cancelled: sessions.filter(s => s.status === 'cancelled').length };
+
+  /* ═══ Modal Overlay Helper ═══ */
+  const ModalOverlay = ({ children, onClose }) => (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={onClose}>
+      <div className="ap__panel" style={{ width: '100%', maxWidth: '520px', margin: 0 }} onClick={e => e.stopPropagation()}>{children}</div>
+    </div>
+  );
 
   return (
-    <motion.div
-      className="dashboard"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <div className="dashboard__objects" aria-hidden="true">
-        <span className="dashboard__object dashboard__object--sphere" />
-        <span className="dashboard__object dashboard__object--torus" />
-        <span className="dashboard__object dashboard__object--diamond" />
+    <motion.div className="dashboard ap" variants={staggerContainer} initial="hidden" animate="visible">
+      <div className="ap__objects" aria-hidden="true">
+        <span className="ap__object ap__object--a" />
+        <span className="ap__object ap__object--b" />
+        <span className="ap__object ap__object--c" />
       </div>
-      <motion.header
-        className="dashboard__header"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div>
-          <h1 className="dashboard__title"><BookOpen size={28} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }} />My Class Sessions</h1>
-          <p className="dashboard__subtitle">Manage and monitor all your active class sessions</p>
-        </div>
-        <motion.button
-          className="dashboard__button dashboard__button--secondary"
-          onClick={handleBack}
-          whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 320, damping: 24 } }}
-          whileTap={{ scale: 0.96 }}
-        >
-          ← Back
-        </motion.button>
-      </motion.header>
-
-      <main>
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ fontSize: '1.1rem', color: 'var(--color-text-secondary)' }}><Loader size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Loading sessions...</p>
+      <div className="ap__inner">
+        {/* Header */}
+        <motion.div className="ap__header" variants={fadeInUp}>
+          <div className="ap__header-left">
+            <button className="ap__back-btn" onClick={() => navigate('/faculty-dashboard')}><ArrowLeft size={16} /> Back</button>
+            <div>
+              <p className="ap__eyebrow">Faculty</p>
+              <h1 className="ap__title">Class Sessions</h1>
+              <p className="ap__subtitle">Manage and monitor all your class sessions</p>
+            </div>
           </div>
-        )}
-
-        {error && (
-          <div style={{
-            padding: '1.5rem',
-            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-            border: '1px solid #ff6b6b',
-            borderRadius: '10px',
-            color: '#ff6b6b',
-            marginBottom: '2rem'
-          }}>
-            <XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{error}
+          <div className="ap__header-actions">
+            <button className="ap__btn ap__btn--primary" onClick={handleOpenCreate}><Plus size={16} /> New Session</button>
           </div>
-        )}
+        </motion.div>
 
-        {!loading && !error && sessions.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>No sessions found</h3>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>You haven't created any sessions yet.</p>
-            <button
-              className="dashboard__button dashboard__button--primary"
-              onClick={handleBack}
-            >
-              Return to Dashboard
-            </button>
+        {/* Stats */}
+        <motion.div className="ap__stats" variants={fadeInUp}>
+          {[
+            { label: 'Total', value: statusCounts.all, color: '#319cb5' },
+            { label: 'Active', value: statusCounts.active, color: '#10b981' },
+            { label: 'Closed', value: statusCounts.closed, color: '#ef4444' },
+            { label: 'Cancelled', value: statusCounts.cancelled, color: '#f59e0b' },
+          ].map((s, i) => (
+            <div className="ap__stat" key={i}>
+              <p className="ap__stat-label">{s.label}</p>
+              <p className="ap__stat-value" style={{ background: `linear-gradient(135deg, ${s.color}, ${s.color}cc)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{s.value}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div className="ap__panel" variants={fadeInUp}>
+          <div className="ap__filters">
+            <input className="ap__search" placeholder="Search sessions..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+            <select className="ap__select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="closed">Closed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
           </div>
-        )}
 
-        {!loading && !error && sessions.length > 0 && (
-          <motion.div
-            className="dashboard__grid"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div className="dashboard__card dashboard__card--clickable" onClick={handleOpenCreate} role="button" tabIndex={0} onKeyPress={(e) => e.key === 'Enter' && handleOpenCreate()} style={{ cursor: 'pointer', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
-              variants={fadeInUp}
-              whileHover={{ y: -10, scale: 1.02, boxShadow: '0 20px 50px rgba(49,156,181,0.22)', transition: { type: 'spring', stiffness: 280, damping: 22 } }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.9 }}><Plus size={40} /></div>
-              <h3 className="dashboard__card-title">Add New Session</h3>
-              <p className="dashboard__card-text">Create a new class session with subject, location, and time.</p>
-              <button className="dashboard__card-action" style={{ marginTop: '1.2rem' }}>
-                Create Session →
-              </button>
-            </motion.div>
-            {sessions.map((session) => (
-              <motion.div key={session.id} className="dashboard__card"
-                variants={fadeInUp}
-                whileHover={{ y: -6, boxShadow: '0 16px 40px rgba(49,156,181,0.18)', transition: { type: 'spring', stiffness: 280, damping: 24 } }}
-              >
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    margin: '0 0 0.25rem 0', 
-                    fontSize: '1.3rem',
-                    fontWeight: '700',
-                    color: 'var(--color-text)'
-                  }}>
-                    {session.subject}
-                  </h3>
-                  {session.course?.name && (
-                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--color-accent)', fontWeight: '600' }}>
-                      <BookOpen size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{session.course.name} ({session.course.code})
-                    </p>
-                  )}
-
-                  <div style={{ marginBottom: '1rem', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
-                    <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
-                      <MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /><strong>{session.location}</strong>
-                    </p>
-                    <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
-                      <Clock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{formatDate(session.startTime)}
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '1rem' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.4rem 1rem',
-                      borderRadius: '20px',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      backgroundColor: session.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : session.status === 'cancelled' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: session.status === 'active' ? '#10b981' : session.status === 'cancelled' ? '#f59e0b' : '#ef4444',
-                      border: `1px solid ${session.status === 'active' ? '#10b981' : session.status === 'cancelled' ? '#f59e0b' : '#ef4444'}`
-                    }}>
-                      <span style={{ fontSize: '1.1em' }}>{session.status === 'active' ? <Circle size={14} style={{ fill: '#22c55e', color: '#22c55e' }} /> : session.status === 'cancelled' ? <Circle size={14} style={{ fill: '#eab308', color: '#eab308' }} /> : <Circle size={14} style={{ fill: '#ef4444', color: '#ef4444' }} />}</span>
-                      {session.status === 'active' ? 'Active' : session.status === 'cancelled' ? 'Cancelled' : 'Closed'}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  className="dashboard__button dashboard__button--primary"
-                  onClick={() => handleGenerateQR(session.id)}
-                  disabled={session.status !== 'active'}
-                  style={{
-                    opacity: session.status !== 'active' ? 0.5 : 1,
-                    cursor: session.status !== 'active' ? 'not-allowed' : 'pointer',
-                    marginTop: '1.5rem',
-                    width: '100%'
-                  }}
-                >
-                  Generate QR →
-                </button>
-
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                  <button
-                    className="dashboard__button dashboard__button--secondary"
-                    onClick={() => handleOpenEdit(session)}
-                    style={{ flex: 1 }}
-                    disabled={session.status !== 'active'}
-                  >
-                    <Pencil size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Edit
-                  </button>
-                  <button
-                    className="dashboard__button"
-                    onClick={() => handleOpenDelete(session)}
-                    style={{
-                      flex: 1,
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      color: '#ef4444',
-                      border: '1px solid #ef4444'
-                    }}
-                  >
-                    <Trash2 size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Delete
-                  </button>
-                </div>
-
-                {/* Close & Cancel — only for active sessions (HFR23) */}
-                {session.status === 'active' && (
-                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
-                    <button
-                      className="dashboard__button"
-                      onClick={() => handleOpenClose(session)}
-                      style={{
-                        flex: 1,
-                        backgroundColor: 'rgba(99, 102, 241, 0.12)',
-                        color: '#6366f1',
-                        border: '1px solid #6366f1'
-                      }}
-                    >
-                      <Lock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Close Session
-                    </button>
-                    <button
-                      className="dashboard__button"
-                      onClick={() => handleOpenCancel(session)}
-                      style={{
-                        flex: 1,
-                        backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                        color: '#f59e0b',
-                        border: '1px solid #f59e0b'
-                      }}
-                    >
-                      <XCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Cancel Class
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </main>
-
-      {showCreateModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: '12px',
-            padding: '2rem',
-            width: '100%',
-            maxWidth: '520px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h2 style={{ margin: '0 0 1rem 0' }}>Create New Session</h2>
-            <form onSubmit={handleCreateSession}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* Searchable Course Dropdown */}
-                <div style={{ position: 'relative' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '8px',
-                      padding: '0.55rem 0.75rem',
-                      backgroundColor: 'var(--color-surface)',
-                      cursor: 'text'
-                    }}
-                    onClick={() => setShowCourseDropdown(true)}
-                  >
-                    <span style={{ fontSize: '1rem', opacity: 0.6 }}><Search size={16} /></span>
-                    <input
-                      type="text"
-                      placeholder={newSession.courseId ? courses.find(c => c.id === parseInt(newSession.courseId))?.name || 'Search course...' : 'Search course...'}
-                      value={courseSearch}
-                      onChange={(e) => { setCourseSearch(e.target.value); setShowCourseDropdown(true); }}
-                      onFocus={() => setShowCourseDropdown(true)}
-                      style={{
-                        border: 'none',
-                        outline: 'none',
-                        background: 'transparent',
-                        flex: 1,
-                        fontSize: '0.95rem',
-                        color: 'var(--color-text)'
-                      }}
-                    />
-                    {newSession.courseId && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setNewSession(p=>({...p,courseId:'',subject:''})); setCourseSearch(''); }}
-                        style={{ background:'none', border:'none', cursor:'pointer', color:'var(--color-text-secondary)', fontSize:'1.1rem', lineHeight:1, padding:0 }}
-                      ><X size={14} /></button>
-                    )}
-                  </div>
-
-                  {/* Selected course badge */}
-                  {newSession.courseId && (() => {
-                    const sel = courses.find(c => c.id === parseInt(newSession.courseId));
-                    return sel ? (
-                      <div style={{ marginTop:'0.4rem', padding:'0.4rem 0.75rem', backgroundColor:'rgba(49,156,181,0.12)', borderRadius:'6px', fontSize:'0.82rem', color:'var(--color-accent)', fontWeight:600 }}>
-                        <CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{sel.name} ({sel.code}){sel.semester ? ` · Sem ${sel.semester}` : ''} — {sel.department_name}
-                      </div>
-                    ) : null;
-                  })()}
-
-                  {/* Dropdown list */}
-                  {showCourseDropdown && (
-                    <>
-                      <div style={{ position:'fixed', inset:0, zIndex:10 }} onClick={() => setShowCourseDropdown(false)} />
-                      <div style={{
-                        position:'absolute', top:'calc(100% + 4px)', left:0, right:0,
-                        backgroundColor:'var(--color-surface)', border:'1px solid var(--color-border)',
-                        borderRadius:'8px', maxHeight:'220px', overflowY:'auto', zIndex:11,
-                        boxShadow:'0 8px 24px rgba(0,0,0,0.18)'
-                      }}>
-                        {(() => {
-                          const q = courseSearch.toLowerCase();
-                          const filtered = courses.filter(c =>
-                            c.name.toLowerCase().includes(q) ||
-                            c.code.toLowerCase().includes(q) ||
-                            (c.department_name || '').toLowerCase().includes(q) ||
-                            (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false)
-                          );
-                          if (filtered.length === 0) return (
-                            <div style={{ padding:'0.75rem 1rem', color:'var(--color-text-secondary)', fontSize:'0.88rem' }}>No courses found</div>
-                          );
-                          // Group by semester
-                          const bySem = filtered.reduce((acc, c) => {
-                            const key = c.semester ? `Semester ${c.semester}` : 'General';
-                            if (!acc[key]) acc[key] = [];
-                            acc[key].push(c);
-                            return acc;
-                          }, {});
-                          return Object.entries(bySem).map(([semLabel, items]) => (
-                            <div key={semLabel}>
-                              <div style={{ padding:'0.4rem 0.75rem', fontSize:'0.78rem', fontWeight:700, color:'var(--color-accent)', backgroundColor:'rgba(49,156,181,0.08)', letterSpacing:'0.05em', textTransform:'uppercase' }}>
-                                <Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}
-                              </div>
-                              {items.map(c => (
-                                <div
-                                  key={c.id}
-                                  onClick={() => {
-                                    setNewSession(p => ({ ...p, courseId: String(c.id), subject: `${c.name} (${c.code})` }));
-                                    setCourseSearch('');
-                                    setShowCourseDropdown(false);
-                                  }}
-                                  style={{
-                                    padding:'0.55rem 1rem', cursor:'pointer', fontSize:'0.9rem',
-                                    backgroundColor: newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'transparent',
-                                    borderBottom:'1px solid rgba(255,255,255,0.05)',
-                                    transition:'background 0.15s'
-                                  }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(49,156,181,0.1)'}
-                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = newSession.courseId===String(c.id)?'rgba(49,156,181,0.15)':'transparent'}
-                                >
-                                  <span style={{ fontWeight:600 }}>{c.name}</span>
-                                  <span style={{ color:'var(--color-text-secondary)', fontSize:'0.8rem', marginLeft:'0.4rem' }}>({c.code})</span>
-                                  <span style={{ float:'right', fontSize:'0.75rem', color:'var(--color-text-secondary)' }}>{c.department_name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ));
-                        })()}
-                      </div>
-                    </>
-                  )}
-                </div>
-                {/* Hidden required validation */}
-                <input type="text" required value={newSession.courseId} onChange={()=>{}} style={{ display:'none' }} />
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Location"
-                  value={newSession.location}
-                  onChange={(e) => setNewSession((prev) => ({ ...prev, location: e.target.value }))}
-                  required
-                />
-                <input
-                  type="datetime-local"
-                  className="form-input"
-                  value={newSession.startTime}
-                  onChange={(e) => setNewSession((prev) => ({ ...prev, startTime: e.target.value }))}
-                  required
-                />
-                <input
-                  type="number"
-                  className="form-input"
-                  min="1"
-                  max="240"
-                  placeholder="Duration (minutes)"
-                  value={newSession.duration}
-                  onChange={(e) => setNewSession((prev) => ({ ...prev, duration: e.target.value }))}
-                  required
-                />
-                {createError && (
-                  <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{createError}</div>
-                )}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="dashboard__button dashboard__button--secondary" onClick={() => setShowCreateModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="dashboard__button dashboard__button--primary" disabled={createLoading}>
-                  {createLoading ? 'Creating...' : 'Create Session'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showEditModal && selectedSession && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: '12px',
-            padding: '2rem',
-            width: '100%',
-            maxWidth: '520px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h2 style={{ margin: '0 0 1rem 0' }}>Edit Session</h2>
-            <form onSubmit={handleEditSession}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <select
-                  className="form-input"
-                  value={editSession.subject}
-                  onChange={(e) => setEditSession((prev) => ({ ...prev, subject: e.target.value }))}
-                  required
-                >
-                  <option value="">-- Select Subject --</option>
-                  {COURSES.map((c) => (
-                    <option key={c.code} value={`${c.name} (${c.code})`}>
-                      {c.name} ({c.code})
-                    </option>
+          {loading ? (
+            <div className="ap__empty"><Loader size={24} className="ap__empty-icon" style={{ animation: 'spin 1s linear infinite' }} /><p className="ap__empty-title">Loading sessions...</p></div>
+          ) : error ? (
+            <div className="ap__empty"><XCircle size={24} style={{ color: '#ef4444' }} /><p className="ap__empty-title" style={{ color: '#ef4444' }}>{error}</p></div>
+          ) : filtered.length === 0 ? (
+            <div className="ap__empty"><div className="ap__empty-icon"><BookOpen size={48} /></div><h3 className="ap__empty-title">No sessions found</h3><p className="ap__empty-text">{sessions.length === 0 ? "You haven't created any sessions yet." : 'No sessions match your filter.'}</p></div>
+          ) : (
+            <div className="ap__table-wrap">
+              <table className="ap__table">
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Location</th>
+                    <th>Start Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(session => (
+                    <tr key={session.id}>
+                      <td>
+                        <div className="ap__user-name">{session.subject}</div>
+                        {session.course?.name && <div className="ap__user-sub">{session.course.name} ({session.course.code})</div>}
+                      </td>
+                      <td><MapPin size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px', opacity: 0.6 }} />{session.location}</td>
+                      <td>{formatDate(session.startTime)}</td>
+                      <td><span className={`ap__badge ap__badge--${session.status === 'active' ? 'active' : session.status === 'cancelled' ? 'warn' : 'inactive'}`}>{session.status}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <button className="ap__btn ap__btn--primary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem' }} onClick={() => handleGenerateQR(session.id)} disabled={session.status !== 'active'}>QR</button>
+                          <button className="ap__btn ap__btn--outline" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem' }} onClick={() => handleOpenEdit(session)} disabled={session.status !== 'active'}><Pencil size={13} /></button>
+                          {session.status === 'active' && <>
+                            <button className="ap__btn ap__btn--ghost" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem' }} onClick={() => handleOpenClose(session)}><Lock size={13} /></button>
+                            <button className="ap__btn ap__btn--ghost" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem', color: '#f59e0b' }} onClick={() => handleOpenCancel(session)}><XCircle size={13} /></button>
+                          </>}
+                          <button className="ap__btn ap__btn--danger" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem' }} onClick={() => handleOpenDelete(session)}><Trash2 size={13} /></button>
+                        </div>
+                      </td>
+                    </tr>
                   ))}
-                </select>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Location"
-                  value={editSession.location}
-                  onChange={(e) => setEditSession((prev) => ({ ...prev, location: e.target.value }))}
-                  required
-                />
-                <input
-                  type="datetime-local"
-                  className="form-input"
-                  value={editSession.startTime}
-                  onChange={(e) => setEditSession((prev) => ({ ...prev, startTime: e.target.value }))}
-                  required
-                />
-                <input
-                  type="number"
-                  className="form-input"
-                  min="1"
-                  max="240"
-                  placeholder="Duration (minutes)"
-                  value={editSession.duration}
-                  onChange={(e) => setEditSession((prev) => ({ ...prev, duration: e.target.value }))}
-                  required
-                />
-                {editError && (
-                  <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{editError}</div>
-                )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      {/* ── Create Session Modal ── */}
+      {showCreateModal && (
+        <ModalOverlay onClose={() => setShowCreateModal(false)}>
+          <h2 className="ap__panel-title" style={{ marginBottom: '1.25rem' }}>Create New Session</h2>
+          <form onSubmit={handleCreateSession}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ position: 'relative' }}>
+                <div className="ap__search" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 0.75rem', cursor: 'text' }} onClick={() => setShowCourseDropdown(true)}>
+                  <Search size={16} style={{ opacity: 0.6 }} />
+                  <input type="text" placeholder={newSession.courseId ? courses.find(c => c.id === parseInt(newSession.courseId))?.name || 'Search course...' : 'Search course...'} value={courseSearch} onChange={e => { setCourseSearch(e.target.value); setShowCourseDropdown(true); }} onFocus={() => setShowCourseDropdown(true)} style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontSize: '0.9rem', color: 'var(--color-text)' }} />
+                  {newSession.courseId && <button type="button" onClick={e => { e.stopPropagation(); setNewSession(p => ({ ...p, courseId: '', subject: '' })); setCourseSearch(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)' }}><X size={14} /></button>}
+                </div>
+                {newSession.courseId && (() => { const sel = courses.find(c => c.id === parseInt(newSession.courseId)); return sel ? <div style={{ marginTop: '0.4rem', padding: '0.4rem 0.75rem', background: 'rgba(49,156,181,0.12)', borderRadius: '6px', fontSize: '0.82rem', color: 'var(--color-primary)', fontWeight: 600 }}><CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{sel.name} ({sel.code}){sel.semester ? ` · Sem ${sel.semester}` : ''} — {sel.department_name}</div> : null; })()}
+                {showCourseDropdown && <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setShowCourseDropdown(false)} />
+                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-surface)', border: '1px solid rgba(49,156,181,0.25)', borderRadius: '10px', maxHeight: '220px', overflowY: 'auto', zIndex: 11, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+                    {(() => {
+                      const q = courseSearch.toLowerCase();
+                      const filtered = courses.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.department_name || '').toLowerCase().includes(q) || (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false));
+                      if (filtered.length === 0) return <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontSize: '0.88rem' }}>No courses found</div>;
+                      const bySem = filtered.reduce((acc, c) => { const key = c.semester ? `Semester ${c.semester}` : 'General'; if (!acc[key]) acc[key] = []; acc[key].push(c); return acc; }, {});
+                      return Object.entries(bySem).map(([semLabel, items]) => (
+                        <div key={semLabel}>
+                          <div style={{ padding: '0.4rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(49,156,181,0.08)', letterSpacing: '0.05em', textTransform: 'uppercase' }}><Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}</div>
+                          {items.map(c => (
+                            <div key={c.id} onClick={() => { setNewSession(p => ({ ...p, courseId: String(c.id), subject: `${c.name} (${c.code})` })); setCourseSearch(''); setShowCourseDropdown(false); }} style={{ padding: '0.55rem 1rem', cursor: 'pointer', fontSize: '0.9rem', background: newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(49,156,181,0.1)'} onMouseLeave={e => e.currentTarget.style.background = newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'transparent'}>
+                              <span style={{ fontWeight: 600 }}>{c.name}</span> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>({c.code})</span>
+                              <span style={{ float: 'right', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{c.department_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </>}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="dashboard__button dashboard__button--secondary" onClick={() => { setShowEditModal(false); setSelectedSession(null); }}>
-                  Cancel
-                </button>
-                <button type="submit" className="dashboard__button dashboard__button--primary" disabled={editLoading}>
-                  {editLoading ? 'Updating...' : 'Update Session'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+              <input type="text" required value={newSession.courseId} onChange={() => {}} style={{ display: 'none' }} />
+              <input className="ap__search" placeholder="Location" value={newSession.location} onChange={e => setNewSession(p => ({ ...p, location: e.target.value }))} required />
+              <input className="ap__search" type="datetime-local" value={newSession.startTime} onChange={e => setNewSession(p => ({ ...p, startTime: e.target.value }))} required />
+              <input className="ap__search" type="number" min="1" max="240" placeholder="Duration (minutes)" value={newSession.duration} onChange={e => setNewSession(p => ({ ...p, duration: e.target.value }))} required />
+              {createError && <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{createError}</div>}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button type="button" className="ap__btn ap__btn--ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="submit" className="ap__btn ap__btn--primary" disabled={createLoading}>{createLoading ? 'Creating...' : 'Create Session'}</button>
+            </div>
+          </form>
+        </ModalOverlay>
       )}
 
-      {/* ── Close Session Modal ────────────────────────────────────────────── */}
+      {/* ── Edit Session Modal ── */}
+      {showEditModal && selectedSession && (
+        <ModalOverlay onClose={() => { setShowEditModal(false); setSelectedSession(null); }}>
+          <h2 className="ap__panel-title" style={{ marginBottom: '1.25rem' }}>Edit Session</h2>
+          <form onSubmit={handleEditSession}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <input className="ap__search" placeholder="Subject" value={editSession.subject} onChange={e => setEditSession(p => ({ ...p, subject: e.target.value }))} required />
+              <input className="ap__search" placeholder="Location" value={editSession.location} onChange={e => setEditSession(p => ({ ...p, location: e.target.value }))} required />
+              <input className="ap__search" type="datetime-local" value={editSession.startTime} onChange={e => setEditSession(p => ({ ...p, startTime: e.target.value }))} required />
+              <input className="ap__search" type="number" min="1" max="240" placeholder="Duration" value={editSession.duration} onChange={e => setEditSession(p => ({ ...p, duration: e.target.value }))} required />
+              {editError && <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{editError}</div>}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button type="button" className="ap__btn ap__btn--ghost" onClick={() => { setShowEditModal(false); setSelectedSession(null); }}>Cancel</button>
+              <button type="submit" className="ap__btn ap__btn--primary" disabled={editLoading}>{editLoading ? 'Saving...' : 'Save Changes'}</button>
+            </div>
+          </form>
+        </ModalOverlay>
+      )}
+
+      {/* ── Close Session Modal ── */}
       {showCloseModal && selectedSession && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '1rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: '12px', padding: '2rem',
-            width: '100%', maxWidth: '420px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h2 style={{ margin: '0 0 1rem 0', color: '#6366f1' }}><Lock size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />Close Session</h2>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-              Close <strong>"{selectedSession.subject}"</strong>?<br />
-              Students who haven't scanned QR will be <strong>auto-marked Absent</strong>.
-            </p>
-            {closeError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{closeError}</div>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button
-                className="dashboard__button dashboard__button--secondary"
-                onClick={() => { setShowCloseModal(false); setSelectedSession(null); }}
-                disabled={closeLoading}
-              >Back</button>
-              <button
-                className="dashboard__button"
-                onClick={handleCloseSession}
-                disabled={closeLoading}
-                style={{ backgroundColor: '#6366f1', color: 'white', border: 'none' }}
-              >{closeLoading ? 'Closing...' : <><Lock size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />Close Session</>}</button>
-            </div>
+        <ModalOverlay onClose={() => { setShowCloseModal(false); setSelectedSession(null); }}>
+          <h2 className="ap__panel-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Lock size={20} style={{ color: '#6366f1' }} /> Close Session</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>Close <strong>"{selectedSession.subject}"</strong>? No more QR scans will be accepted.</p>
+          {closeError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{closeError}</div>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <button className="ap__btn ap__btn--ghost" onClick={() => { setShowCloseModal(false); setSelectedSession(null); }} disabled={closeLoading}>Back</button>
+            <button className="ap__btn ap__btn--primary" onClick={handleCloseSession} disabled={closeLoading}>{closeLoading ? 'Closing...' : 'Close Session'}</button>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
-      {/* ── Cancel Session Modal (HFR23) ──────────────────────────────────── */}
+      {/* ── Cancel Session Modal ── */}
       {showCancelModal && selectedSession && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '1rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: '12px', padding: '2rem',
-            width: '100%', maxWidth: '440px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h2 style={{ margin: '0 0 0.5rem 0', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><XCircle size={22} /> Cancel Class</h2>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>
-              Cancel <strong>"{selectedSession.subject}"</strong>?<br />
-              Students who already scanned will be marked <strong>Excused</strong> —
-              their attendance % won't be affected.
-            </p>
-            <textarea
-              placeholder="Reason for cancellation (optional)"
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              rows={3}
-              style={{
-                width: '100%', padding: '0.75rem',
-                borderRadius: '8px', fontSize: '0.95rem',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-bg)',
-                color: 'var(--color-text)',
-                resize: 'vertical', boxSizing: 'border-box',
-                marginBottom: '1rem'
-              }}
-            />
-            {cancelError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{cancelError}</div>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button
-                className="dashboard__button dashboard__button--secondary"
-                onClick={() => { setShowCancelModal(false); setSelectedSession(null); }}
-                disabled={cancelLoading}
-              >Back</button>
-              <button
-                className="dashboard__button"
-                onClick={handleCancelSession}
-                disabled={cancelLoading}
-                style={{ backgroundColor: '#f59e0b', color: 'white', border: 'none' }}
-              >{cancelLoading ? 'Cancelling...' : <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><XCircle size={16} /> Cancel Class</span>}</button>
-            </div>
+        <ModalOverlay onClose={() => { setShowCancelModal(false); setSelectedSession(null); }}>
+          <h2 className="ap__panel-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b' }}><XCircle size={20} /> Cancel Class</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: '1.6' }}>Cancel <strong>"{selectedSession.subject}"</strong>? Students who already scanned will be marked <strong>Excused</strong>.</p>
+          <textarea className="ap__search" placeholder="Reason for cancellation (optional)" value={cancelReason} onChange={e => setCancelReason(e.target.value)} rows={3} style={{ resize: 'vertical', width: '100%', boxSizing: 'border-box', marginBottom: '1rem' }} />
+          {cancelError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{cancelError}</div>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <button className="ap__btn ap__btn--ghost" onClick={() => { setShowCancelModal(false); setSelectedSession(null); }} disabled={cancelLoading}>Back</button>
+            <button className="ap__btn ap__btn--danger" onClick={handleCancelSession} disabled={cancelLoading}>{cancelLoading ? 'Cancelling...' : 'Cancel Class'}</button>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
+      {/* ── Delete Session Modal ── */}
       {showDeleteModal && selectedSession && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-surface)',
-            borderRadius: '12px',
-            padding: '2rem',
-            width: '100%',
-            maxWidth: '420px',
-            border: '1px solid var(--color-border)'
-          }}>
-            <h2 style={{ margin: '0 0 1rem 0', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Trash2 size={22} /> Delete Session</h2>
-            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
-              Are you sure you want to delete the session <strong>"{selectedSession.subject}"</strong>? This action cannot be undone.
-            </p>
-            {deleteError && (
-              <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{deleteError}</div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button 
-                className="dashboard__button dashboard__button--secondary" 
-                onClick={() => { setShowDeleteModal(false); setSelectedSession(null); }}
-                disabled={deleteLoading}
-              >
-                Cancel
-              </button>
-              <button 
-                className="dashboard__button" 
-                onClick={handleDeleteSession}
-                disabled={deleteLoading}
-                style={{
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                {deleteLoading ? 'Deleting...' : <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Trash2 size={16} /> Delete</span>}
-              </button>
-            </div>
+        <ModalOverlay onClose={() => { setShowDeleteModal(false); setSelectedSession(null); }}>
+          <h2 className="ap__panel-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444' }}><Trash2 size={20} /> Delete Session</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: '1.6' }}>Are you sure you want to delete <strong>"{selectedSession.subject}"</strong>? This action cannot be undone.</p>
+          {deleteError && <div style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>{deleteError}</div>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+            <button className="ap__btn ap__btn--ghost" onClick={() => { setShowDeleteModal(false); setSelectedSession(null); }} disabled={deleteLoading}>Cancel</button>
+            <button className="ap__btn ap__btn--danger" onClick={handleDeleteSession} disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </motion.div>
   );

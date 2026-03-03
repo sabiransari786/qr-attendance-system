@@ -112,7 +112,7 @@ function PrivacyPolicy() {
           <section className="legal__section">
             <h2>9. Contact Us</h2>
             <p>
-              For privacy-related inquiries, contact us at <a href="mailto:privacy@qrattendance.com" className="legal__link">privacy@qrattendance.com</a>.
+              For privacy-related inquiries, contact us at <a href="mailto:qrattendancemanagement@gmail.com" className="legal__link">qrattendancemanagement@gmail.com</a>.
             </p>
           </section>
         </div>

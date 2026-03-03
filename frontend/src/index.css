@@ -51,6 +51,30 @@
   --student-card-action-border: rgba(255, 255, 255, 0.45);
   --student-card-action-text: #ffffff;
 
+  /* Status Colors (Dark default) */
+  --status-present-bg: rgba(16, 185, 129, 0.15);
+  --status-present-border: rgba(16, 185, 129, 0.35);
+  --status-present-text: #34d399;
+  --status-absent-bg: rgba(239, 68, 68, 0.15);
+  --status-absent-border: rgba(239, 68, 68, 0.35);
+  --status-absent-text: #f87171;
+  --status-late-bg: rgba(245, 158, 11, 0.15);
+  --status-late-border: rgba(245, 158, 11, 0.35);
+  --status-late-text: #fbbf24;
+  --status-warning-bg: rgba(245, 158, 11, 0.12);
+  --status-warning-border: rgba(245, 158, 11, 0.3);
+  --status-warning-text: #fbbf24;
+  --status-success-bg: rgba(16, 185, 129, 0.12);
+  --status-success-border: rgba(16, 185, 129, 0.3);
+  --status-success-text: #34d399;
+  --status-info-bg: rgba(59, 130, 246, 0.12);
+  --status-info-border: rgba(59, 130, 246, 0.3);
+  --status-info-text: #60a5fa;
+  --status-error-bg: rgba(239, 68, 68, 0.12);
+  --status-error-border: rgba(239, 68, 68, 0.3);
+  --status-error-text: #f87171;
+  --progress-bar-bg: rgba(255, 255, 255, 0.1);
+
   /* Typography */
   --font-primary: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, sans-serif;
@@ -99,6 +123,30 @@
   --student-card-action-bg: rgba(15, 23, 42, 0.08);
   --student-card-action-border: rgba(15, 23, 42, 0.2);
   --student-card-action-text: #0f172a;
+
+  /* Status Colors (Light) */
+  --status-present-bg: #d1fae5;
+  --status-present-border: #34d399;
+  --status-present-text: #065f46;
+  --status-absent-bg: #fee2e2;
+  --status-absent-border: #f87171;
+  --status-absent-text: #991b1b;
+  --status-late-bg: #fef3c7;
+  --status-late-border: #fbbf24;
+  --status-late-text: #92400e;
+  --status-warning-bg: #fef3c7;
+  --status-warning-border: #fbbf24;
+  --status-warning-text: #92400e;
+  --status-success-bg: #d1fae5;
+  --status-success-border: #34d399;
+  --status-success-text: #065f46;
+  --status-info-bg: #dbeafe;
+  --status-info-border: #3b82f6;
+  --status-info-text: #1e40af;
+  --status-error-bg: #fee2e2;
+  --status-error-border: #ef4444;
+  --status-error-text: #991b1b;
+  --progress-bar-bg: #e5e7eb;
 }
 
 * {

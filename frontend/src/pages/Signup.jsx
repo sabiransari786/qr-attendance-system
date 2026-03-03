@@ -67,6 +67,23 @@ function Signup() {
   const handleTogglePassword = () => setShowPassword(!showPassword);
   const handleToggleConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
 
+  // Password strength calculator
+  const passwordStrength = useMemo(() => {
+    const pw = formValues.password;
+    if (!pw) return { score: 0, label: "", color: "transparent" };
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[a-z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+    if (score <= 2) return { score: 1, label: "Weak", color: "#ef4444" };
+    if (score <= 4) return { score: 2, label: "Medium", color: "#f59e0b" };
+    return { score: 3, label: "Strong", color: "#22c55e" };
+  }, [formValues.password]);
+
   const filledCount = [
     formValues.fullName, formValues.email, formValues.rollNumber,
     formValues.contactNumber, formValues.department, formValues.semester,
@@ -375,9 +392,38 @@ function Signup() {
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                 </motion.button>
               </div>
+              {/* Password Strength Meter */}
+              {formValues.password && (
+                <div style={{ marginTop: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "4px", marginBottom: "0.3rem" }}>
+                    {[1, 2, 3].map((level) => (
+                      <div
+                        key={level}
+                        style={{
+                          flex: 1,
+                          height: "4px",
+                          borderRadius: "4px",
+                          background: passwordStrength.score >= level ? passwordStrength.color : "rgba(148,163,184,0.2)",
+                          transition: "background 0.3s ease",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    color: passwordStrength.color,
+                    letterSpacing: "0.03em",
+                    margin: 0,
+                  }}>
+                    {passwordStrength.label}
+                    {passwordStrength.score === 1 && " — Add uppercase, numbers & special characters"}
+                    {passwordStrength.score === 2 && " — Try adding special characters (!@#$)"}
+                    {passwordStrength.score === 3 && " — Your password is secure"}
+                  </p>
+                </div>
+              )}
             </motion.div>
-
-            {/* Confirm Password Field */}
             <motion.div className={`signup__form-group auth__input-group ${focusedField === 'confirmPassword' ? 'auth__input-group--focused' : ''} ${formValues.confirmPassword ? 'auth__input-group--filled' : ''}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.47, duration: 0.4 }}>
               <label className="signup__label" htmlFor="confirmPassword">Confirm Password</label>
               <div className="auth__input-wrapper signup__password-wrapper">
