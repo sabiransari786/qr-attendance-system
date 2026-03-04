@@ -409,16 +409,13 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
 
         // ---------------------------------------------------------------------
         // STEP 4.5: Course Enrollment Check
+        // If department and semester match (already validated above), student is eligible
+        // Skip strict enrollment table check - use department/semester matching instead
         // ---------------------------------------------------------------------
-        if (session.course_id) {
-            const [enrollment] = await connection.query(
-                `SELECT ce.id FROM course_enrollment ce
-                 WHERE ce.course_id = ? AND ce.student_id = ? AND ce.status = 'active'`,
-                [session.course_id, studentId]
-            );
-            if (!enrollment || enrollment.length === 0) {
-                throw new CourseEnrollmentError();
-            }
+        if (session.course_id && session.department_id && session.course_semester) {
+            // Department and semester already validated in STEP 3.5 and 3.6
+            // If we reach here, student is eligible for this course
+            // No need for explicit enrollment record
         }
 
         // ---------------------------------------------------------------------
