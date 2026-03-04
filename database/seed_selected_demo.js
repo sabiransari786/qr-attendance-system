@@ -48,6 +48,14 @@ const DEMO_TEACHER = {
   department: 'Computer Engineering',
 };
 
+const DEMO_TEACHER_2 = {
+  name: 'Prof. Neha Sharma',
+  email: 'neha.faculty@attendance.com',
+  contact: '9876500003',
+  teacherId: 'DEMO-FAC-002',
+  department: 'Computer Engineering',
+};
+
 const DEMO_STUDENT = {
   name: 'Aryan Verma',
   email: 'demo.student@attendance.com',
@@ -66,6 +74,15 @@ const SUBJECTS = [
   'Operating Systems (CO402)',
   'Computer Networks (CO502)',
   'Software Engineering (CO601)',
+];
+
+const SUBJECTS_2 = [
+  'Object Oriented Programming (CO302)',
+  'Microprocessors & Interfaces (CO503)',
+  'Digital Electronics (CO202)',
+  'Theory of Computation (CO403)',
+  'Machine Learning (CO602)',
+  'Cloud Computing (CO604)',
 ];
 
 const LOCATIONS = [
@@ -125,6 +142,44 @@ async function seedSelectedDemo() {
     [DEMO_TEACHER.name, DEMO_TEACHER.email, DEMO_TEACHER.contact, DEMO_TEACHER.teacherId, DEMO_TEACHER.department, teacherId, teacherId]
   );
   console.log(`   ✅ Teacher approved_users entry added\n`);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STEP 1B: Create/Update Demo Teacher 2 (Computer Engineering)
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log('── STEP 1B: Creating Demo Teacher 2 (CE) ──');
+
+  const [existingTeacher2] = await pool.query(
+    "SELECT id FROM users WHERE LOWER(email) = LOWER(?)", [DEMO_TEACHER_2.email]
+  );
+
+  let teacher2Id;
+  if (existingTeacher2.length > 0) {
+    teacher2Id = existingTeacher2[0].id;
+    await pool.query(
+      `UPDATE users SET password = ?, name = ?, department = ?, 
+       teacher_id = COALESCE(teacher_id, ?), contact_number = ?, is_active = TRUE, role = 'faculty'
+       WHERE id = ?`,
+      [hashedPassword, DEMO_TEACHER_2.name, DEMO_TEACHER_2.department, DEMO_TEACHER_2.teacherId, DEMO_TEACHER_2.contact, teacher2Id]
+    );
+    console.log(`   ✅ Teacher 2 updated: ${DEMO_TEACHER_2.email}`);
+  } else {
+    const [result] = await pool.query(
+      `INSERT INTO users (name, email, contact_number, password, role, teacher_id, department, is_active)
+       VALUES (?, ?, ?, ?, 'faculty', ?, ?, TRUE)`,
+      [DEMO_TEACHER_2.name, DEMO_TEACHER_2.email, DEMO_TEACHER_2.contact, hashedPassword, DEMO_TEACHER_2.teacherId, DEMO_TEACHER_2.department]
+    );
+    teacher2Id = result.insertId;
+    console.log(`   ✅ Teacher 2 created: ${DEMO_TEACHER_2.email}`);
+  }
+
+  // Approved users entry for teacher 2
+  await pool.query(
+    `INSERT INTO approved_users (name, email, contact_number, role, teacher_id, department, is_registered, registered_user_id)
+     VALUES (?, ?, ?, 'faculty', ?, ?, 1, ?)
+     ON DUPLICATE KEY UPDATE is_registered = 1, registered_user_id = ?, updated_at = NOW()`,
+    [DEMO_TEACHER_2.name, DEMO_TEACHER_2.email, DEMO_TEACHER_2.contact, DEMO_TEACHER_2.teacherId, DEMO_TEACHER_2.department, teacher2Id, teacher2Id]
+  );
+  console.log(`   ✅ Teacher 2 approved_users entry added\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STEP 2: Create/Update Demo Student Account
@@ -215,6 +270,56 @@ async function seedSelectedDemo() {
   console.log(`   ✅ ${sessionIds.length} sessions created (last 30 days)\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // STEP 3B: Create Sessions for Teacher 2 (last 30 days)
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log('── STEP 3B: Creating Sessions for Teacher 2 ──');
+
+  // Clean old demo sessions for this teacher
+  await pool.query(
+    `DELETE FROM sessions WHERE faculty_id = ? AND qr_code = 'DEMO-SEED-QR-T2'`,
+    [teacher2Id]
+  );
+
+  const session2Ids = [];
+  const session2Details = [];
+
+  for (let dayOffset = 1; dayOffset <= 30; dayOffset++) {
+    // Skip Sundays (dayOffset % 7 === 0)
+    if (dayOffset % 7 === 0) continue;
+
+    const subjectIdx = (dayOffset - 1) % SUBJECTS_2.length;
+    const hour = dayOffset % 2 === 0 ? 11 : 15; // Different times from Teacher 1
+    const status = dayOffset <= 2 ? 'active' : 'closed';
+
+    const [result] = await pool.query(
+      `INSERT INTO sessions (faculty_id, subject, location, start_time, end_time, status, qr_code, qr_expiry_time)
+       VALUES (?, ?, ?,
+         DATE_SUB(NOW(), INTERVAL ? DAY) + INTERVAL ? HOUR,
+         DATE_SUB(NOW(), INTERVAL ? DAY) + INTERVAL ? HOUR,
+         ?, 'DEMO-SEED-QR-T2',
+         DATE_SUB(NOW(), INTERVAL ? DAY) + INTERVAL ? HOUR
+       )`,
+      [
+        teacher2Id,
+        SUBJECTS_2[subjectIdx],
+        LOCATIONS[subjectIdx],
+        dayOffset, hour,
+        dayOffset, hour + 1,
+        status,
+        dayOffset, hour + 1,
+      ]
+    );
+    session2Ids.push(result.insertId);
+    session2Details.push({
+      id: result.insertId,
+      subject: SUBJECTS_2[subjectIdx],
+      dayOffset,
+      status,
+    });
+  }
+  console.log(`   ✅ ${session2Ids.length} sessions created for Teacher 2\n`);
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // STEP 4: Add Attendance Records for Demo Student
   // ═══════════════════════════════════════════════════════════════════════════
   console.log('── STEP 4: Adding Attendance Records ──');
@@ -251,8 +356,42 @@ async function seedSelectedDemo() {
   const lateCount = attendancePattern.slice(0, sessionIds.length).filter(s => s === 'late').length;
   const absentCount = attendancePattern.slice(0, sessionIds.length).filter(s => s === 'absent').length;
 
-  console.log(`   ✅ ${attendanceCount} attendance records added`);
+  console.log(`   ✅ ${attendanceCount} attendance records added (Teacher 1)`);
   console.log(`      Present: ${presentCount} | Late: ${lateCount} | Absent: ${absentCount}\n`);
+
+  // Attendance for Teacher 2 sessions
+  let attendance2Count = 0;
+  const attendancePattern2 = [
+    'present', 'present', 'present', 'late',    'present',
+    'present', 'present', 'absent',  'present', 'present',
+    'present', 'present', 'late',    'present', 'present',
+    'absent',  'present', 'present', 'present', 'present',
+    'present', 'late',    'present', 'present', 'present',
+    'present', 'present', 'present', 'absent',  'present',
+  ];
+
+  for (let i = 0; i < session2Ids.length; i++) {
+    const sessId = session2Ids[i];
+    const status = attendancePattern2[i % attendancePattern2.length];
+    const dayOffset = session2Details[i].dayOffset;
+
+    try {
+      await pool.query(
+        `INSERT INTO attendance (session_id, student_id, status, marked_at)
+         VALUES (?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY) + INTERVAL 12 HOUR)
+         ON DUPLICATE KEY UPDATE status = VALUES(status)`,
+        [sessId, studentId, status, dayOffset]
+      );
+      attendance2Count++;
+    } catch (err) { /* skip */ }
+  }
+
+  const present2Count = attendancePattern2.slice(0, session2Ids.length).filter(s => s === 'present').length;
+  const late2Count = attendancePattern2.slice(0, session2Ids.length).filter(s => s === 'late').length;
+  const absent2Count = attendancePattern2.slice(0, session2Ids.length).filter(s => s === 'absent').length;
+
+  console.log(`   ✅ ${attendance2Count} attendance records added (Teacher 2)`);
+  console.log(`      Present: ${present2Count} | Late: ${late2Count} | Absent: ${absent2Count}\n`);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // STEP 5: Add Manual Attendance Requests
@@ -345,32 +484,35 @@ async function seedSelectedDemo() {
   // ═══════════════════════════════════════════════════════════════════════════
   // SUMMARY
   // ═══════════════════════════════════════════════════════════════════════════
-  console.log('╔══════════════════════════════════════════════════════════╗');
-  console.log('║   ✅ SEED COMPLETE - SUMMARY                           ║');
-  console.log('╠══════════════════════════════════════════════════════════╣');
-  console.log('║                                                        ║');
-  console.log('║   Demo Teacher Account:                                ║');
-  console.log(`║     Name:      ${DEMO_TEACHER.name.padEnd(38)}║`);
-  console.log(`║     Email:     ${DEMO_TEACHER.email.padEnd(38)}║`);
-  console.log(`║     Password:  ${PASSWORD.padEnd(38)}║`);
-  console.log(`║     Teacher ID:${DEMO_TEACHER.teacherId.padEnd(38)}║`);
-  console.log(`║     Department:${DEMO_TEACHER.department.padEnd(38)}║`);
-  console.log('║                                                        ║');
-  console.log('║   Demo Student Account:                                ║');
-  console.log(`║     Name:      ${DEMO_STUDENT.name.padEnd(38)}║`);
-  console.log(`║     Email:     ${DEMO_STUDENT.email.padEnd(38)}║`);
-  console.log(`║     Password:  ${PASSWORD.padEnd(38)}║`);
-  console.log(`║     Student ID:${DEMO_STUDENT.studentId.padEnd(38)}║`);
-  console.log(`║     Department:${DEMO_STUDENT.department.padEnd(38)}║`);
-  console.log(`║     Semester:  ${DEMO_STUDENT.semester.padEnd(38)}║`);
-  console.log('║                                                        ║');
-  console.log('║   Data Created:                                        ║');
-  console.log(`║     Sessions:           ${String(sessionIds.length).padEnd(29)}║`);
-  console.log(`║     Attendance Records: ${String(attendanceCount).padEnd(29)}║`);
-  console.log(`║     Manual Requests:    ${String(requestCount).padEnd(29)}║`);
-  console.log(`║     Activity Logs:      ${String(activityCount).padEnd(29)}║`);
-  console.log('║                                                        ║');
-  console.log('╚══════════════════════════════════════════════════════════╝');
+  console.log('╔══════════════════════════════════════════════════════════════╗');
+  console.log('║   ✅ SEED COMPLETE - SUMMARY                                ║');
+  console.log('╠══════════════════════════════════════════════════════════════╣');
+  console.log('║                                                              ║');
+  console.log('║   Demo Teacher 1 Account:                                    ║');
+  console.log(`║     Name:      ${DEMO_TEACHER.name.padEnd(42)}║`);
+  console.log(`║     Email:     ${DEMO_TEACHER.email.padEnd(42)}║`);
+  console.log(`║     Password:  ${PASSWORD.padEnd(42)}║`);
+  console.log('║                                                              ║');
+  console.log('║   Demo Teacher 2 Account (CE):                               ║');
+  console.log(`║     Name:      ${DEMO_TEACHER_2.name.padEnd(42)}║`);
+  console.log(`║     Email:     ${DEMO_TEACHER_2.email.padEnd(42)}║`);
+  console.log(`║     Password:  ${PASSWORD.padEnd(42)}║`);
+  console.log('║                                                              ║');
+  console.log('║   Demo Student Account:                                      ║');
+  console.log(`║     Name:      ${DEMO_STUDENT.name.padEnd(42)}║`);
+  console.log(`║     Email:     ${DEMO_STUDENT.email.padEnd(42)}║`);
+  console.log(`║     Password:  ${PASSWORD.padEnd(42)}║`);
+  console.log(`║     Department:${DEMO_STUDENT.department.padEnd(42)}║`);
+  console.log('║                                                              ║');
+  console.log('║   Data Created:                                              ║');
+  console.log(`║     Sessions (T1):      ${String(sessionIds.length).padEnd(33)}║`);
+  console.log(`║     Sessions (T2):      ${String(session2Ids.length).padEnd(33)}║`);
+  console.log(`║     Attendance (T1):    ${String(attendanceCount).padEnd(33)}║`);
+  console.log(`║     Attendance (T2):    ${String(attendance2Count).padEnd(33)}║`);
+  console.log(`║     Manual Requests:    ${String(requestCount).padEnd(33)}║`);
+  console.log(`║     Activity Logs:      ${String(activityCount).padEnd(33)}║`);
+  console.log('║                                                              ║');
+  console.log('╚══════════════════════════════════════════════════════════════╝');
 
   await pool.end();
 }

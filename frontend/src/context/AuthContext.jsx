@@ -77,6 +77,15 @@ export function AuthProvider({ children }) {
     setError(errorMsg);
   }, []);
 
+  // Update user data (e.g., after profile edit)
+  const updateUser = useCallback((updatedData) => {
+    setUser((prevUser) => {
+      const newUser = { ...prevUser, ...updatedData };
+      sessionStorage.setItem("user", JSON.stringify(newUser));
+      return newUser;
+    });
+  }, []);
+
   const value = {
     user,
     token,
@@ -86,6 +95,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     setAuthError,
+    updateUser,
   };
 
   return (

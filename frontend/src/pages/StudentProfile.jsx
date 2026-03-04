@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
+import { AuthContext } from "../context/AuthContext";
 import { DEPARTMENTS } from "../config/formOptions";
 import "../styles/profile.css";
 import "../styles/dashboard.css";
@@ -11,6 +12,7 @@ import { Eye, Pencil, Trash2, Camera, ChevronUp, ChevronLeft, ChevronRight, Chev
 
 function StudentProfile() {
   const navigate = useNavigate();
+  const { updateUser } = useContext(AuthContext);
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -237,6 +239,8 @@ function StudentProfile() {
         setMessage({ type: "success", text: "Profile updated successfully!" });
         sessionStorage.setItem("userName", updatedProfile.name);
         sessionStorage.setItem("userEmail", updatedProfile.email);
+        // Update AuthContext so dashboard shows new name
+        updateUser({ name: updatedProfile.name, email: updatedProfile.email });
         setTimeout(() => { fetchProfileData(); setMessage({ type: "", text: "" }); }, 2000);
       } else {
         setMessage({ type: "error", text: data.message || "Failed to update profile" });

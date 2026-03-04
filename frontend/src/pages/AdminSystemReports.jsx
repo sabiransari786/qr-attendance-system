@@ -1,7 +1,6 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Wrench, BarChart3, Check } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
@@ -20,15 +19,6 @@ const DEPT_ATTENDANCE = [
 
 const TREND_MONTHS = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb"];
 const TREND_VALUES = [76, 80, 83, 78, 86, 89];
-
-const UPCOMING = [
-  "Export reports as PDF / CSV",
-  "Predictive attendance analytics with ML",
-  "Department-wise comparative charts",
-  "Faculty performance scorecards",
-  "Student at-risk detection",
-  "Scheduled report email delivery",
-];
 
 function DonutChart({ present, absent, total }) {
   const pct = total ? Math.round((present / total) * 100) : 0;
@@ -159,14 +149,6 @@ function AdminSystemReports() {
             </div>
           </div>
           <div className="ap__header-actions">
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: "0.4rem",
-              padding: "0.4rem 1rem", borderRadius: "999px",
-              background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
-              color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600,
-            }}>
-              <Wrench size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />In Development
-            </span>
             <button className="ap__btn ap__btn--outline" onClick={() => navigate("/admin/activity-logs")}>
               View Audit Logs →
             </button>
@@ -237,25 +219,6 @@ function AdminSystemReports() {
                 <span className="ap__bar-pct">{d.pct}%</span>
               </motion.div>
             ))}
-          </div>
-        </motion.div>
-
-        {/* Coming soon */}
-        <motion.div className="ap__panel" variants={fadeInUp}>
-          <div className="ap__coming">
-            <span className="ap__coming-icon"><BarChart3 size={48} /></span>
-            <h2 className="ap__coming-title">Advanced Reports Coming Soon</h2>
-            <p className="ap__coming-text">
-              Full interactive reporting dashboard with exports and AI-powered insights is in development.
-            </p>
-            <div className="ap__feature-list">
-              {UPCOMING.map((f, i) => (
-                <motion.div key={i} className="ap__feature-item" variants={fadeInUp} transition={{ delay: i * 0.06 }}>
-                  <span className="ap__feature-check"><Check size={14} /></span>
-                  {f}
-                </motion.div>
-              ))}
-            </div>
           </div>
         </motion.div>
       </div>

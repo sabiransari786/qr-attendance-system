@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
+import { AuthContext } from "../context/AuthContext";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import { DEPARTMENTS } from "../config/formOptions";
 import { Eye, Pencil, Trash2, Camera, ChevronUp, ChevronLeft, ChevronRight, ChevronDown, X, Loader, Check, BarChart3, Users } from 'lucide-react';
@@ -9,6 +10,7 @@ import "../styles/profile.css";
 
 function AdminProfile() {
   const navigate = useNavigate();
+  const { updateUser } = useContext(AuthContext);
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -357,6 +359,9 @@ function AdminProfile() {
         // Update sessionStorage with latest data
         sessionStorage.setItem("userName", updatedProfile.name);
         sessionStorage.setItem("userEmail", updatedProfile.email);
+        
+        // Update AuthContext so dashboard shows new name
+        updateUser({ name: updatedProfile.name, email: updatedProfile.email });
         
         // Refresh profile data from server to ensure consistency
         setTimeout(() => {

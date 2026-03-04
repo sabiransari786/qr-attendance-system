@@ -18,20 +18,9 @@ import '../styles/admin-pages.css';
 import '../styles/admin-dashboard-premium.css';
 
 /* ── Animated counter ─────────────────────────────────────────────── */
-function AnimatedCounter({ value, suffix = '', duration = 1.5 }) {
-  const ref = useRef(null);
-  const prev = useRef(0);
-  useEffect(() => {
-    const num = parseFloat(value) || 0;
-    const ctrl = animate(prev.current, num, {
-      duration,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate(v) { if (ref.current) ref.current.textContent = Math.round(v) + suffix; },
-    });
-    prev.current = num;
-    return () => ctrl.stop();
-  }, [value, suffix, duration]);
-  return <span ref={ref}>{(parseFloat(value) || 0) + suffix}</span>;
+function AnimatedCounter({ value, suffix = '' }) {
+  const num = parseFloat(value) || 0;
+  return <span>{Math.round(num)}{suffix}</span>;
 }
 
 /* ── Main component ───────────────────────────────────────────────── */
@@ -55,13 +44,18 @@ function StudentDashboardEnhanced() {
     setLoading(true);
     try {
       const token = sessionStorage.getItem('authToken');
+      console.log('Fetching attendance for user:', user.id);
       const res = await fetch(`${API_BASE_URL}/attendance/student/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const records = data.data || [];
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log('API Response:', data);
+      const records = data.data || [];
 
         const totalClasses = records.length;
         const presentClasses = records.filter((r) => r.status === 'present').length;
@@ -93,6 +87,7 @@ function StudentDashboardEnhanced() {
         }));
 
         setAttendanceStats({ overall: overallPercentage, present: presentClasses, late: lateClasses, absent: absentClasses, total: totalClasses, subjects });
+        console.log('Stats set:', { overall: overallPercentage, present: presentClasses, late: lateClasses, absent: absentClasses });
 
         // Notifications
         const notifs = [];
@@ -106,7 +101,7 @@ function StudentDashboardEnhanced() {
           { id: 2, subject: 'Web Development', time: '02:00 PM', room: 'Lab 201', faculty: 'Teacher' },
           { id: 3, subject: 'Algorithm Design', time: '01:00 PM', room: 'Room 303', faculty: 'Prof. Kumar' },
         ]);
-      }
+
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setAttendanceStats({ overall: 84, present: 32, late: 5, absent: 7, total: 44, subjects: [
