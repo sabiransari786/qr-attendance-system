@@ -1,0 +1,255 @@
+/* Unauthorized / Access Denied Page - Responsive Theme */
+
+/* Container */
+.unauthorized__container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 7.5rem 1.5rem 2rem;
+  position: relative;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(84, 255, 216, 0.18), transparent 38%),
+    radial-gradient(circle at 88% 22%, rgba(111, 120, 255, 0.2), transparent 42%),
+    radial-gradient(circle at 22% 85%, rgba(255, 122, 122, 0.18), transparent 40%),
+    linear-gradient(135deg, #03181f 0%, #0b1f2e 40%, #1b1f3a 70%, #1f3c47 100%);
+  background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
+  animation: unauthorized-bg-float 18s ease-in-out infinite;
+}
+
+.unauthorized__objects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  perspective: 1000px;
+}
+
+.unauthorized__object {
+  position: absolute;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 20px 40px rgba(2, 12, 16, 0.4));
+  opacity: 0.85;
+  animation: unauthorized-object-float 14s linear infinite;
+}
+
+.unauthorized__object--sphere {
+  width: 200px;
+  height: 200px;
+  top: 12%;
+  left: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(84, 255, 216, 0.95), rgba(15, 118, 110, 0.25));
+  animation-duration: 16s;
+}
+
+.unauthorized__object--ring {
+  width: 150px;
+  height: 150px;
+  bottom: 16%;
+  right: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(12, 74, 110, 0.1) 35%, rgba(111, 120, 255, 0.75) 55%, rgba(111, 120, 255, 0.1) 70%);
+  box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.25);
+  animation-duration: 18s;
+}
+
+.unauthorized__object--cube {
+  width: 140px;
+  height: 140px;
+  top: 32%;
+  right: 18%;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 122, 122, 0.85), rgba(111, 120, 255, 0.35));
+  transform: rotate(18deg);
+  animation-duration: 14s;
+}
+
+[data-theme="light"] .unauthorized__object {
+  filter: drop-shadow(0 20px 40px rgba(90, 168, 245, 0.2));
+}
+
+[data-theme="light"] .unauthorized__object--sphere {
+  background: radial-gradient(circle at 30% 30%, rgba(156, 214, 255, 0.95), rgba(90, 168, 245, 0.25));
+}
+
+[data-theme="light"] .unauthorized__object--ring {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 35%, rgba(156, 214, 255, 0.75) 55%, rgba(156, 214, 255, 0.1) 70%);
+}
+
+[data-theme="light"] .unauthorized__object--cube {
+  background: linear-gradient(135deg, rgba(90, 168, 245, 0.7), rgba(168, 216, 255, 0.4));
+}
+
+@keyframes unauthorized-object-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(30px, -45px, 80px) rotate(16deg);
+  }
+}
+
+[data-theme="light"] .unauthorized__container {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(156, 214, 255, 0.35), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(196, 228, 255, 0.35), transparent 42%),
+    radial-gradient(circle at 22% 85%, rgba(214, 237, 255, 0.35), transparent 40%),
+    linear-gradient(135deg, #f7fbff 0%, #eef6ff 45%, #e6f1ff 75%, #f3f9ff 100%);
+  background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
+  animation: unauthorized-bg-float 18s ease-in-out infinite;
+}
+
+@keyframes unauthorized-bg-float {
+  0%,
+  100% {
+    background-position: 0% 0%, 100% 0%, 20% 100%, 0 0;
+  }
+  50% {
+    background-position: 20% 10%, 80% 20%, 30% 80%, 0 0;
+  }
+}
+
+/* Card */
+.unauthorized__card {
+  width: 100%;
+  max-width: 550px;
+  padding: 3.5rem 2.5rem;
+  border: 1px solid var(--border-soft);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header Section */
+.unauthorized__header {
+  text-align: center;
+}
+
+.unauthorized__title {
+  margin: 0 0 1.25rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-light);
+  letter-spacing: -1px;
+  line-height: 1.2;
+  text-shadow: 0 2px 20px rgba(49, 156, 181, 0.3);
+}
+
+.unauthorized__message {
+  margin: 0 0 1.25rem 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--light-accent);
+  line-height: 1.5;
+}
+
+.unauthorized__description {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+/* Footer Section */
+.unauthorized__footer {
+  display: flex;
+  justify-content: center;
+}
+
+/* Action Button */
+.unauthorized__button {
+  padding: 1rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-light);
+  background: var(--primary-accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 15px rgba(49, 156, 181, 0.3);
+}
+
+.unauthorized__button:hover {
+  background: #2B8CA1;
+  box-shadow: 0 6px 25px rgba(49, 156, 181, 0.5);
+  transform: translateY(-2px);
+}
+
+.unauthorized__button:active {
+  transform: translateY(0);
+}
+
+.unauthorized__button:focus {
+  outline: 2px solid var(--primary-accent);
+  outline-offset: 2px;
+}
+
+.unauthorized__button:disabled {
+  background: rgba(49, 156, 181, 0.3);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .unauthorized__container {
+    padding: 1.5rem 1rem;
+  }
+
+  .unauthorized__card {
+    padding: 2.5rem 1.75rem;
+    gap: 1.5rem;
+  }
+
+  .unauthorized__title {
+    font-size: 1.8rem;
+  }
+
+  .unauthorized__message {
+    font-size: 1rem;
+  }
+
+  .unauthorized__description {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .unauthorized__container {
+    padding: 1rem;
+  }
+
+  .unauthorized__card {
+    padding: 2rem 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .unauthorized__title {
+    font-size: 1.5rem;
+  }
+
+  .unauthorized__message {
+    font-size: 0.95rem;
+  }
+
+  .unauthorized__description {
+    font-size: 0.85rem;
+  }
+
+  .unauthorized__button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}

@@ -1,0 +1,400 @@
+/* ============================================================================
+   ADMIN USER APPROVAL PANEL STYLES
+   ============================================================================ */
+
+.admin-approval-panel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 30px;
+  margin-top: 30px;
+  color: #fff;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-approval-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 25px;
+  gap: 20px;
+}
+
+.admin-approval-panel__eyebrow {
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0.8;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.admin-approval-panel__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.admin-approval-panel__close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.admin-approval-panel__close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Actions Bar */
+.admin-approval-panel__actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.admin-approval-panel__btn {
+  padding: 10px 20px;
+  border: 1.5px solid rgba(49, 156, 181, 0.4);
+  background: rgba(49, 156, 181, 0.12);
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.19);
+}
+
+.admin-approval-panel__btn:hover:not(:disabled) {
+  background: rgba(49, 156, 181, 0.25);
+  border-color: rgba(49, 156, 181, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(49, 156, 181, 0.3);
+}
+
+.admin-approval-panel__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-approval-panel__btn--primary {
+  background: rgba(0, 212, 255, 0.2);
+  border: 1.5px solid rgba(0, 212, 255, 0.5);
+  color: #ccf5fe;
+  font-weight: 700;
+  box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.admin-approval-panel__btn--primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  background: rgba(0, 212, 255, 0.35);
+  border-color: rgba(0, 212, 255, 0.8);
+  box-shadow: 0 12px 40px rgba(0, 212, 255, 0.4);
+}
+
+/* Form */
+.admin-approval-form {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-approval-form__title {
+  color: white;
+  margin: 0 0 20px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.admin-approval-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.admin-approval-form__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-approval-form__group label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.admin-approval-form__group input,
+.admin-approval-form__group select {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.admin-approval-form__group input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-approval-form__group input:focus,
+.admin-approval-form__group select:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.admin-approval-form__submit {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #00d4ff 0%, #00b8d4 100%);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-approval-form__submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+}
+
+/* Filters */
+.admin-approval-panel__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-approval-panel__search,
+.admin-approval-panel__select {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.admin-approval-panel__search::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-approval-panel__search:focus,
+.admin-approval-panel__select:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Table */
+.admin-approval-panel__table {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.admin-approval-panel__table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  color: #333;
+}
+
+.admin-approval-panel__table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.admin-approval-panel__table th {
+  padding: 15px;
+  text-align: left;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-approval-panel__table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.admin-approval-panel__table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.admin-approval-panel__table tbody tr:hover {
+  background: #f5f5f5;
+}
+
+.admin-approval-panel__cell-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.admin-approval-panel__cell-email {
+  color: #667eea;
+  word-break: break-all;
+}
+
+.admin-approval-panel__cell-id {
+  font-family: 'Monaco', 'Menlo', monospace;
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Role Badge */
+.admin-approval-panel__role {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.admin-approval-panel__role--student {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.admin-approval-panel__role--faculty {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
+
+/* Status Badge */
+.admin-approval-panel__status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.admin-approval-panel__status--pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.admin-approval-panel__status--registered {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* Delete Button */
+.admin-approval-panel__delete-btn {
+  padding: 6px 12px;
+  border: 1.5px solid rgba(255, 107, 107, 0.5);
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.15);
+}
+
+.admin-approval-panel__delete-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.3);
+  color: #ff9999;
+  border-color: rgba(255, 107, 107, 0.8);
+  box-shadow: 0 12px 40px rgba(255, 107, 107, 0.25);
+  transform: translateY(-2px);
+}
+
+.admin-approval-panel__delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* State Message */
+.admin-approval-panel__state {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-approval-panel {
+    padding: 20px;
+  }
+
+  .admin-approval-panel__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-approval-panel__title {
+    font-size: 1.5rem;
+  }
+
+  .admin-approval-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-approval-panel__table {
+    font-size: 0.85rem;
+  }
+
+  .admin-approval-panel__table th,
+  .admin-approval-panel__table td {
+    padding: 10px;
+  }
+
+  .admin-approval-panel__filters {
+    grid-template-columns: 1fr;
+  }
+}
