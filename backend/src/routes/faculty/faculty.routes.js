@@ -12,7 +12,19 @@ const { pool } = require('../../config');
 router.get('/my-courses', authMiddleware, async (req, res) => {
   try {
     const facultyId = req.user.id;
-
+    // Get department_id of the logged-in faculty
+    const [facultyRows] = await pool.query(
+      `SELECT department_id FROM users WHERE id = ? AND role = 'faculty'`,
+      [facultyId]
+    );
+    if (!facultyRows || facultyRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Faculty not found or department not set.' });
+    }
+    const departmentId = facultyRows[0].department_id;
+    if (!departmentId) {
+      return res.status(404).json({ success: false, message: 'Faculty department not set.' });
+    }
+    // Get all courses from this department
     const [courses] = await pool.query(
       `SELECT 
           c.id,
@@ -24,15 +36,14 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
           d.code AS department_code
        FROM courses c
        LEFT JOIN departments d ON c.department_id = d.id
-       WHERE c.faculty_id = ?
+       WHERE c.department_id = ?
        ORDER BY c.semester, d.name, c.name`,
-      [facultyId]
+      [departmentId]
     );
-
     return res.status(200).json({
       success: true,
       data: courses,
-      message: `${courses.length} courses found`
+      message: `${courses.length} courses found in your department.`
     });
   } catch (error) {
     console.error('Error fetching faculty courses:', error);
