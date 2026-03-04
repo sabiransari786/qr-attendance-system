@@ -12,18 +12,28 @@ const { pool } = require('../../config');
 router.get('/my-courses', authMiddleware, async (req, res) => {
   try {
     const facultyId = req.user.id;
-    // Get department_id of the logged-in faculty
+    // Get department name of the logged-in faculty (users table has 'department' as varchar)
     const [facultyRows] = await pool.query(
-      `SELECT department_id FROM users WHERE id = ? AND role = 'faculty'`,
+      `SELECT department FROM users WHERE id = ? AND role = 'faculty'`,
       [facultyId]
     );
     if (!facultyRows || facultyRows.length === 0) {
       return res.status(404).json({ success: false, message: 'Faculty not found or department not set.' });
     }
-    const departmentId = facultyRows[0].department_id;
-    if (!departmentId) {
-      return res.status(404).json({ success: false, message: 'Faculty department not set.' });
+    const departmentName = facultyRows[0].department;
+    
+    // Lookup department_id from departments table using department name
+    let departmentId = null;
+    if (departmentName) {
+      const [deptRows] = await pool.query(
+        `SELECT id FROM departments WHERE name = ?`,
+        [departmentName]
+      );
+      if (deptRows && deptRows.length > 0) {
+        departmentId = deptRows[0].id;
+      }
     }
+    
     // Get all courses from this department OR assigned directly to this faculty
     const [courses] = await pool.query(
       `SELECT 

@@ -67,6 +67,7 @@ body {
   --color-text-secondary: #64748b;
   --color-border: #e2e8f0;
   --color-background: #ffffff;
+  --color-surface: #ffffff;
   --color-card-alt: #f8fafc;
   --color-success: #22c55e;
   --color-warning: #eab308;
@@ -137,6 +138,7 @@ body {
   --color-text-secondary: #94a3b8;
   --color-border: #334155;
   --color-background: #1e293b;
+  --color-surface: #0d2a34;
   --color-card-alt: #0f172a;
 }
 
