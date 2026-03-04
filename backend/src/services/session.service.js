@@ -383,24 +383,17 @@ const createSession = async (facultyId, sessionData) => {
         let resolvedDeptId = faculty[0].dept_id || null; // default: faculty's own dept
 
         if (courseId) {
+            // Check if course exists and belongs to faculty's department (or is assigned to this faculty)
             const [courseRows] = await pool.query(
-                `SELECT c.id, c.department_id FROM courses c WHERE c.id = ? AND c.faculty_id = ?`,
-                [courseId, facultyId]
+                `SELECT c.id, c.department_id FROM courses c 
+                 WHERE c.id = ? AND (c.faculty_id = ? OR c.department_id = ?)`,
+                [courseId, facultyId, faculty[0].dept_id]
             );
             if (!courseRows || courseRows.length === 0) {
-                throw new InvalidSessionDataError('Selected course does not belong to this faculty.');
+                throw new InvalidSessionDataError('Selected course does not belong to your department.');
             }
             resolvedCourseId = courseRows[0].id;
             resolvedDeptId = courseRows[0].department_id;
-
-            // Department consistency check: course's department must match faculty's department
-            if (faculty[0].dept_id && resolvedDeptId &&
-                Number(resolvedDeptId) !== Number(faculty[0].dept_id)) {
-                throw new InvalidSessionDataError(
-                    `This course belongs to a different department than yours (${faculty[0].department}). ` +
-                    `You can only create sessions for courses in your own department.`
-                );
-            }
         }
 
         // ---------------------------------------------------------------------
