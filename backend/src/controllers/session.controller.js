@@ -401,13 +401,14 @@ const getActiveSessions = async (req, res, next) => {
         // 
         // Yeh filters optional hain - agar nahi diye toh saari active sessions aa jayengi
         // (with proper authorization - faculty ko sirf apni dikhayi jayengi)
-        const { facultyId, subject, location } = req.query;
+        const { facultyId, subject, location, status } = req.query;
 
         // Filters ko ek object mein pack kar do - service ko pass karna easy hoga
         const filters = {
             facultyId: facultyId || null,     // Specific faculty filter
             subject: subject || null,         // Subject filter
-            location: location || null        // Location filter
+            location: location || null,       // Location filter
+            status: status || null            // Status filter (active/closed/cancelled) - null means all
         };
 
         // ---------------------------------------------------------------------

@@ -21,7 +21,7 @@
   color: var(--color-text);
   font-family: var(--font-primary);
   margin-top: 0;
-  padding-top: 80px;
+  padding-top: 0;
   position: relative;
   overflow: hidden;
 }
@@ -572,7 +572,7 @@
 
 /* Features Section */
 .home__features {
-  padding: 5rem 2rem;
+  padding: 7rem 2rem;
   flex: 1;
   background: linear-gradient(180deg, transparent 0%, rgba(49, 156, 181, 0.03) 50%, transparent 100%);
   position: relative;
@@ -1073,7 +1073,7 @@
 }
 /* Statistics Section */
 .home__stats {
-  padding: 5rem 2rem;
+  padding: 7rem 2rem;
   background: linear-gradient(180deg, transparent 0%, rgba(49, 156, 181, 0.05) 100%);
 }
 
@@ -1181,7 +1181,7 @@
 
 /* Workflow Section */
 .home__workflow {
-  padding: 5rem 2rem;
+  padding: 7rem 2rem;
 }
 
 .home__workflow-header {
@@ -1331,7 +1331,7 @@
 
 /* Testimonials Section */
 .home__testimonials {
-  padding: 5rem 2rem;
+  padding: 7rem 2rem;
   background: linear-gradient(180deg, rgba(49, 156, 181, 0.05) 0%, transparent 100%);
 }
 
@@ -1370,6 +1370,8 @@
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .home__testimonial-card::before {
@@ -1415,17 +1417,19 @@
   color: var(--color-text-secondary);
   line-height: 1.8;
   font-style: italic;
+  flex: 1;
 }
 
 .home__testimonial-author {
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-top: auto;
 }
 
 .home__author-avatar {
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   background: linear-gradient(135deg, #319CB5, #14B8A6);
   color: white;
@@ -1433,7 +1437,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   flex-shrink: 0;
 }
 
@@ -1456,7 +1460,7 @@
 
 /* CTA Section */
 .home__cta {
-  padding: 5rem 2rem;
+  padding: 7rem 2rem;
   background: linear-gradient(135deg, rgba(49, 156, 181, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%);
 }
 

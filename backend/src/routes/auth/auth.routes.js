@@ -899,9 +899,24 @@ router.post('/admin/teachers', authMiddleware, requireAdmin, async (req, res) =>
       ]
     );
 
+    // ── Send credentials email to teacher ─────────────────────────────────────
+    try {
+      const { sendTeacherCredentialsEmail } = require('../../config/email');
+      await sendTeacherCredentialsEmail(
+        normalizedEmail,
+        name.trim(),
+        normalizedTeacherId,
+        department?.trim() || null,
+        password
+      );
+    } catch (emailError) {
+      console.error('⚠️ Teacher created but email failed:', emailError.message);
+      // Don't fail the request — teacher is already created
+    }
+
     return res.status(201).json({
       success: true,
-      message: 'Teacher account created successfully. They can log in immediately.',
+      message: 'Teacher account created successfully. Credentials sent to email.',
       data: {
         id: newUserId,
         name: name.trim(),

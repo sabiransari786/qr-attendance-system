@@ -1,30 +1,19 @@
 import { useContext, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Check, AlertTriangle, Users } from 'lucide-react';
+import { X, Check, Users } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import "../styles/dashboard.css";
 import "../styles/admin-pages.css";
 
-const MOCK_USERS = [
-  { id: 1, name: "Admin User", email: "admin@attendance.com", role: "admin", is_active: true, department: "Administration" },
-  { id: 2, name: "Rahul Singh", email: "rahul@demo.com", role: "student", is_active: true, department: "Computer Science" },
-  { id: 3, name: "Dr. Priya Sharma", email: "priya.faculty@demo.com", role: "faculty", is_active: true, department: "Electrical" },
-  { id: 4, name: "Amit Patel", email: "amit@demo.com", role: "student", is_active: false, department: "Mechanical" },
-  { id: 5, name: "Prof. Kiran Mehta", email: "kiran@demo.com", role: "faculty", is_active: true, department: "Civil" },
-  { id: 6, name: "Sneha Mishra", email: "sneha@demo.com", role: "student", is_active: true, department: "Electronics" },
-];
-
 function AdminUserAccess() {
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
-  const isMock = import.meta.env.VITE_USE_MOCK_API === "true";
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isMockMode, setIsMockMode] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -38,7 +27,6 @@ function AdminUserAccess() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    if (isMock) { setUsers(MOCK_USERS); setIsMockMode(true); setLoading(false); return; }
     try {
       const params = new URLSearchParams();
       if (roleFilter !== "all") params.append("role", roleFilter);
@@ -47,11 +35,10 @@ function AdminUserAccess() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success && data.data) { setUsers(data.data); setIsMockMode(false); }
-      else { setUsers(MOCK_USERS); setIsMockMode(true); }
+      if (data.success && data.data) { setUsers(data.data); }
+      else { setUsers([]); }
     } catch {
-      setUsers(MOCK_USERS);
-      setIsMockMode(true);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -62,15 +49,13 @@ function AdminUserAccess() {
   const handleRoleChange = async (userId, role) => {
     setActiveAction(`role-${userId}`);
     try {
-      if (!isMockMode) {
-        const res = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}/role`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ role }),
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error();
-      }
+      const res = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role } : u)));
       showToast("Role updated successfully");
     } catch {
@@ -83,15 +68,13 @@ function AdminUserAccess() {
   const handleStatusToggle = async (userId, isActive) => {
     setActiveAction(`status-${userId}`);
     try {
-      if (!isMockMode) {
-        const res = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}/status`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ is_active: !isActive }),
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error();
-      }
+      const res = await fetch(`${API_BASE_URL}/auth/admin/users/${userId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ is_active: !isActive }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error();
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: !u.is_active } : u)));
       showToast(`User ${!isActive ? "activated" : "deactivated"}`);
     } catch {
@@ -105,12 +88,10 @@ function AdminUserAccess() {
     if (!window.confirm("Delete this user? This action cannot be undone.")) return;
     setActiveAction(`delete-${userId}`);
     try {
-      if (!isMockMode) {
-        await fetch(`${API_BASE_URL}/auth/admin/users/${userId}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
+      await fetch(`${API_BASE_URL}/auth/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       showToast("User deleted");
     } catch {
@@ -179,7 +160,6 @@ function AdminUserAccess() {
             </div>
           </div>
           <div className="ap__header-actions">
-            {isMockMode && <span className="ap__mock-note"><AlertTriangle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Mock data</span>}
             <button className="ap__btn ap__btn--outline" onClick={fetchUsers} disabled={loading}>↻ Refresh</button>
             <button className="ap__btn ap__btn--primary" onClick={() => navigate("/admin/approvals")}>+ Add User</button>
           </div>

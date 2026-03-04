@@ -29,8 +29,7 @@ import AdminActivityLogs from "../pages/AdminActivityLogs";
 import AdminDepartments from "../pages/AdminDepartments";
 import AdminSystemReports from "../pages/AdminSystemReports";
 import AdminTeacherManagement from "../pages/AdminTeacherManagement";
-import StudentAttendanceRequest from "../pages/StudentAttendanceRequest";
-import FacultyAttendanceRequests from "../pages/FacultyAttendanceRequests";
+import StudentAttendanceRequest from "../pages/StudentAttendanceRequest";import SubjectAttendance from '../pages/SubjectAttendance';import FacultyAttendanceRequests from "../pages/FacultyAttendanceRequests";
 import TermsAndConditions from "../pages/TermsAndConditions";
 import PrivacyPolicy from "../pages/PrivacyPolicy";
 import CookiePolicy from "../pages/CookiePolicy";
@@ -123,6 +122,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={["student"]}>
             <StudentAttendanceRequest />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/subjects"
+        element={
+          <ProtectedRoute requiredRoles={["student"]}>
+            <SubjectAttendance />
           </ProtectedRoute>
         }
       />

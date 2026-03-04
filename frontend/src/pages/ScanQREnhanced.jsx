@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import jsQR from 'jsqr';
 import {
-  Camera, CameraIcon, Image, FolderOpen, Keyboard, ClipboardList,
+  Camera, CameraIcon, ClipboardList,
   CheckCircle, Loader, AlertTriangle, XCircle, Check, BookOpenText,
   ArrowLeft,
 } from 'lucide-react';
@@ -21,7 +21,6 @@ function ScanQREnhanced() {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const animationRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   const [qrCode, setQrCode] = useState('');
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -50,30 +49,6 @@ function ScanQREnhanced() {
   const fmtTime = (sec) => {
     if (!sec) return '00:00';
     return `${Math.floor(sec / 60).toString().padStart(2, '0')}:${(sec % 60).toString().padStart(2, '0')}`;
-  };
-
-  /* ── QR input ──────────────────────────────────────────────── */
-  const handleQrInputChange = (e) => { setQrCode(e.target.value); setMessage({ type: '', text: '' }); };
-
-  /* ── Image upload ──────────────────────────────────────────── */
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setLoading(true);
-    setMessage({ type: 'info', text: 'Processing image…' });
-    const img = new window.Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    img.onload = () => {
-      canvas.width = img.width; canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
-      if (code) { setQrCode(code.data); verifyQrCode(code.data); }
-      else { setMessage({ type: 'error', text: 'No QR code found in image' }); setLoading(false); }
-    };
-    img.onerror = () => { setMessage({ type: 'error', text: 'Failed to load image' }); setLoading(false); };
-    img.src = URL.createObjectURL(file);
   };
 
   /* ── Location ──────────────────────────────────────────────── */
@@ -212,12 +187,12 @@ function ScanQREnhanced() {
             </button>
             <p className="ap__eyebrow">Student &bull; Attendance</p>
             <h1 className="ap__title"><Camera size={26} style={{ verticalAlign: 'middle', marginRight: 8 }} />Scan QR Code</h1>
-            <p className="ap__subtitle">Scan or upload QR code to mark your attendance</p>
+            <p className="ap__subtitle">Point your camera at the QR code to mark attendance</p>
           </div>
         </header>
 
-        {/* Scanning Options — 3 panels */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+        {/* Camera Scan Panel */}
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
           {/* Camera */}
           <div className="ap__panel">
             <div className="ap__panel-header">
@@ -238,35 +213,6 @@ function ScanQREnhanced() {
                 </>
               )}
               <canvas ref={canvasRef} style={{ display: 'none' }} />
-            </div>
-          </div>
-
-          {/* Upload */}
-          <div className="ap__panel">
-            <div className="ap__panel-header">
-              <h2 className="ap__panel-title"><Image size={18} /> Upload QR</h2>
-              <span className="ap__badge ap__badge--inactive">Upload</span>
-            </div>
-            <div style={{ padding: '1.25rem', textAlign: 'center' }}>
-              <FolderOpen size={48} style={{ color: 'var(--accent)', marginBottom: 12 }} />
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '1rem' }}>Select QR code image from your device</p>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-              <button className="ap__btn ap__btn--primary" onClick={() => fileInputRef.current?.click()} style={{ width: '100%' }}>Choose Image</button>
-            </div>
-          </div>
-
-          {/* Manual */}
-          <div className="ap__panel">
-            <div className="ap__panel-header">
-              <h2 className="ap__panel-title"><Keyboard size={18} /> Manual Entry</h2>
-              <span className="ap__badge ap__badge--inactive">Type</span>
-            </div>
-            <div style={{ padding: '1.25rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-text-secondary)' }}>Enter QR Code</label>
-              <input className="ap__search" value={qrCode} onChange={handleQrInputChange} placeholder="Enter QR code manually" style={{ marginBottom: '0.85rem' }} />
-              <button className="ap__btn ap__btn--primary" onClick={() => verifyQrCode()} disabled={loading || !qrCode.trim()} style={{ width: '100%' }}>
-                {loading ? 'Verifying…' : 'Verify Code'}
-              </button>
             </div>
           </div>
         </div>

@@ -35,9 +35,9 @@ img {
 }
 
 /* Mobile viewport optimization */
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   html {
-    font-size: 14px; /* Smaller base font for mobile */
+    font-size: 15px;
   }
   
   body {
@@ -111,7 +111,6 @@ img {
   
   table {
     width: 100%;
-    min-width: 500px;
     font-size: 0.85rem;
   }
   
@@ -126,7 +125,6 @@ img {
   select,
   textarea {
     font-size: 16px !important; /* Prevent iOS zoom */
-    padding: 0.75rem !important;
     border-radius: 8px;
   }
   
@@ -206,7 +204,7 @@ img {
    DASHBOARD RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   /* Dashboard header */
   .dashboard__header {
     flex-direction: column !important;
@@ -247,7 +245,7 @@ img {
    PROFILE PAGE RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .profile-header {
     flex-direction: column !important;
     text-align: center;
@@ -289,7 +287,7 @@ img {
    QR CODE PAGES RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .qr-container,
   .qr-scanner-container {
     padding: 1rem !important;
@@ -321,7 +319,7 @@ img {
    TABLE RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   /* Hide less important columns on mobile */
   .hide-mobile {
     display: none !important;
@@ -362,7 +360,7 @@ img {
    NAVIGATION RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .navbar {
     padding: 0.75rem 1rem !important;
   }
@@ -386,11 +384,11 @@ img {
    AUTH PAGES RESPONSIVE (Login/Signup)
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .login__card,
   .signup__card {
     padding: 1.5rem !important;
-    width: 95vw !important;
+    width: 100% !important;
     max-width: 95vw !important;
   }
   
@@ -432,7 +430,7 @@ img {
    SCAN QR PAGE RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .scan-container {
     padding: 1rem !important;
   }
@@ -457,7 +455,7 @@ img {
    HOME PAGE RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .home__hero {
     padding: 3rem 1rem !important;
   }
@@ -490,7 +488,7 @@ img {
    ATTENDANCE HISTORY RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .attendance-filters {
     flex-direction: column !important;
     gap: 1rem !important;
@@ -511,7 +509,7 @@ img {
    REPORTS PAGE RESPONSIVE
    ============================================================================ */
 
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   .report-filters {
     flex-direction: column !important;
   }

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
-import { DEPARTMENTS } from "../config/dummyData";
+import { DEPARTMENTS } from "../config/formOptions";
 import { Eye, Pencil, Trash2, Camera, ChevronUp, ChevronLeft, ChevronRight, ChevronDown, X, Loader, Check, BarChart3, Users } from 'lucide-react';
 import "../styles/profile.css";
 

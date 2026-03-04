@@ -45,15 +45,26 @@ function FacultyDashboardWithCharts() {
         const response = await fetch(`${API_BASE_URL}/session`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
           const data = await response.json();
-          const sessionsData = (data.data || data || []).filter(s => s.facultyId === user?.id);
+          const sessionsData = (data.data || data || []);
           setSessions(sessionsData);
-          const chartData = sessionsData.map(session => {
-            const presentCount = Math.floor(Math.random() * 8) + 2;
-            const lateCount = Math.floor(Math.random() * 2);
-            const absentCount = Math.floor(Math.random() * 2);
+          // Fetch real attendance data for each session
+          const chartData = await Promise.all(sessionsData.slice(0, 20).map(async (session) => {
+            let presentCount = 0, lateCount = 0, absentCount = 0;
+            try {
+              const attRes = await fetch(`${API_BASE_URL}/attendance/session/${session.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+              if (attRes.ok) {
+                const attData = await attRes.json();
+                const records = attData.data || attData || [];
+                records.forEach(r => {
+                  if (r.status === 'present') presentCount++;
+                  else if (r.status === 'late') lateCount++;
+                  else if (r.status === 'absent') absentCount++;
+                });
+              }
+            } catch (e) { /* fallback to 0 */ }
             const total = presentCount + lateCount + absentCount;
             return { name: session.subject?.substring(0, 12) || 'Session', subject: session.subject, present: presentCount, late: lateCount, absent: absentCount, total, attendance: total > 0 ? Math.round((presentCount / total) * 100) : 0, status: session.status };
-          });
+          }));
           setAttendanceData(chartData);
           const totalPresent = chartData.reduce((sum, d) => sum + d.present, 0);
           const totalLate = chartData.reduce((sum, d) => sum + d.late, 0);
@@ -82,7 +93,7 @@ function FacultyDashboardWithCharts() {
     { label: 'Absent', value: loading ? '…' : stats.totalAbsent, Icon: XCircle, color: '#ef4444', sub: `${stats.totalStudentsMarked > 0 ? Math.round((stats.totalAbsent / stats.totalStudentsMarked) * 100) : 0}%` },
   ], [stats, loading]);
 
-  const firstName = user?.name?.split(" ")[0] || "Faculty";
+  const fullName = user?.name || "Faculty";
   const tooltipStyle = { background: 'var(--color-surface)', border: '1px solid rgba(49,156,181,0.25)', borderRadius: '10px', color: 'var(--color-text)' };
 
   return (
@@ -95,7 +106,7 @@ function FacultyDashboardWithCharts() {
       <div className="ap__inner">
         <motion.div className="adp__welcome" variants={fadeInUp}>
           <p className="adp__welcome-eyebrow"><LayoutDashboard size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />Faculty Panel</p>
-          <h1 className="adp__welcome-title">Welcome back, {firstName}</h1>
+          <h1 className="adp__welcome-title">Welcome back, {fullName}</h1>
           <p className="adp__welcome-sub">View attendance analytics and manage your classes from your command center.</p>
         </motion.div>
 
@@ -156,39 +167,6 @@ function FacultyDashboardWithCharts() {
                 </ResponsiveContainer>
               </div>
             </div>
-          </motion.div>
-        )}
-
-        {!loading && sessions.length > 0 && (
-          <motion.div variants={fadeInUp}>
-            <div className="ap__panel">
-              <div className="ap__panel-header"><h3 className="ap__panel-title">Your Sessions</h3><span className="ap__panel-count">{sessions.length} sessions</span></div>
-              <div className="ap__table-wrap">
-                <table className="ap__table">
-                  <thead><tr><th>Subject</th><th>Location</th><th>Status</th><th>Start Time</th><th>Attendance</th></tr></thead>
-                  <tbody>
-                    {sessions.map((session) => {
-                      const sd = attendanceData.find(d => d.subject === session.subject);
-                      return (
-                        <tr key={session.id}>
-                          <td style={{ fontWeight: 600 }}>{session.subject}</td>
-                          <td>{session.location}</td>
-                          <td><span className={`ap__badge ap__badge--${session.status === 'active' ? 'active' : 'inactive'}`}>{session.status}</span></td>
-                          <td>{new Date(session.startTime).toLocaleString()}</td>
-                          <td>{sd && <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}><CheckCircle size={14} style={{ color: '#319cb5' }} />{sd.present}<Clock size={14} style={{ color: '#f59e0b', marginLeft: '0.25rem' }} />{sd.late}<XCircle size={14} style={{ color: '#ef4444', marginLeft: '0.25rem' }} />{sd.absent}</span>}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {!loading && sessions.length === 0 && (
-          <motion.div className="ap__panel" variants={fadeInUp}>
-            <div className="ap__empty"><div className="ap__empty-icon"><BookOpen size={48} /></div><h3 className="ap__empty-title">No Sessions Created Yet</h3><p className="ap__empty-text">Create your first class session to get started.</p><button className="ap__btn ap__btn--primary" onClick={() => navigate('/faculty/qr-generation')}>Create First Session</button></div>
           </motion.div>
         )}
 

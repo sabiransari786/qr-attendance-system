@@ -276,9 +276,9 @@
   box-shadow: 0 12px 40px rgba(49, 156, 181, 0.2);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .dashboard {
-    padding: 2rem 1.25rem 2.5rem;
+    padding: calc(70px + 1.5rem) 1rem 2rem;
   }
 
   .dashboard__header {
@@ -3043,13 +3043,13 @@
 /* Responsive adjustments for navbar spacing */
 @media (max-width: 768px) {
   .dashboard {
-    padding: calc(100px + 2rem) 1.5rem 2rem;
+    padding: calc(70px + 1.5rem) 1rem 3rem;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard {
-    padding: calc(110px + 1rem) 1rem 1.5rem;
+    padding: calc(70px + 1rem) 0.85rem 2rem;
   }
 }
 

@@ -33,7 +33,12 @@ CREATE TABLE IF NOT EXISTS `users` (
   `role` ENUM('student', 'faculty', 'admin') NOT NULL DEFAULT 'student' COMMENT 'User role',
   `student_id` VARCHAR(100) UNIQUE COMMENT 'Student ID - unique per student',
   `teacher_id` VARCHAR(100) UNIQUE COMMENT 'Faculty/Teacher ID - unique per faculty',
+  `department` VARCHAR(100) NULL COMMENT 'User department (e.g., Computer Science, Electrical)',
+  `semester` VARCHAR(20) NULL COMMENT 'Student semester (e.g., 1st, 2nd, 3rd)',
+  `section` VARCHAR(10) NULL COMMENT 'Student section (e.g., A, B, C)',
   `is_active` BOOLEAN DEFAULT TRUE COMMENT 'Account active status',
+  `profile_photo` LONGBLOB COMMENT 'User profile photo (stored as binary data)',
+  `photo_mime_type` VARCHAR(50) COMMENT 'MIME type of the photo (e.g., image/jpeg, image/png)',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation time',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
   
@@ -42,7 +47,40 @@ CREATE TABLE IF NOT EXISTS `users` (
   INDEX `idx_role` (`role`),
   INDEX `idx_student_id` (`student_id`),
   INDEX `idx_teacher_id` (`teacher_id`),
+  INDEX `idx_department` (`department`),
   INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- DEPARTMENTS TABLE - For organizing courses/departments
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `departments` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL UNIQUE,
+  `code` VARCHAR(10) UNIQUE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- COURSES TABLE - For tracking courses
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `courses` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `code` VARCHAR(20) UNIQUE,
+  `department_id` INT,
+  `faculty_id` INT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  -- Foreign keys
+  FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`faculty_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  
+  -- Indexes
+  INDEX `idx_department_id` (`department_id`),
+  INDEX `idx_faculty_id` (`faculty_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
@@ -59,20 +97,28 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   `location` VARCHAR(255) NOT NULL COMMENT 'Class room or location',
   `start_time` TIMESTAMP NOT NULL COMMENT 'Session start time',
   `end_time` TIMESTAMP NULL COMMENT 'Session end time',
-  `status` ENUM('active', 'closed') NOT NULL DEFAULT 'active' COMMENT 'Session status',
+  `status` ENUM('active', 'closed', 'cancelled') NOT NULL DEFAULT 'active' COMMENT 'Session status',
   `qr_code` LONGTEXT COMMENT 'QR code data (encoded session info)',
   `qr_expiry_time` TIMESTAMP NOT NULL COMMENT 'When QR code expires',
+  `course_id` INT NULL COMMENT 'Reference to course',
+  `department_id` INT NULL COMMENT 'Reference to department',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Session creation time',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
   
-  -- Foreign key reference to users table
+  -- Foreign key references
   CONSTRAINT `fk_sessions_faculty_id` FOREIGN KEY (`faculty_id`) 
     REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_sessions_course_id` FOREIGN KEY (`course_id`)
+    REFERENCES `courses`(`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_sessions_department_id` FOREIGN KEY (`department_id`)
+    REFERENCES `departments`(`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   
   -- Indexes for frequently queried columns
   INDEX `idx_faculty_id` (`faculty_id`),
   INDEX `idx_status` (`status`),
   INDEX `idx_start_time` (`start_time`),
+  INDEX `idx_course_id` (`course_id`),
+  INDEX `idx_department_id` (`department_id`),
   INDEX `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -87,7 +133,7 @@ CREATE TABLE IF NOT EXISTS `attendance` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `session_id` INT NOT NULL COMMENT 'Reference to session',
   `student_id` INT NOT NULL COMMENT 'Reference to student user',
-  `status` ENUM('present', 'late', 'absent') NOT NULL DEFAULT 'absent' COMMENT 'Attendance status',
+  `status` ENUM('present', 'late', 'absent', 'excused') NOT NULL DEFAULT 'absent' COMMENT 'Attendance status',
   `marked_at` TIMESTAMP NOT NULL COMMENT 'When attendance was marked',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Record creation time',
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
@@ -135,112 +181,9 @@ CREATE TABLE IF NOT EXISTS `attendance` (
 -- - InnoDB engine for ACID compliance
 --
 -- ============================================================================
--- ============================================================================
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `email` VARCHAR(255) NOT NULL UNIQUE,
-  `contact_number` VARCHAR(20),
-  `password` VARCHAR(255) NOT NULL,
-  `role` ENUM('student', 'faculty', 'admin') NOT NULL DEFAULT 'student',
-  `student_id` VARCHAR(50) UNIQUE,
-  `teacher_id` VARCHAR(50) UNIQUE,
-  `is_active` BOOLEAN DEFAULT TRUE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  -- Indexes for faster queries
-  INDEX `idx_email` (`email`),
-  INDEX `idx_role` (`role`),
-  INDEX `idx_student_id` (`student_id`),
-  INDEX `idx_teacher_id` (`teacher_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
--- SESSIONS TABLE - Attendance sessions created by faculty
--- ============================================================================
-CREATE TABLE IF NOT EXISTS `sessions` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `faculty_id` INT NOT NULL,
-  `subject` VARCHAR(255) NOT NULL,
-  `location` VARCHAR(100),
-  `start_time` TIMESTAMP NOT NULL,
-  `end_time` TIMESTAMP,
-  `status` ENUM('active', 'closed') DEFAULT 'active',
-  `qr_code` LONGTEXT,
-  `qr_expiry_time` TIMESTAMP,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  -- Foreign key to users table
-  FOREIGN KEY (`faculty_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  
-  -- Indexes for faster queries
-  INDEX `idx_faculty_id` (`faculty_id`),
-  INDEX `idx_status` (`status`),
-  INDEX `idx_start_time` (`start_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================================
--- ATTENDANCE TABLE - Records of student attendance for each session
--- ============================================================================
-CREATE TABLE IF NOT EXISTS `attendance` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `session_id` INT NOT NULL,
-  `student_id` INT NOT NULL,
-  `status` ENUM('present', 'late', 'absent') DEFAULT 'present',
-  `marked_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  -- Foreign keys to sessions and users tables
-  FOREIGN KEY (`session_id`) REFERENCES `sessions` (`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  
-  -- Unique constraint - one attendance record per student per session
-  UNIQUE KEY `unique_student_session` (`session_id`, `student_id`),
-  
-  -- Indexes for faster queries
-  INDEX `idx_session_id` (`session_id`),
-  INDEX `idx_student_id` (`student_id`),
-  INDEX `idx_status` (`status`),
-  INDEX `idx_marked_at` (`marked_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================================
--- OPTIONAL: DEPARTMENTS TABLE - For organizing courses/departments
--- ============================================================================
-CREATE TABLE IF NOT EXISTS `departments` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(100) NOT NULL UNIQUE,
-  `code` VARCHAR(10) UNIQUE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================================
--- OPTIONAL: COURSES TABLE - For tracking courses
--- ============================================================================
-CREATE TABLE IF NOT EXISTS `courses` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `code` VARCHAR(20) UNIQUE,
-  `department_id` INT,
-  `faculty_id` INT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  -- Foreign keys
-  FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`faculty_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  
-  -- Indexes
-  INDEX `idx_department_id` (`department_id`),
-  INDEX `idx_faculty_id` (`faculty_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================================
--- OPTIONAL: COURSE_ENROLLMENT TABLE - Track which students are in which courses
+-- COURSE_ENROLLMENT TABLE - Track which students are in which courses
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS `course_enrollment` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -293,3 +236,94 @@ CREATE TABLE IF NOT EXISTS `attendance_request` (
   INDEX `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================================
+-- OTP VERIFICATION TABLE - Password reset OTP storage
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `otp_verification` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `otp` VARCHAR(10) NOT NULL,
+  `verified` BOOLEAN DEFAULT FALSE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `verified_at` TIMESTAMP NULL,
+  `expires_at` TIMESTAMP NULL,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  INDEX `idx_otp_email` (`email`),
+  INDEX `idx_otp_expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- ACTIVITY LOGS TABLE - System activity and audit trail
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NULL COMMENT 'Actor user id (nullable for anonymous actions)',
+  `user_role` VARCHAR(20) NULL COMMENT 'Actor role at time of action',
+  `action` VARCHAR(120) NOT NULL COMMENT 'Normalized action label',
+  `entity_type` VARCHAR(80) NULL COMMENT 'Affected entity type',
+  `entity_id` VARCHAR(80) NULL COMMENT 'Affected entity id',
+  `method` VARCHAR(10) NOT NULL COMMENT 'HTTP method',
+  `path` VARCHAR(255) NOT NULL COMMENT 'Request path',
+  `status_code` INT NOT NULL COMMENT 'HTTP status code',
+  `ip_address` VARCHAR(64) NULL COMMENT 'Request IP address',
+  `user_agent` VARCHAR(255) NULL COMMENT 'Client user agent',
+  `metadata` LONGTEXT NULL COMMENT 'Additional metadata (JSON string)',
+  `duration_ms` INT NULL COMMENT 'Request duration in milliseconds',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_activity_user_id` (`user_id`),
+  INDEX `idx_activity_role` (`user_role`),
+  INDEX `idx_activity_action` (`action`),
+  INDEX `idx_activity_status` (`status_code`),
+  INDEX `idx_activity_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- APPROVED USERS TABLE - User pre-approval system for admin
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `approved_users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL COMMENT 'User full name',
+  `email` VARCHAR(255) NOT NULL UNIQUE COMMENT 'User email - must match during signup',
+  `contact_number` VARCHAR(20) NOT NULL COMMENT 'User phone number - must match during signup',
+  `role` ENUM('student', 'faculty') NOT NULL DEFAULT 'student' COMMENT 'User role',
+  `student_id` VARCHAR(100) COMMENT 'Student ID if role is student',
+  `teacher_id` VARCHAR(100) COMMENT 'Faculty ID if role is faculty',
+  `department` VARCHAR(100) COMMENT 'Department name',
+  `semester` INT COMMENT 'Semester (for students)',
+  `section` VARCHAR(50) COMMENT 'Class section',
+  `is_registered` BOOLEAN DEFAULT FALSE COMMENT 'Has user already signed up?',
+  `registered_user_id` INT COMMENT 'Reference to created user in users table',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'When admin added this user',
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update time',
+  CONSTRAINT `fk_approved_users_user_id` FOREIGN KEY (`registered_user_id`)
+    REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX `idx_approved_email` (`email`),
+  INDEX `idx_approved_contact` (`contact_number`),
+  INDEX `idx_approved_role` (`role`),
+  INDEX `idx_approved_registered` (`is_registered`),
+  INDEX `idx_approved_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- MANUAL ATTENDANCE REQUEST TABLE - Student manual attendance requests
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS `manual_attendance_request` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL COMMENT 'Student requesting attendance',
+  `session_id` INT NOT NULL COMMENT 'Session for which attendance is requested',
+  `reason` VARCHAR(500) NOT NULL COMMENT 'Student-provided reason',
+  `status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  `reviewed_by` INT NULL COMMENT 'Faculty who reviewed the request',
+  `reviewed_at` TIMESTAMP NULL COMMENT 'When the request was reviewed',
+  `rejection_note` VARCHAR(500) NULL COMMENT 'Optional reason for rejection',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_student_session` (`student_id`, `session_id`),
+  FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`session_id`) REFERENCES `sessions`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+  INDEX `idx_manual_student_id` (`student_id`),
+  INDEX `idx_manual_session_id` (`session_id`),
+  INDEX `idx_manual_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

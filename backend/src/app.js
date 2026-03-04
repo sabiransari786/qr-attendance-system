@@ -91,29 +91,17 @@ const app = express();
 // CORS middleware headers add karke frontend ko backend access karne ki permission deta hai
 // Network access (phone/tablet) ke liye bhi CORS enable kar rahe hain
 app.use(cors({
-  origin: '*', // Allow all origins for development (phone/network access)
+  origin: process.env.CORS_ORIGIN || '*', // Set CORS_ORIGIN in production (e.g., 'https://yourdomain.com')
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  credentials: process.env.CORS_ORIGIN ? true : false, // credentials only with specific origin, not with '*'
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
   preflightContinue: false,
   maxAge: 86400 // 24 hours preflight cache
 }));
 
-// Additional CORS headers for mobile browsers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  // Handle OPTIONS preflight
-  if (req.method === 'OPTIONS') {
-    console.log('📋 Handling OPTIONS preflight for:', req.path);
-    return res.status(200).end();
-  }
-  
-  next();
-});
+// Note: CORS headers are already handled by the cors() middleware above.
+// No additional manual CORS middleware needed.
 
 // express.json() middleware - JSON request body ko parse karne ke liye
 // Frontend se JSON data aata hai (e.g., login credentials) - ye middleware use parse karke req.body mein daalta hai

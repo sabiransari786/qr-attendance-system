@@ -775,7 +775,7 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
         // ---------------------------------------------------------------------
         // STEP 1: Build Query with Filters
         // ---------------------------------------------------------------------
-        // Base query - active sessions fetch karo
+        // Base query - sessions fetch karo (optionally filtered by status)
         let query = `
             SELECT 
                 s.id,
@@ -799,10 +799,16 @@ const getActiveSessions = async (filters = {}, userContext = {}) => {
             LEFT JOIN users u ON s.faculty_id = u.id
             LEFT JOIN courses c ON s.course_id = c.id
             LEFT JOIN departments d ON s.department_id = d.id
-            WHERE s.status = ?
+            WHERE 1=1
         `;
         
-        const queryParams = [SESSION_STATUS.ACTIVE];
+        const queryParams = [];
+
+        // Status filter - agar specific status diya toh woh filter karo, warna sab sessions
+        if (filters.status) {
+            query += ` AND s.status = ?`;
+            queryParams.push(filters.status);
+        }
         
         // Faculty filter
         if (filters.facultyId) {

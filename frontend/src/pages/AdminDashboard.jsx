@@ -81,8 +81,6 @@ function AdminDashboard() {
   const [isLoadingStudents, setIsLoadingStudents] = useState(true);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
-  const isMockMode = import.meta.env.VITE_USE_MOCK_API === "true";
-
   /* ── Auto-fetch overview data on mount ──────────────────────────────── */
   useEffect(() => {
     fetchStudents();
@@ -103,33 +101,14 @@ function AdminDashboard() {
       if (data.success && data.data) setStudents(data.data);
     } catch (error) {
       console.error("Error fetching students:", error);
-      setStudents([
-        { id: 2, name: "Student", email: "student@demo.com", student_id: "STU-0001", is_active: true },
-        { id: 7, name: "Rahul Singh", email: "rahul@demo.com", student_id: "STU-0002", is_active: true },
-        { id: 8, name: "Priya Verma", email: "priya@demo.com", student_id: "STU-0003", is_active: true },
-        { id: 9, name: "Amit Patel", email: "amit@demo.com", student_id: "STU-0004", is_active: true },
-        { id: 10, name: "Neha Gupta", email: "neha@demo.com", student_id: "STU-0005", is_active: true },
-      ]);
+      setStudents([]);
     } finally {
       setIsLoadingStudents(false);
     }
   };
 
-  const getMockUsers = () => [
-    { id: 1, name: "Admin User", email: "admin@attendance.com", role: "admin", is_active: true, department: "Administration" },
-    { id: 2, name: "Student One", email: "student@attendance.com", role: "student", is_active: true, department: "Computer Science" },
-    { id: 3, name: "Faculty User", email: "faculty@attendance.com", role: "faculty", is_active: true, department: "Electrical" },
-    { id: 4, name: "Riya Sharma", email: "riya@demo.com", role: "student", is_active: false, department: "Mechanical" },
-    { id: 5, name: "Arjun Verma", email: "arjun@demo.com", role: "student", is_active: true, department: "Civil" },
-  ];
-
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
-    if (isMockMode) {
-      setUsers(getMockUsers());
-      setIsLoadingUsers(false);
-      return;
-    }
     try {
       const response = await fetch(`${API_BASE_URL}/auth/admin/users`, {
         headers: {
@@ -142,7 +121,7 @@ function AdminDashboard() {
       else setUsers([]);
     } catch (error) {
       console.error("Error fetching users:", error);
-      setUsers(getMockUsers());
+      setUsers([]);
     } finally {
       setIsLoadingUsers(false);
     }

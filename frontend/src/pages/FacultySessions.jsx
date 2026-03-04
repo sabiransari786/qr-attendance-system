@@ -8,6 +8,13 @@ import { fadeInUp, staggerContainer } from '../animations/animationConfig';
 import '../styles/dashboard.css';
 import '../styles/admin-pages.css';
 
+/* ═══ Modal Overlay Helper (defined outside to avoid re-mount on every render) ═══ */
+const ModalOverlay = ({ children, onClose }) => (
+  <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={onClose}>
+    <div className="ap__panel" style={{ width: '100%', maxWidth: '520px', margin: 0 }} onClick={e => e.stopPropagation()}>{children}</div>
+  </div>
+);
+
 function FacultySessions() {
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
@@ -49,13 +56,13 @@ function FacultySessions() {
         const response = await fetch(`${API_BASE_URL}/session`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
           const data = await response.json();
-          const allSessions = data.data || [];
-          setSessions(allSessions.filter(s => s.facultyId === user?.id));
+          const allSessions = data.data || data || [];
+          setSessions(allSessions);
         } else { setError('Failed to fetch sessions'); }
       } catch (err) { console.error('Error fetching sessions:', err); setError('Error loading sessions'); }
       finally { setLoading(false); }
     };
-    if (token) fetchSessions();
+    if (token && user?.id) fetchSessions();
   }, [token, user?.id]);
 
   useEffect(() => {
@@ -152,13 +159,6 @@ function FacultySessions() {
   });
 
   const statusCounts = { all: sessions.length, active: sessions.filter(s => s.status === 'active').length, closed: sessions.filter(s => s.status === 'closed').length, cancelled: sessions.filter(s => s.status === 'cancelled').length };
-
-  /* ═══ Modal Overlay Helper ═══ */
-  const ModalOverlay = ({ children, onClose }) => (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={onClose}>
-      <div className="ap__panel" style={{ width: '100%', maxWidth: '520px', margin: 0 }} onClick={e => e.stopPropagation()}>{children}</div>
-    </div>
-  );
 
   return (
     <motion.div className="dashboard ap" variants={staggerContainer} initial="hidden" animate="visible">
@@ -264,7 +264,7 @@ function FacultySessions() {
           <h2 className="ap__panel-title" style={{ marginBottom: '1.25rem' }}>Create New Session</h2>
           <form onSubmit={handleCreateSession}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative' }} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setShowCourseDropdown(false); }}>
                 <div className="ap__search" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 0.75rem', cursor: 'text' }} onClick={() => setShowCourseDropdown(true)}>
                   <Search size={16} style={{ opacity: 0.6 }} />
                   <input type="text" placeholder={newSession.courseId ? courses.find(c => c.id === parseInt(newSession.courseId))?.name || 'Search course...' : 'Search course...'} value={courseSearch} onChange={e => { setCourseSearch(e.target.value); setShowCourseDropdown(true); }} onFocus={() => setShowCourseDropdown(true)} style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontSize: '0.9rem', color: 'var(--color-text)' }} />
@@ -272,8 +272,7 @@ function FacultySessions() {
                 </div>
                 {newSession.courseId && (() => { const sel = courses.find(c => c.id === parseInt(newSession.courseId)); return sel ? <div style={{ marginTop: '0.4rem', padding: '0.4rem 0.75rem', background: 'rgba(49,156,181,0.12)', borderRadius: '6px', fontSize: '0.82rem', color: 'var(--color-primary)', fontWeight: 600 }}><CheckCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{sel.name} ({sel.code}){sel.semester ? ` · Sem ${sel.semester}` : ''} — {sel.department_name}</div> : null; })()}
                 {showCourseDropdown && <>
-                  <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setShowCourseDropdown(false)} />
-                  <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-surface)', border: '1px solid rgba(49,156,181,0.25)', borderRadius: '10px', maxHeight: '220px', overflowY: 'auto', zIndex: 11, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+                  <div tabIndex={-1} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-surface)', border: '1px solid rgba(49,156,181,0.25)', borderRadius: '10px', maxHeight: '220px', overflowY: 'auto', zIndex: 11, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
                     {(() => {
                       const q = courseSearch.toLowerCase();
                       const filtered = courses.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.department_name || '').toLowerCase().includes(q) || (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false));
@@ -295,9 +294,9 @@ function FacultySessions() {
                 </>}
               </div>
               <input type="text" required value={newSession.courseId} onChange={() => {}} style={{ display: 'none' }} />
-              <input className="ap__search" placeholder="Location" value={newSession.location} onChange={e => setNewSession(p => ({ ...p, location: e.target.value }))} required />
-              <input className="ap__search" type="datetime-local" value={newSession.startTime} onChange={e => setNewSession(p => ({ ...p, startTime: e.target.value }))} required />
-              <input className="ap__search" type="number" min="1" max="240" placeholder="Duration (minutes)" value={newSession.duration} onChange={e => setNewSession(p => ({ ...p, duration: e.target.value }))} required />
+              <input className="ap__search" placeholder="Location" value={newSession.location} onChange={e => setNewSession(p => ({ ...p, location: e.target.value }))} onFocus={() => setShowCourseDropdown(false)} required />
+              <input className="ap__search" type="datetime-local" value={newSession.startTime} onChange={e => setNewSession(p => ({ ...p, startTime: e.target.value }))} onFocus={() => setShowCourseDropdown(false)} required />
+              <input className="ap__search" type="number" min="1" max="240" placeholder="Duration (minutes)" value={newSession.duration} onChange={e => setNewSession(p => ({ ...p, duration: e.target.value }))} onFocus={() => setShowCourseDropdown(false)} required />
               {createError && <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>{createError}</div>}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>

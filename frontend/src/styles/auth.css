@@ -226,6 +226,18 @@
   padding-left: 2.8rem !important;
 }
 
+/* Ensure icon padding works inside wrappers too */
+.auth__input-wrapper .login__input,
+.auth__input-wrapper .signup__input,
+.auth__input-wrapper input {
+  padding-left: 2.8rem !important;
+}
+
+.auth__input-group .auth__input-wrapper input,
+.auth__input-group .auth__input-wrapper select {
+  padding-left: 2.8rem !important;
+}
+
 .auth__select {
   cursor: pointer;
   appearance: none;
@@ -502,7 +514,8 @@
   background-size: 140% 140%, 160% 160%, 140% 140%, 100% 100%;
   animation: auth-bg-float 18s ease-in-out infinite;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .login__container::before,
@@ -1732,17 +1745,17 @@
 
   .auth__input-group input,
   .auth__input-group select {
-    padding: 0.7rem 0.8rem 0.7rem 2.5rem;
-    font-size: 0.88rem;
+    padding: 0.75rem 0.9rem 0.75rem 3rem !important;
+    font-size: 0.9rem;
   }
 
   .auth__input-icon {
-    left: 0.7rem;
+    left: 0.85rem;
   }
 
   .auth__input-icon svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   .signup__submit-btn,
@@ -1804,8 +1817,8 @@
 
   .auth__input-group input,
   .auth__input-group select {
-    padding: 0.6rem 0.7rem 0.6rem 2.3rem;
-    font-size: 0.84rem;
+    padding: 0.65rem 0.8rem 0.65rem 2.8rem !important;
+    font-size: 0.88rem;
   }
 }
 

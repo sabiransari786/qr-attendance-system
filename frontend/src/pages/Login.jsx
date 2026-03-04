@@ -1,9 +1,9 @@
 import { useMemo, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Radio, Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 import { login } from "../services/api";
-import { ROLE_ROUTES, API_BASE_URL } from "../utils/constants";
+import { ROLE_ROUTES } from "../utils/constants";
 import { AuthContext } from "../context/AuthContext";
 import LoginSuccessModal from "../components/LoginSuccessModal";
 import { fadeInUp, fadeInDown, staggerContainer, buttonHover, buttonTap } from '../animations/animationConfig';
@@ -275,17 +275,6 @@ function Login() {
             </Link>
           </p>
         </motion.div>
-        
-        {/* Network Debug Info */}
-        {window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && (
-          <div style={{
-            marginTop: '20px', padding: '10px', background: 'rgba(49, 156, 181, 0.08)',
-            borderRadius: '8px', fontSize: '12px', textAlign: 'center', color: 'var(--text-muted)',
-            border: '1px solid rgba(49, 156, 181, 0.15)'
-          }}>
-            <Radio size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} /> Backend: {API_BASE_URL}
-          </div>
-        )}
       </motion.section>
     </motion.div>
   );

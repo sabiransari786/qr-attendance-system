@@ -1,0 +1,82 @@
+# Docker Compose for QR Attendance Tracking System
+# Usage: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: attendance-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-attendance_tracker}
+      MYSQL_USER: ${DB_USER:-attendance_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-attendance_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - attendance-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: attendance-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-attendance_user}
+      DB_PASSWORD: ${DB_PASSWORD:-attendance_password}
+      DB_NAME: ${DB_NAME:-attendance_tracker}
+      DB_CONNECTION_LIMIT: 20
+      JWT_SECRET: ${JWT_SECRET:-change_this_secret_in_production}
+      JWT_EXPIRY: 24h
+      CORS_ORIGIN: ${FRONTEND_URL:-http://localhost}
+      BCRYPT_SALT_ROUNDS: 12
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "5001:5001"
+    networks:
+      - attendance-network
+
+  # Frontend (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5001/api}
+    container_name: attendance-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - attendance-network
+
+networks:
+  attendance-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  uploads_data:

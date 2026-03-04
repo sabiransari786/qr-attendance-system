@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, UserCheck, User, CheckCircle, Ban, Loader, ClipboardList, Plus, IdCard, Building, EyeOff, Eye } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
-import { DEPARTMENTS } from "../config/dummyData";
+import { DEPARTMENTS } from "../config/formOptions";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import "../styles/admin-pages.css";
 import "../styles/admin-approval-page.css";

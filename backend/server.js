@@ -40,13 +40,19 @@ const getLocalIP = () => {
   return 'localhost';
 };
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', async () => {
   const localIP = getLocalIP();
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Local: http://localhost:${PORT}`);
   console.log(`🌐 Network: http://${localIP}:${PORT}`);
   console.log(`✅ API Health Check: http://localhost:${PORT}/api/health`);
+
+  // ============================================================================
+  // SEED DEMO USERS — Deployment ke baad bhi demo data available rahega
+  // ============================================================================
+  const seedDemoUsers = require('./src/seed-demo-users');
+  await seedDemoUsers();
 
   // ============================================================================
   // AUTO SESSION CLOSE — Orphan Sessions Fix
@@ -75,7 +81,33 @@ app.listen(PORT, '0.0.0.0', () => {
   // Pehle immediately run karo (orphan sessions clean karo on startup)
   autoCloseSessions();
   // Phir har 10 minute pe run karo
-  setInterval(autoCloseSessions, 10 * 60 * 1000);
+  const autoCloseInterval = setInterval(autoCloseSessions, 10 * 60 * 1000);
+
+  // ============================================================================
+  // GRACEFUL SHUTDOWN — Clean exit on SIGTERM/SIGINT
+  // ============================================================================
+  const gracefulShutdown = async (signal) => {
+    console.log(`\n⚠️  ${signal} received. Shutting down gracefully...`);
+    clearInterval(autoCloseInterval);
+    server.close(async () => {
+      try {
+        await pool.end();
+        console.log('✅ Database pool closed.');
+      } catch (err) {
+        console.error('❌ Error closing database pool:', err.message);
+      }
+      console.log('👋 Server shut down complete.');
+      process.exit(0);
+    });
+    // Force exit after 10 seconds if graceful shutdown hangs
+    setTimeout(() => {
+      console.error('❌ Forced shutdown after timeout.');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 });
 
 // ============================================================================

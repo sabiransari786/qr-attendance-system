@@ -73,9 +73,13 @@ const jwt = require('jsonwebtoken');
  * JWT Secret Key
  * Token signing ke liye secret key chahiye - environment variable se aata hai
  * Production mein strong, random secret key use karni chahiye
- * Default value development ke liye hai - production mein set karna zaroori hai
+ * Agar JWT_SECRET set nahi hai toh server start nahi hona chahiye
  */
-const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('\u274c FATAL: JWT_SECRET environment variable is not set. Set it in .env file.');
+  process.exit(1);
+}
 
 /**
  * JWT Token Expiry Time

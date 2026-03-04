@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { Smartphone, Zap, Check, BarChart3, KeyRound, Lock, Users, Target, Cloud, HardDrive, TrendingUp, RefreshCw, UserCheck, CheckCircle, Star, ArrowLeft } from 'lucide-react';
+import { Smartphone, Zap, Check, BarChart3, KeyRound, Lock, Users, Target, Timer, Calendar, AlertCircle, History, UserCheck, CheckCircle, Star, ArrowLeft } from 'lucide-react';
 import "../styles/home.css";
 import {
   fadeInUp,
@@ -226,19 +226,19 @@ function Home() {
                   marginBottom: '1rem',
                   opacity: 0.9
                 }}>
-                  <Cloud size={56} />
+                  <Timer size={56} />
                 </div>
-                <span className="home__feature-badge home__feature-badge--cloud">Cloud</span>
-                <h3 className="home__feature-title" style={{marginTop: '1rem'}}>Centralized Data</h3>
+                <span className="home__feature-badge home__feature-badge--cloud">Timed</span>
+                <h3 className="home__feature-title" style={{marginTop: '1rem'}}>Smart Sessions</h3>
               </div>
               <div className="attendee-card-back">
                 <p className="home__feature-description">
-                  All attendance records stored securely in a centralized database for easy reporting and auditing.
+                  Faculty can create time-bound sessions with auto-expiring QR codes. No late entries, no proxy attendance.
                 </p>
                 <div className="home__feature-highlights" style={{marginTop: '20px'}}>
-                  <span className="home__feature-tag"><HardDrive size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Reliable</span>
-                  <span className="home__feature-tag"><TrendingUp size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Scalable</span>
-                  <span className="home__feature-tag"><RefreshCw size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Sync</span>
+                  <span className="home__feature-tag"><Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Scheduled</span>
+                  <span className="home__feature-tag"><AlertCircle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Auto-expire</span>
+                  <span className="home__feature-tag"><History size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />Logs</span>
                 </div>
                 <a href="#" className="home__feature-link" style={{marginTop: '20px'}}>
                   Learn more →
@@ -389,10 +389,10 @@ function Home() {
               "This system has revolutionized our attendance tracking. It's accurate, fast, and students love using it. Management has become so much easier!"
             </p>
             <div className="home__testimonial-author">
-              <div className="home__author-avatar">DR</div>
+              <img src="/images/dr-mohd-sadiq.jpg" alt="Dr. Mohd Sadiq" className="home__author-avatar" style={{ borderRadius: '50%', width: '70px', height: '70px', objectFit: 'cover' }} />
               <div className="home__author-info">
-                <p className="home__author-name">Dr. Ramesh Kumar</p>
-                <p className="home__author-role">Dean, Tech Institute</p>
+                <p className="home__author-name">Dr. Mohd Sadiq</p>
+                <p className="home__author-role">HOD of Computer Engineering</p>
               </div>
             </div>
           </motion.div>
@@ -403,10 +403,10 @@ function Home() {
               "As a faculty member, I appreciate the simplicity. No more manual roll calls, no disputes about attendance. Takes less than a minute!"
             </p>
             <div className="home__testimonial-author">
-              <div className="home__author-avatar">PM</div>
+              <img src="/images/image.png" alt="Dr. Sunil" className="home__author-avatar" style={{ borderRadius: '50%', width: '70px', height: '70px', objectFit: 'cover' }} />
               <div className="home__author-info">
-                <p className="home__author-name">Prof. Meera Sharma</p>
-                <p className="home__author-role">Computer Science Faculty</p>
+                <p className="home__author-name">Dr. Sunil</p>
+                <p className="home__author-role">Teacher</p>
               </div>
             </div>
           </motion.div>
@@ -417,10 +417,10 @@ function Home() {
               "Transparent and efficient! I can see my attendance records in real-time. The system is very reliable and never fails."
             </p>
             <div className="home__testimonial-author">
-              <div className="home__author-avatar">AJ</div>
+              <div className="home__author-avatar">MT</div>
               <div className="home__author-info">
-                <p className="home__author-name">Arjun Joshi</p>
-                <p className="home__author-role">Student, 4th Year</p>
+                <p className="home__author-name">Mr. Tabrej</p>
+                <p className="home__author-role">Teacher</p>
               </div>
             </div>
           </motion.div>

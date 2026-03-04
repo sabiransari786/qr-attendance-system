@@ -1,6 +1,5 @@
 /* Import Responsive Styles - MUST BE FIRST */
 @import './styles/responsive.css';
-@import './styles/mobile-enhanced.css';
 @import './styles/mobile-app-ui.css';
 
 /* ==========================================================================

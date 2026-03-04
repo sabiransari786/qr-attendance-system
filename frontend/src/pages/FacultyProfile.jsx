@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { API_BASE_URL } from "../utils/constants";
-import { DEPARTMENTS } from "../config/dummyData";
+import { DEPARTMENTS } from "../config/formOptions";
 import "../styles/profile.css";
 import {
   fadeInUp,

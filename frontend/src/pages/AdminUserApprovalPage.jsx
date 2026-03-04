@@ -9,7 +9,7 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
-import { DEPARTMENTS } from "../config/dummyData";
+import { DEPARTMENTS } from "../config/formOptions";
 import "../styles/dashboard.css";
 import "../styles/admin-pages.css";
 

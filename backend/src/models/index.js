@@ -2,43 +2,18 @@
  * Models Barrel File (index.js)
  *
  * Barrel file ka role:
- *  - Saare Mongoose models ko ek single entry-point se export karna
+ *  - Saare models ko ek single entry-point se export karna
  *  - Taaki controllers/services me imports clean aur readable rahein:
- *      const { User, Session, Attendance } = require('../models');
+ *      const { AttendanceRequest } = require('../models');
  *
- * Direct imports vs barrel file:
- *  - Direct:  require('../models/user.model');
- *  - Barrel:  require('../models');
- *  - Benefit: Less repetition, centralized management, easy scalability.
+ * NOTE: user.model.js, session.model.js, attendance.model.js are legacy Mongoose
+ * schemas. The actual app uses MySQL via mysql2/promise (pool) directly in services.
+ * Only AttendanceRequest model uses MySQL pool correctly and is actively used.
  */
 
-// User model - system ke saare users (student/teacher/admin) ke liye
-const User = require('./user.model');
-
-// Session model - QR based class/lecture sessions ke liye
-const Session = require('./session.model');
-
-// Attendance model - har student ki attendance records ke liye
-const Attendance = require('./attendance.model');
-
-/**
- * Clean, structured exports:
- *  - Consistent naming
- *  - Easy destructuring in controllers/services
-// Attendance Request model - QR code generation requests ke liye
+// Attendance Request model - QR code generation requests ke liye (uses MySQL pool)
 const AttendanceRequest = require('./attendance-request.model');
 
- *
- * Usage Example:
- *  const { User, Session, Attendance } = require('../models');
- */
 module.exports = {
-  User,
-  Session,
-  Attendance
-module.exports = {
-  User,
-  Session,
-  Attendance,
   AttendanceRequest
 };

@@ -108,6 +108,18 @@ function Navbar() {
             src="/images/logo.jpeg" 
             alt="QR Attendance Logo"
             className="navbar__brand-icon"
+            style={{
+              width: '36px',
+              height: '36px',
+              minWidth: '36px',
+              minHeight: '36px',
+              display: 'block',
+              visibility: 'visible',
+              opacity: 1,
+              objectFit: 'cover',
+              borderRadius: '8px',
+              flexShrink: 0
+            }}
           />
           <div className="navbar__brand-text">
             <span className="navbar__brand-title">QR Attendance</span>

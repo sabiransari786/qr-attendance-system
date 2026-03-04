@@ -5,7 +5,7 @@ import { Eye, EyeOff, User, Mail, Hash, Phone, Building2, BookOpen, Users, Lock,
 import { registerStudent } from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import Toast from "../components/Toast";
-import { DEPARTMENTS, SEMESTERS, SECTIONS } from "../config/dummyData";
+import { DEPARTMENTS, SEMESTERS, SECTIONS } from "../config/formOptions";
 import "../styles/auth.css";
 import {
   fadeInUp,
