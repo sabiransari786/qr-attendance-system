@@ -608,3 +608,1217 @@ img {
     height: 80px !important;
   }
 }
+
+/* ============================================================================
+   ADMIN PAGES RESPONSIVE (AP Classes)
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  /* Admin page shell */
+  .ap {
+    padding: calc(72px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .ap__inner {
+    padding: 0;
+  }
+  
+  /* Admin header */
+  .ap__header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .ap__header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .ap__title {
+    font-size: 1.4rem !important;
+    line-height: 1.3;
+  }
+  
+  .ap__subtitle {
+    font-size: 0.85rem !important;
+  }
+  
+  .ap__eyebrow {
+    font-size: 0.65rem !important;
+  }
+  
+  .ap__header-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .ap__header-actions .ap__btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Admin stats grid */
+  .ap__stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .ap__stat {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+  
+  .ap__stat-value {
+    font-size: 1.5rem !important;
+  }
+  
+  .ap__stat-label {
+    font-size: 0.68rem !important;
+  }
+  
+  /* Admin panels */
+  .ap__panel {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .ap__panel-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+  
+  .ap__panel-title {
+    font-size: 0.95rem !important;
+  }
+  
+  /* Admin filters */
+  .ap__filters {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .ap__search,
+  .ap__select {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+  
+  /* Admin buttons */
+  .ap__btn {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.85rem !important;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Admin table responsive */
+  .ap__table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+  }
+  
+  .ap__table {
+    font-size: 0.8rem !important;
+    min-width: 600px;
+  }
+  
+  .ap__table th,
+  .ap__table td {
+    padding: 0.65rem 0.5rem !important;
+    white-space: nowrap;
+  }
+  
+  .ap__avatar-cell {
+    gap: 0.5rem;
+  }
+  
+  .ap__avatar {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 0.7rem !important;
+  }
+  
+  .ap__user-name {
+    font-size: 0.8rem !important;
+  }
+  
+  .ap__user-sub {
+    font-size: 0.68rem !important;
+  }
+  
+  .ap__badge {
+    font-size: 0.65rem !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+  
+  /* Admin charts */
+  .ap__donut-wrap {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .ap__donut {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .ap__legend {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: center;
+  }
+  
+  /* Back button */
+  .ap__back-btn {
+    font-size: 0.78rem !important;
+    padding: 0.45rem 0.85rem !important;
+  }
+  
+  /* Hide background objects on mobile */
+  .ap__objects,
+  .ap__object {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .ap {
+    padding: calc(65px + 0.75rem) 0.5rem 1.5rem !important;
+  }
+  
+  .ap__stats {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .ap__title {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ============================================================================
+   DASHBOARD PAGES RESPONSIVE (Admin/Faculty/Student Dashboards)
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .dashboard {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .dashboard__header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    padding-bottom: 1.5rem !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  .dashboard__title {
+    font-size: 1.5rem !important;
+  }
+  
+  .dashboard__subtitle {
+    font-size: 0.9rem !important;
+  }
+  
+  .dashboard__buttons {
+    width: 100%;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .dashboard__button {
+    width: 100% !important;
+    justify-content: center;
+  }
+  
+  .dashboard__grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .dashboard__card {
+    padding: 1.25rem !important;
+    min-height: auto !important;
+    border-radius: 14px !important;
+  }
+  
+  .dashboard__card-title {
+    font-size: 1.1rem !important;
+  }
+  
+  .dashboard__card-desc {
+    font-size: 0.85rem !important;
+  }
+  
+  /* Hide 3D objects on mobile */
+  .dashboard__objects,
+  .dashboard__object {
+    display: none !important;
+  }
+  
+  /* Stats grid */
+  .dashboard__stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Admin dashboard specific */
+  .admin-dashboard__stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .admin-dashboard__stat {
+    padding: 1rem !important;
+  }
+  
+  .admin-dashboard__stat-value {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Navigation cards grid */
+  .adp__nav-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .adp__nav-card {
+    padding: 1.25rem !important;
+  }
+  
+  .adp__nav-title {
+    font-size: 1rem !important;
+  }
+  
+  .adp__nav-desc {
+    font-size: 0.8rem !important;
+  }
+  
+  /* Charts container */
+  .adp__charts {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .adp__chart {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+  
+  .adp__chart-title {
+    font-size: 0.95rem !important;
+  }
+  
+  /* Recharts responsive */
+  .recharts-wrapper {
+    max-width: 100% !important;
+  }
+  
+  .recharts-responsive-container {
+    max-width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .dashboard {
+    padding: calc(65px + 0.75rem) 0.5rem 1.5rem !important;
+  }
+  
+  .dashboard__title {
+    font-size: 1.3rem !important;
+  }
+  
+  .dashboard__stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .admin-dashboard__stats {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .stat-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    gap: 1rem !important;
+  }
+}
+
+/* ============================================================================
+   FACULTY PAGES RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  /* QR Generation */
+  .qr-generation-page,
+  .faculty-qr-page {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .qr-form-container {
+    padding: 1.25rem !important;
+  }
+  
+  .qr-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .qr-code-container {
+    padding: 1rem !important;
+  }
+  
+  .qr-code-display {
+    width: 200px !important;
+    height: 200px !important;
+    margin: 0 auto;
+  }
+  
+  /* Sessions page */
+  .faculty-sessions-page {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .session-card {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+  
+  .session-card__header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  
+  .session-card__info {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Attendance reports */
+  .faculty-reports-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .faculty-reports-layout aside {
+    position: static !important;
+    max-height: none !important;
+    border-radius: 14px !important;
+  }
+  
+  .report-filters-container {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Suspicious activity */
+  .suspicious-card {
+    grid-template-columns: 1fr !important;
+    padding: 1rem !important;
+  }
+  
+  .suspicious-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Attendance requests */
+  .request-card {
+    padding: 1rem !important;
+  }
+  
+  .request-card__header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  
+  .request-card__actions {
+    width: 100%;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .request-card__actions button {
+    width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .qr-code-display {
+    width: 180px !important;
+    height: 180px !important;
+  }
+}
+
+/* ============================================================================
+   STUDENT PAGES RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  /* Scan QR page */
+  .scan-qr-page,
+  .qr-scanner-page {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .scanner-container {
+    padding: 1rem !important;
+    border-radius: 14px !important;
+  }
+  
+  #qr-reader {
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
+  }
+  
+  .scan-instructions {
+    padding: 1rem !important;
+    font-size: 0.85rem !important;
+  }
+  
+  /* Student dashboard enhanced */
+  .student-dashboard-cards {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .student-stat-card {
+    padding: 1rem !important;
+  }
+  
+  .student-stat-value {
+    font-size: 1.75rem !important;
+  }
+  
+  /* Attendance history */
+  .attendance-history-page {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .attendance-filters {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .attendance-filters select,
+  .attendance-filters input {
+    width: 100% !important;
+  }
+  
+  .attendance-summary {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .attendance-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .attendance-table {
+    min-width: 500px;
+  }
+  
+  /* Subject attendance */
+  .subject-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+  
+  .subject-card {
+    padding: 1rem !important;
+  }
+  
+  /* Student attendance request */
+  .request-form-container {
+    padding: 1.25rem !important;
+    border-radius: 14px !important;
+  }
+  
+  .request-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .attendance-summary {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .student-stat-value {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* ============================================================================
+   PROFILE PAGES RESPONSIVE (Enhanced)
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .profile-container {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .profile__card {
+    border-radius: 14px !important;
+  }
+  
+  .profile__header {
+    flex-direction: column !important;
+    text-align: center;
+    gap: 1rem !important;
+    padding: 2rem 1.25rem !important;
+  }
+  
+  .profile__avatar {
+    width: 90px !important;
+    height: 90px !important;
+    font-size: 2rem !important;
+  }
+  
+  .profile__name {
+    font-size: 1.4rem !important;
+  }
+  
+  .profile__role {
+    font-size: 0.9rem !important;
+  }
+  
+  .profile__content {
+    padding: 1.5rem 1.25rem !important;
+  }
+  
+  .profile__section {
+    margin-bottom: 1.75rem !important;
+  }
+  
+  .profile__section-title {
+    font-size: 1rem !important;
+  }
+  
+  .profile-info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .profile-info-item {
+    padding: 0.85rem !important;
+  }
+  
+  .profile__back-btn {
+    padding: 0.6rem 1rem !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Photo editor */
+  .photo-editor-modal {
+    padding: 0.5rem !important;
+  }
+  
+  .photo-editor-content {
+    width: 95vw !important;
+    max-width: 400px !important;
+    padding: 1rem !important;
+  }
+  
+  .photo-editor-canvas {
+    height: 200px !important;
+  }
+  
+  .photo-editor-controls {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .position-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem !important;
+  }
+  
+  .position-controls button {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .zoom-slider {
+    width: 100% !important;
+  }
+  
+  /* Hide profile background objects */
+  .profile__objects,
+  .profile__object {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .profile__header {
+    padding: 1.5rem 1rem !important;
+  }
+  
+  .profile__avatar {
+    width: 80px !important;
+    height: 80px !important;
+    font-size: 1.75rem !important;
+  }
+  
+  .profile__name {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ============================================================================
+   AUTH PAGES RESPONSIVE (Login/Signup Enhanced)
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .login__container,
+  .signup__container {
+    padding: calc(70px + 1.5rem) 1rem 2rem !important;
+    min-height: 100vh;
+  }
+  
+  .login__card,
+  .signup__card {
+    padding: 2rem 1.5rem !important;
+    border-radius: 20px !important;
+    max-width: 100% !important;
+    margin: 0 auto;
+  }
+  
+  .login__title,
+  .signup__title {
+    font-size: 1.6rem !important;
+  }
+  
+  .auth__brand-icon {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .auth__form-row {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .auth__input-group {
+    border-radius: 10px !important;
+  }
+  
+  .auth__input-group input,
+  .auth__input-group select {
+    padding: 0.85rem 1rem 0.85rem 3rem !important;
+    font-size: 1rem !important;
+  }
+  
+  .signup__submit-btn,
+  .login__submit-btn,
+  .auth__submit-btn {
+    padding: 0.85rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-height: 48px;
+  }
+  
+  /* Hide auth background objects on mobile */
+  .auth__objects,
+  .auth__object {
+    opacity: 0.3 !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .login__container,
+  .signup__container {
+    padding: calc(65px + 1rem) 0.75rem 1.5rem !important;
+  }
+  
+  .login__card,
+  .signup__card {
+    padding: 1.5rem 1.25rem !important;
+    border-radius: 16px !important;
+  }
+  
+  .login__title,
+  .signup__title {
+    font-size: 1.4rem !important;
+  }
+  
+  .auth__objects,
+  .auth__object {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+   HOME PAGE RESPONSIVE (Enhanced)
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .home {
+    padding-top: 0 !important;
+  }
+  
+  .home__hero {
+    padding: 5rem 1rem 3rem !important;
+  }
+  
+  .home__hero-inner {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    text-align: center;
+  }
+  
+  .home__hero-content {
+    order: 1;
+  }
+  
+  .home__hero-visual {
+    order: 2;
+    min-height: 200px !important;
+  }
+  
+  .home__hero-title {
+    font-size: 1.75rem !important;
+    line-height: 1.3;
+  }
+  
+  .home__hero-description {
+    font-size: 0.95rem !important;
+    margin: 0 auto;
+  }
+  
+  .home__hero-badge {
+    font-size: 0.7rem !important;
+    padding: 0.35rem 0.85rem !important;
+  }
+  
+  .home__hero-actions {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
+  }
+  
+  .home__hero-actions .btn {
+    width: 100% !important;
+    max-width: 280px;
+    justify-content: center;
+  }
+  
+  .home__hero-metrics {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .home__features {
+    padding: 3rem 1rem !important;
+  }
+  
+  .home__features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .home__feature-card {
+    padding: 1.25rem !important;
+    border-radius: 14px !important;
+  }
+  
+  /* Stats section */
+  .home__stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  .home__stat-value {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Testimonials */
+  .home__testimonials {
+    padding: 3rem 1rem !important;
+  }
+  
+  .home__testimonials-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* CTA Section */
+  .home__cta {
+    padding: 3rem 1rem !important;
+    text-align: center;
+  }
+  
+  .home__cta-title {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Hide decorative objects */
+  .home__objects,
+  .home__object {
+    opacity: 0.4 !important;
+  }
+  
+  .home__object--sphere {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  .home__object--torus {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  
+  .home__object--diamond {
+    width: 70px !important;
+    height: 70px !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .home__hero {
+    padding: 4rem 0.75rem 2.5rem !important;
+  }
+  
+  .home__hero-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .home__hero-metrics {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .home__stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .home__objects,
+  .home__object {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+   NOTIFICATIONS PAGE RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .notifications-page {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .notification-card {
+    padding: 1rem !important;
+    border-radius: 12px !important;
+  }
+  
+  .notification-card__header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  
+  .notification-card__icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .notification-card__title {
+    font-size: 0.95rem !important;
+  }
+  
+  .notification-card__message {
+    font-size: 0.85rem !important;
+  }
+}
+
+/* ============================================================================
+   LEGAL PAGES RESPONSIVE (Privacy, Terms, Cookie Policy)
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .legal-page,
+  .privacy-page,
+  .terms-page,
+  .cookie-page {
+    padding: calc(70px + 1rem) 1rem 2rem !important;
+  }
+  
+  .legal-container {
+    padding: 1.5rem 1.25rem !important;
+    border-radius: 14px !important;
+  }
+  
+  .legal-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .legal-subtitle {
+    font-size: 1.1rem !important;
+  }
+  
+  .legal-section {
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .legal-section p,
+  .legal-section li {
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+  }
+}
+
+/* ============================================================================
+   SUPPORT & FEEDBACK PAGES RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .support-page,
+  .feedback-page {
+    padding: calc(70px + 1rem) 0.75rem 2rem !important;
+  }
+  
+  .support-container,
+  .feedback-container {
+    padding: 1.5rem !important;
+    border-radius: 14px !important;
+  }
+  
+  .support-form,
+  .feedback-form {
+    gap: 1rem !important;
+  }
+  
+  .form-row {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .form-group {
+    width: 100% !important;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.85rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+/* ============================================================================
+   MODAL & OVERLAY RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem !important;
+  }
+  
+  .modal-content,
+  .modal-container {
+    width: 95vw !important;
+    max-width: 400px !important;
+    max-height: 90vh !important;
+    padding: 1.25rem !important;
+    border-radius: 14px !important;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    padding-bottom: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .modal-title {
+    font-size: 1.2rem !important;
+  }
+  
+  .modal-body {
+    padding: 0 !important;
+  }
+  
+  .modal-footer {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    padding-top: 1rem !important;
+  }
+  
+  .modal-footer button {
+    width: 100% !important;
+  }
+  
+  .modal-close-btn {
+    top: 0.75rem !important;
+    right: 0.75rem !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+/* ============================================================================
+   TOAST NOTIFICATIONS RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .toast-container {
+    top: auto !important;
+    bottom: 1rem !important;
+    right: 0.5rem !important;
+    left: 0.5rem !important;
+    max-width: none !important;
+  }
+  
+  .toast {
+    padding: 0.85rem 1rem !important;
+    border-radius: 10px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .toast-icon {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* ============================================================================
+   FOOTER RESPONSIVE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  .footer {
+    padding: 2.5rem 1rem 1.5rem !important;
+  }
+  
+  .footer__inner {
+    flex-direction: column !important;
+    gap: 2rem !important;
+    text-align: center;
+  }
+  
+  .footer__links {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  
+  .footer__link {
+    font-size: 0.9rem !important;
+  }
+  
+  .footer__copyright {
+    font-size: 0.8rem !important;
+  }
+  
+  .footer__social {
+    justify-content: center !important;
+    gap: 1rem !important;
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES FOR MOBILE
+   ============================================================================ */
+
+@media screen and (max-width: 768px) {
+  /* Hide on mobile */
+  .hide-mobile,
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Show only on mobile */
+  .mobile-only {
+    display: block !important;
+  }
+  
+  /* Full width on mobile */
+  .mobile-full-width {
+    width: 100% !important;
+  }
+  
+  /* Stack flex items on mobile */
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  
+  /* Center on mobile */
+  .mobile-center {
+    text-align: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Reduce gap on mobile */
+  .mobile-gap-sm {
+    gap: 0.5rem !important;
+  }
+  
+  /* Touch-friendly sizing */
+  .touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+/* ============================================================================
+   SAFE AREA INSETS (iPhone X and newer)
+   ============================================================================ */
+
+@supports (padding: max(0px)) {
+  @media screen and (max-width: 768px) {
+    .dashboard,
+    .ap,
+    .profile-container,
+    .home {
+      padding-bottom: max(2rem, env(safe-area-inset-bottom)) !important;
+    }
+    
+    .navbar {
+      padding-top: max(0.5rem, env(safe-area-inset-top)) !important;
+    }
+    
+    .footer {
+      padding-bottom: max(1.5rem, env(safe-area-inset-bottom)) !important;
+    }
+  }
+}
+
+/* ============================================================================
+   REDUCED MOTION PREFERENCES
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .dashboard__object,
+  .ap__object,
+  .home__object,
+  .profile__object,
+  .auth__object {
+    animation: none !important;
+  }
+}
