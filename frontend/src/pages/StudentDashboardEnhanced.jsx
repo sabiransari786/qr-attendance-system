@@ -44,7 +44,6 @@ function StudentDashboardEnhanced() {
     setLoading(true);
     try {
       const token = sessionStorage.getItem('authToken');
-      console.log('Fetching attendance for user:', user.id);
       const res = await fetch(`${API_BASE_URL}/attendance/student/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -54,7 +53,6 @@ function StudentDashboardEnhanced() {
       }
 
       const data = await res.json();
-      console.log('API Response:', data);
       const records = data.data || [];
 
         const totalClasses = records.length;
@@ -87,7 +85,6 @@ function StudentDashboardEnhanced() {
         }));
 
         setAttendanceStats({ overall: overallPercentage, present: presentClasses, late: lateClasses, absent: absentClasses, total: totalClasses, subjects });
-        console.log('Stats set:', { overall: overallPercentage, present: presentClasses, late: lateClasses, absent: absentClasses });
 
         // Notifications
         const notifs = [];

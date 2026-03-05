@@ -103,20 +103,11 @@ const authService = require('../services/auth.service');
  */
 const login = async (req, res, next) => {
     try {
-        // Log incoming request
-        console.log('🔐 LOGIN REQUEST RECEIVED');
-        console.log('   From IP:', req.ip || req.connection.remoteAddress);
-        console.log('   Origin:', req.get('origin'));
-        console.log('   User-Agent:', req.get('user-agent'));
-        
         // ---------------------------------------------------------------------
         // STEP 1: Request body se login credentials extract karo
         // ---------------------------------------------------------------------
         // Destructuring use kar rahe hain - clean aur readable hai
         const { email, password } = req.body;
-        
-        console.log('   Email:', email);
-        console.log('   Password:', password ? '***' : 'missing');
 
         // ---------------------------------------------------------------------
         // STEP 2: Basic Validation - Required fields check karo
@@ -557,10 +548,6 @@ const updateProfile = async (req, res, next) => {
         // Get user ID from authenticated user (set by auth middleware)
         const userId = req.user?.id;
         
-        console.log('📝 Profile Update Request:');
-        console.log('User ID:', userId);
-        console.log('Update Data:', req.body);
-        
         if (!userId) {
             return res.status(401).json({
                 success: false,
@@ -581,9 +568,6 @@ const updateProfile = async (req, res, next) => {
         
         // Call service to update profile
         const updatedUser = await authService.updateProfile(userId, updateData);
-        
-        console.log('✅ Profile Updated Successfully:');
-        console.log('Updated User:', JSON.stringify(updatedUser, null, 2));
         
         // Return success response
         return res.status(200).json({
@@ -665,10 +649,6 @@ const uploadProfilePhoto = async (req, res, next) => {
             });
         }
         
-        console.log(`📸 Controller: Uploading photo for user ${userId}`);
-        console.log(`   Photo size: ${photoBuffer.length} bytes`);
-        console.log(`   MIME type: ${mimeType}`);
-        
         // Call service to upload photo
         const updatedUser = await authService.uploadProfilePhoto(userId, photoBuffer, mimeType);
         
@@ -701,8 +681,6 @@ const getProfilePhoto = async (req, res, next) => {
                 message: 'User ID is required'
             });
         }
-        
-        console.log(`📷 Controller: Fetching photo for user ${userId}`);
         
         // Call service to get photo
         const photoData = await authService.getProfilePhoto(userId);
