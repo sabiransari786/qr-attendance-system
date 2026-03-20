@@ -55,20 +55,39 @@ body {
    ============================================================================ */
 
 :root {
-  /* Primary Colors */
-  --primary-color: #6366f1;
-  --primary-dark: #4f46e5;
-  --primary-light: #818cf8;
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  /* Primary Colors (Dark Theme Default) */
+  --primary-color: #319CB5;
+  --primary-dark: #03181F;
+  --primary-light: #54FFD8;
+  --primary-gradient: linear-gradient(135deg, #319CB5 0%, #54FFD8 100%);
+
+  /* Legacy Theme Tokens used across styles */
+  --primary-accent: #319CB5;
+  --light-accent: #CCF5FE;
+  --deep-neutral: #040D10;
+  --text-light: #FFFFFF;
+  --text-muted: #9CA3AF;
+  --card-bg: rgba(3, 24, 31, 0.8);
+  --border-soft: rgba(49, 156, 181, 0.2);
+  --input-bg: rgba(20, 40, 50, 0.6);
+
+  --color-bg: #03181F;
+  --color-bg-secondary: rgba(49, 156, 181, 0.08);
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray: #6B7280;
+  --color-lighter-gray: #F3F4F6;
+  --color-dark-gray: #1F2937;
+  --color-border-gray: #E5E7EB;
   
   /* Admin Pages Variables (color-* naming convention) */
-  --color-primary: #6366f1;
-  --color-text: #1a1a2e;
-  --color-text-secondary: #64748b;
-  --color-border: #e2e8f0;
-  --color-background: #ffffff;
-  --color-surface: #ffffff;
-  --color-card-alt: #f8fafc;
+  --color-primary: #319CB5;
+  --color-text: #FFFFFF;
+  --color-text-secondary: #9CA3AF;
+  --color-border: rgba(49, 156, 181, 0.2);
+  --color-background: #03181F;
+  --color-surface: rgba(3, 24, 31, 0.8);
+  --color-card-alt: #0d2530;
   --color-success: #22c55e;
   --color-warning: #eab308;
   --color-error: #ef4444;
@@ -133,13 +152,50 @@ body {
 
 /* Dark Theme Variables */
 [data-theme="dark"] {
-  --color-primary: #818cf8;
-  --color-text: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-border: #334155;
-  --color-background: #1e293b;
-  --color-surface: #0d2a34;
-  --color-card-alt: #0f172a;
+  --primary-color: #319CB5;
+  --primary-dark: #03181F;
+  --primary-light: #54FFD8;
+  --primary-gradient: linear-gradient(135deg, #319CB5 0%, #54FFD8 100%);
+  --primary-accent: #319CB5;
+  --light-accent: #CCF5FE;
+  --deep-neutral: #040D10;
+  --text-light: #FFFFFF;
+  --text-muted: #9CA3AF;
+  --card-bg: rgba(3, 24, 31, 0.8);
+  --border-soft: rgba(49, 156, 181, 0.2);
+  --input-bg: rgba(20, 40, 50, 0.6);
+  --color-bg: #03181F;
+  --color-bg-secondary: rgba(49, 156, 181, 0.08);
+  --color-primary: #319CB5;
+  --color-text: #FFFFFF;
+  --color-text-secondary: #9CA3AF;
+  --color-border: rgba(49, 156, 181, 0.2);
+  --color-background: #03181F;
+  --color-surface: rgba(3, 24, 31, 0.8);
+  --color-card-alt: #0d2530;
+}
+
+/* Light Theme Variables */
+[data-theme="light"] {
+  --primary-dark: #F7FAFC;
+  --primary-accent: #5E8EA0;
+  --light-accent: #B8D0D9;
+  --deep-neutral: #FFFFFF;
+  --text-light: #2F3B40;
+  --text-muted: #6C8794;
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --border-soft: rgba(94, 142, 160, 0.16);
+  --input-bg: rgba(248, 251, 253, 0.95);
+
+  --color-bg: #F9FBFD;
+  --color-bg-secondary: rgba(120, 158, 164, 0.08);
+  --color-text: #2F3B40;
+  --color-text-secondary: #6C8794;
+  --color-primary: #5E8EA0;
+  --color-border: rgba(94, 142, 160, 0.16);
+  --color-background: #ffffff;
+  --color-surface: rgba(255, 255, 255, 0.98);
+  --color-card-alt: #f8fafc;
 }
 
 /* ============================================================================
