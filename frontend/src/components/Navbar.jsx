@@ -135,7 +135,7 @@ function Navbar() {
           aria-expanded={isMobileMenuOpen}
         >
           <img
-            src="/images/menu.png"
+            src="/images/menu.png?v=2"
             alt="Menu"
             className="navbar__mobile-menu-icon"
           />

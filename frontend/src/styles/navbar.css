@@ -282,6 +282,12 @@
   height: 22px;
   object-fit: contain;
   display: block;
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(22%) sepia(14%) saturate(742%) hue-rotate(157deg) brightness(94%) contrast(88%);
+}
+
+[data-theme="dark"] .navbar__mobile-menu-icon {
+  filter: brightness(0) invert(1);
 }
 
 .navbar__mobile-close {
