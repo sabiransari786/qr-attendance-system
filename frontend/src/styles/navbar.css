@@ -330,10 +330,14 @@
 .navbar__overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 15, 20, 0.46);
+  background: rgba(4, 15, 20, 0.28);
   z-index: 999;
-  backdrop-filter: blur(4px);
+  backdrop-filter: none;
   animation: navFadeIn 0.3s ease;
+}
+
+.navbar__mobile-close {
+  display: none;
 }
 
 @keyframes navFadeIn {
@@ -574,6 +578,31 @@
     gap: 0.5rem;
   }
 
+  .navbar__mobile-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(49, 156, 181, 0.35);
+    border-radius: 10px;
+    background: rgba(49, 156, 181, 0.12);
+    color: var(--color-text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .navbar__mobile-close:hover,
+  .navbar__mobile-close:active {
+    background: rgba(49, 156, 181, 0.2);
+    border-color: rgba(49, 156, 181, 0.55);
+  }
+
   .navbar__nav--open {
     right: 0;
   }
@@ -637,6 +666,12 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 249, 255, 0.99));
     border-left-color: rgba(90, 168, 245, 0.25);
     box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
+  }
+
+  [data-theme="light"] .navbar__mobile-close {
+    background: rgba(90, 168, 245, 0.14);
+    border-color: rgba(90, 168, 245, 0.4);
+    color: #163042;
   }
 
   [data-theme="light"] .navbar__link--active,
