@@ -330,14 +330,10 @@
 .navbar__overlay {
   position: fixed;
   inset: 0;
-  background: rgba(4, 15, 20, 0.28);
+  background: rgba(0, 0, 0, 0.7);
   z-index: 999;
-  backdrop-filter: none;
+  backdrop-filter: blur(8px);
   animation: navFadeIn 0.3s ease;
-}
-
-.navbar__mobile-close {
-  display: none;
 }
 
 @keyframes navFadeIn {
@@ -557,60 +553,29 @@
 
   /* Slide-in drawer */
   .navbar__nav {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0.75rem;
-    transform: translateY(-8px) scale(0.98);
-    opacity: 0;
-    pointer-events: none;
-    height: auto;
-    max-height: calc(100dvh - 6rem);
-    width: min(300px, calc(100vw - 1.5rem));
-    max-width: min(300px, calc(100vw - 1.5rem));
+    position: fixed;
+    top: 0;
+    right: -100%;
+    height: 100vh;
+    height: 100dvh;
+    width: 280px;
+    max-width: 80vw;
     flex-direction: column;
     align-items: stretch;
-    padding: 3.6rem 0.9rem 1rem;
+    padding: 5rem 1.25rem 2rem;
     margin: 0;
-    background: linear-gradient(180deg, rgba(3, 24, 31, 0.99), rgba(6, 31, 43, 0.98));
-    border: 1px solid rgba(49, 156, 181, 0.32);
-    border-radius: 16px;
-    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
-    transition: transform 0.22s ease, opacity 0.22s ease;
+    background: linear-gradient(180deg, rgba(3, 24, 31, 0.98), rgba(6, 31, 43, 0.98));
+    border-left: 1px solid rgba(49, 156, 181, 0.3);
+    border-radius: 0;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1001;
     overflow-y: auto;
     gap: 0.5rem;
   }
 
-  .navbar__mobile-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(49, 156, 181, 0.35);
-    border-radius: 10px;
-    background: rgba(49, 156, 181, 0.12);
-    color: var(--color-text);
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-    z-index: 2;
-  }
-
-  .navbar__mobile-close:hover,
-  .navbar__mobile-close:active {
-    background: rgba(49, 156, 181, 0.2);
-    border-color: rgba(49, 156, 181, 0.55);
-  }
-
   .navbar__nav--open {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-    pointer-events: auto;
+    right: 0;
   }
 
   .navbar__link {
@@ -622,15 +587,6 @@
     text-align: left;
     border: 1px solid transparent;
     background: rgba(49, 156, 181, 0.08);
-    color: #d5ecf4;
-  }
-
-  .navbar__nav .navbar__link.navbar__link--active,
-  .navbar__nav .navbar__link.navbar__link--active-primary {
-    background: rgba(49, 156, 181, 0.24);
-    border-color: rgba(49, 156, 181, 0.52);
-    color: #ffffff;
-    box-shadow: none;
   }
 
   .navbar__link:hover,
@@ -660,14 +616,10 @@
   }
 
   .navbar__theme-toggle {
-    margin-top: 0.65rem;
+    margin-top: 1.5rem;
     align-self: flex-start;
     width: 42px;
     height: 42px;
-  }
-
-  .navbar__overlay {
-    display: none;
   }
 }
 
@@ -675,27 +627,8 @@
 @media (max-width: 768px) {
   [data-theme="light"] .navbar__nav {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 249, 255, 0.99));
-    border-color: rgba(90, 168, 245, 0.28);
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.14);
-  }
-
-  [data-theme="light"] .navbar__mobile-close {
-    background: rgba(90, 168, 245, 0.14);
-    border-color: rgba(90, 168, 245, 0.4);
-    color: #163042;
-  }
-
-  [data-theme="light"] .navbar__link {
-    color: #1d3342;
-    background: rgba(90, 168, 245, 0.1);
-  }
-
-  [data-theme="light"] .navbar__nav .navbar__link.navbar__link--active,
-  [data-theme="light"] .navbar__nav .navbar__link.navbar__link--active-primary {
-    background: rgba(90, 168, 245, 0.2);
-    border-color: rgba(90, 168, 245, 0.45);
-    color: #163042;
-    box-shadow: none;
+    border-left-color: rgba(90, 168, 245, 0.25);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -729,10 +662,8 @@
   }
 
   .navbar__nav {
-    right: 0.5rem;
-    width: min(260px, calc(100vw - 1rem));
-    max-width: min(260px, calc(100vw - 1rem));
-    padding: 3.4rem 0.8rem 0.9rem;
+    width: 260px;
+    padding: 4.5rem 1rem 1.5rem;
   }
 
   .navbar__link {
