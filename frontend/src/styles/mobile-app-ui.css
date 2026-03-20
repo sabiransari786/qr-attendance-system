@@ -247,11 +247,11 @@
   
   .navbar__link--active,
   .navbar__link--active-primary {
-    background: rgba(49, 156, 181, 0.24) !important;
-    color: var(--color-text) !important;
+    background: var(--primary-accent) !important;
+    color: #ffffff !important;
     font-weight: 700 !important;
-    border-color: rgba(49, 156, 181, 0.45) !important;
-    box-shadow: none !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(49, 156, 181, 0.3) !important;
   }
   
   .navbar__link--primary {
