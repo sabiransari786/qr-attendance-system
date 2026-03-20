@@ -142,6 +142,14 @@ function Navbar() {
         </button>
 
         <nav className={`navbar__nav ${isMobileMenuOpen ? 'navbar__nav--open' : ''}`} aria-label="Main navigation">
+          <button
+            className="navbar__mobile-close"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+
           {!isAuthenticated ? (
             <>
               <NavLink

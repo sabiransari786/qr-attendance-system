@@ -277,6 +277,10 @@
   transform: scale(0.95);
 }
 
+.navbar__mobile-close {
+  display: none;
+}
+
 /* Hamburger Icon */
 .hamburger {
   display: flex;
