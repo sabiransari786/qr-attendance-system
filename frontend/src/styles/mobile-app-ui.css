@@ -754,14 +754,13 @@
     border-bottom: none;
   }
   
-  /* Sticky first column */
+  /* Keep first column non-sticky on mobile to avoid overlap while horizontal scrolling */
   table th:first-child,
   table td:first-child {
-    position: sticky;
-    left: 0;
-    background: var(--card-bg);
-    z-index: 10;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    position: static !important;
+    left: auto !important;
+    z-index: auto !important;
+    box-shadow: none !important;
   }
   
   /* ============================================================================
