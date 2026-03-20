@@ -330,9 +330,9 @@
 .navbar__overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(4, 15, 20, 0.46);
   z-index: 999;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
   animation: navFadeIn 0.3s ease;
 }
 
@@ -589,6 +589,14 @@
     background: rgba(49, 156, 181, 0.08);
   }
 
+  .navbar__link--active,
+  .navbar__link--active-primary {
+    background: rgba(49, 156, 181, 0.24);
+    border-color: rgba(49, 156, 181, 0.52);
+    color: var(--color-text);
+    box-shadow: none;
+  }
+
   .navbar__link:hover,
   .navbar__link:active {
     transform: none;
@@ -629,6 +637,14 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 249, 255, 0.99));
     border-left-color: rgba(90, 168, 245, 0.25);
     box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
+  }
+
+  [data-theme="light"] .navbar__link--active,
+  [data-theme="light"] .navbar__link--active-primary {
+    background: rgba(90, 168, 245, 0.2);
+    border-color: rgba(90, 168, 245, 0.45);
+    color: #163042;
+    box-shadow: none;
   }
 }
 
