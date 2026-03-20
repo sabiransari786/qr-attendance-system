@@ -277,6 +277,13 @@
   transform: scale(0.95);
 }
 
+.navbar__mobile-menu-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
+}
+
 .navbar__mobile-close {
   display: none;
 }

@@ -134,11 +134,11 @@ function Navbar() {
           aria-label="Toggle menu"
           aria-expanded={isMobileMenuOpen}
         >
-          <span className={`hamburger ${isMobileMenuOpen ? 'open' : ''}`}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </span>
+          <img
+            src="/images/menu.png"
+            alt="Menu"
+            className="navbar__mobile-menu-icon"
+          />
         </button>
 
         <nav className={`navbar__nav ${isMobileMenuOpen ? 'navbar__nav--open' : ''}`} aria-label="Main navigation">
