@@ -190,10 +190,6 @@ function AdminDashboard() {
             Admin Panel
           </p>
           <h1 className="adp__welcome-title">Welcome back, {firstName}</h1>
-          <p className="adp__welcome-sub">
-            Oversee platform access, departments, and system-level reporting from
-            your central command center.
-          </p>
         </motion.div>
 
         {/* ── Stat Cards ─────────────────────────────────────────────── */}
