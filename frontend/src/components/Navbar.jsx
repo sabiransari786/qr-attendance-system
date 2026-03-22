@@ -80,9 +80,6 @@ function Navbar() {
       navigate("/student-profile");
     } else if (user?.role === "faculty") {
       navigate("/faculty-profile");
-    } else if (user?.role === "admin") {
-      // Admin profile - redirect to admin profile page
-      navigate("/admin-profile");
     }
   };
 
@@ -185,26 +182,28 @@ function Navbar() {
             </>
           ) : (
             <>
-              <button 
-                className="navbar__link navbar__profile-link"
-                onClick={() => {
-                  handleProfileClick();
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                {profilePhoto ? (
-                  <img 
-                    src={profilePhoto} 
-                    alt="Profile" 
-                    className="navbar__profile-img"
-                  />
-                ) : (
-                  <span className="navbar__profile-placeholder">
-                    {user?.name?.charAt(0)?.toUpperCase() || <User size={16} />}
-                  </span>
+                {user?.role !== "admin" && (
+                  <button 
+                    className="navbar__link navbar__profile-link"
+                    onClick={() => {
+                      handleProfileClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
+                    {profilePhoto ? (
+                      <img 
+                        src={profilePhoto} 
+                        alt="Profile" 
+                        className="navbar__profile-img"
+                      />
+                    ) : (
+                      <span className="navbar__profile-placeholder">
+                        {user?.name?.charAt(0)?.toUpperCase() || <User size={16} />}
+                      </span>
+                    )}
+                    <span>Profile</span>
+                  </button>
                 )}
-                <span>Profile</span>
-              </button>
               <button 
                 className="navbar__link navbar__link--primary"
                 onClick={() => {
