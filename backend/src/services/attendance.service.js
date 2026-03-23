@@ -187,6 +187,21 @@ const decodeQRData = (qrData) => {
     }
 };
 
+const normalizeDepartmentKey = (value) => {
+    if (value === null || value === undefined) return '';
+    let normalized = String(value).toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!normalized) return '';
+
+    // Treat common naming variants as same department.
+    normalized = normalized
+        .replace('telecommunication', 'communication')
+        .replace('telecom', 'communication')
+        .replace('engg', 'engineering')
+        .replace('dept', 'department');
+
+    return normalized;
+};
+
 /**
  * -----------------------------------------------------------------------------
  * VALIDATE QR EXPIRY
@@ -319,8 +334,9 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // STEP 2: Session Validation (transaction connection use karo)
         // ---------------------------------------------------------------------
         const [sessions] = await connection.query(
-            `SELECT s.id, s.status, s.start_time, s.end_time, s.faculty_id, s.subject, s.location, s.course_id, s.department_id, c.semester AS course_semester
+            `SELECT s.id, s.status, s.start_time, s.end_time, s.faculty_id, s.subject, s.location, s.course_id, s.department_id, d.name AS session_department_name, c.semester AS course_semester
              FROM sessions s
+             LEFT JOIN departments d ON d.id = s.department_id
              LEFT JOIN courses c ON c.id = s.course_id
              WHERE s.id = ?`,
             [sessionId]
@@ -384,7 +400,12 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // ---------------------------------------------------------------------
         if (session.department_id) {
             const studentDeptId = student.dept_id;
-            if (!studentDeptId || Number(studentDeptId) !== Number(session.department_id)) {
+            const isDeptIdMatch = !!studentDeptId && Number(studentDeptId) === Number(session.department_id);
+            const studentDeptKey = normalizeDepartmentKey(student.department);
+            const sessionDeptKey = normalizeDepartmentKey(session.session_department_name);
+            const isDeptNameMatch = !!studentDeptKey && !!sessionDeptKey && studentDeptKey === sessionDeptKey;
+
+            if (!isDeptIdMatch && !isDeptNameMatch) {
                 const err = new Error(
                     `Branch mismatch: This session does not belong to your branch. ` +
                     `You can only mark attendance for sessions in your own branch (${student.department || 'unset'}).`
