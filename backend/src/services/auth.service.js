@@ -306,17 +306,49 @@ const ensureApprovalSchema = async () => {
             return;
         }
 
-        const [statusColumn] = await pool.query(
+        let [statusColumn] = await pool.query(
             `SELECT COLUMN_NAME FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'approval_status'`
         );
         approvalStatusSupported = !!(statusColumn && statusColumn.length > 0);
+        if (!approvalStatusSupported) {
+            try {
+                await pool.query(
+                    `ALTER TABLE approved_users
+                     ADD COLUMN approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending'`
+                );
+                [statusColumn] = await pool.query(
+                    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+                     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'approval_status'`
+                );
+                approvalStatusSupported = !!(statusColumn && statusColumn.length > 0);
+            } catch (alterStatusError) {
+                approvalStatusSupported = false;
+                console.warn('⚠️ Could not add approval_status column:', alterStatusError.message);
+            }
+        }
 
-        const [passwordHashColumn] = await pool.query(
+        let [passwordHashColumn] = await pool.query(
             `SELECT COLUMN_NAME FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'pending_password_hash'`
         );
         pendingPasswordHashSupported = !!(passwordHashColumn && passwordHashColumn.length > 0);
+        if (!pendingPasswordHashSupported) {
+            try {
+                await pool.query(
+                    `ALTER TABLE approved_users
+                     ADD COLUMN pending_password_hash VARCHAR(255) NULL`
+                );
+                [passwordHashColumn] = await pool.query(
+                    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+                     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'pending_password_hash'`
+                );
+                pendingPasswordHashSupported = !!(passwordHashColumn && passwordHashColumn.length > 0);
+            } catch (alterPasswordColumnError) {
+                pendingPasswordHashSupported = false;
+                console.warn('⚠️ Could not add pending_password_hash column:', alterPasswordColumnError.message);
+            }
+        }
     } catch (schemaError) {
         // Legacy schema / restricted DB users should not block signup flow.
         approvalStatusSupported = false;
@@ -370,6 +402,7 @@ const login = async (email, password) => {
         
         // Email lowercase karo - database consistency ke liye
         const normalizedEmail = email.trim().toLowerCase();
+        await ensureApprovalSchema();
         
         // ---------------------------------------------------------------------
         // STEP 2: Find User in Database
@@ -385,11 +418,76 @@ const login = async (email, password) => {
         
         // User nahi mila - generic error message (security best practice)
         // Specific "user not found" message se attacker ko pata chal jayega ki email exist karta hai
-        if (!users || users.length === 0) {
-            throw new InvalidCredentialsError();
+        let user = users && users.length > 0 ? users[0] : null;
+
+        if (!user) {
+            const [approvalRows] = await pool.query(
+                `SELECT * FROM approved_users WHERE LOWER(email) = LOWER(?) LIMIT 1`,
+                [normalizedEmail]
+            );
+
+            if (!approvalRows || approvalRows.length === 0) {
+                throw new InvalidCredentialsError();
+            }
+
+            const approvalRow = approvalRows[0];
+            const status = approvalStatusSupported ? approvalRow.approval_status : 'pending';
+
+            if (status === 'rejected') {
+                throw new ValidationError('Your signup request was rejected. Please contact admin.');
+            }
+
+            if (status !== 'approved') {
+                throw new ValidationError('Your signup request is pending admin approval. Please wait.');
+            }
+
+            if (approvalRow.pending_password_hash) {
+                const [insertResult] = await pool.query(
+                    `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, department, semester, section, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [
+                        approvalRow.name,
+                        approvalRow.email,
+                        approvalRow.contact_number,
+                        approvalRow.pending_password_hash,
+                        approvalRow.role,
+                        approvalRow.student_id || null,
+                        approvalRow.teacher_id || null,
+                        approvalRow.department || null,
+                        approvalRow.semester || null,
+                        approvalRow.section || null,
+                    ]
+                );
+
+                if (approvalStatusSupported && pendingPasswordHashSupported) {
+                    await pool.query(
+                        `UPDATE approved_users
+                         SET is_registered = TRUE, registered_user_id = ?, pending_password_hash = NULL, updated_at = NOW()
+                         WHERE id = ?`,
+                        [insertResult.insertId, approvalRow.id]
+                    );
+                } else {
+                    await pool.query(
+                        `UPDATE approved_users
+                         SET is_registered = TRUE, registered_user_id = ?, updated_at = NOW()
+                         WHERE id = ?`,
+                        [insertResult.insertId, approvalRow.id]
+                    );
+                }
+
+                const [createdUsers] = await pool.query(
+                    `SELECT id, name, email, password, role, is_active, created_at
+                     FROM users
+                     WHERE id = ? LIMIT 1`,
+                    [insertResult.insertId]
+                );
+                user = createdUsers && createdUsers.length > 0 ? createdUsers[0] : null;
+            }
+
+            if (!user) {
+                throw new ValidationError('Your account is approved but registration is incomplete. Please sign up again or contact admin.');
+            }
         }
-        
-        const user = users[0];
 
         // is_active check: agar admin ne account deactivate kar diya hai toh login block
         if (user.is_active === 0 || user.is_active === false) {
