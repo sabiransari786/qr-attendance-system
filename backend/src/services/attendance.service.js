@@ -374,12 +374,17 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // ---------------------------------------------------------------------
         if (session.course_semester) {
             const semesterMap = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
-            const studentSemNum = semesterMap[students[0].semester];
+            const rawStudentSemester = students[0].semester;
+            const normalizedStudentSemester = rawStudentSemester === null || rawStudentSemester === undefined
+                ? ''
+                : String(rawStudentSemester).trim().toLowerCase();
+            const parsedSemester = Number.parseInt(normalizedStudentSemester.replace(/[^0-9]/g, ''), 10);
+            const studentSemNum = Number.isFinite(parsedSemester) ? parsedSemester : semesterMap[normalizedStudentSemester];
             const courseSemNum = Number(session.course_semester);
             if (!studentSemNum || studentSemNum !== courseSemNum) {
                 const err = new Error(
                     `Semester mismatch: This session is for Semester ${courseSemNum}. ` +
-                    `You are currently in Semester ${students[0].semester || 'unknown'}. ` +
+                    `You are currently in Semester ${studentSemNum || 'unknown'}. ` +
                     `You can only attend classes of your current semester.`
                 );
                 err.statusCode = 403;
