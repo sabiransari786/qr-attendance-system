@@ -97,6 +97,8 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
  */
 const BCRYPT_SALT_ROUNDS = 10;
 let approvalSchemaReady = false;
+let approvalStatusSupported = false;
+let pendingPasswordHashSupported = false;
 
 // =============================================================================
 // CUSTOM ERROR CLASSES
@@ -266,32 +268,26 @@ const prepareUserResponse = (user) => {
 const ensureApprovalSchema = async () => {
     if (approvalSchemaReady) return;
 
-    const [statusColumn] = await pool.query(
-        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'approval_status'`
-    );
-
-    if (!statusColumn || statusColumn.length === 0) {
-        await pool.query(
-            `ALTER TABLE approved_users
-             ADD COLUMN approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved' AFTER section`
+    try {
+        const [statusColumn] = await pool.query(
+            `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'approval_status'`
         );
-        await pool.query(`CREATE INDEX idx_approved_status ON approved_users (approval_status)`);
-    }
+        approvalStatusSupported = !!(statusColumn && statusColumn.length > 0);
 
-    const [passwordHashColumn] = await pool.query(
-        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'pending_password_hash'`
-    );
-
-    if (!passwordHashColumn || passwordHashColumn.length === 0) {
-        await pool.query(
-            `ALTER TABLE approved_users
-             ADD COLUMN pending_password_hash VARCHAR(255) NULL AFTER approval_status`
+        const [passwordHashColumn] = await pool.query(
+            `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'pending_password_hash'`
         );
+        pendingPasswordHashSupported = !!(passwordHashColumn && passwordHashColumn.length > 0);
+    } catch (schemaError) {
+        // Legacy schema / restricted DB users should not block signup flow.
+        approvalStatusSupported = false;
+        pendingPasswordHashSupported = false;
+        console.warn('⚠️ approved_users extended schema unavailable, running in legacy mode:', schemaError.message);
+    } finally {
+        approvalSchemaReady = true;
     }
-
-    approvalSchemaReady = true;
 };
 
 // =============================================================================
@@ -879,12 +875,14 @@ const getApprovedUser = async (email, contactNumber) => {
         await ensureApprovalSchema();
         const normalizedEmail = email.trim().toLowerCase();
         const normalizedContact = contactNumber.trim();
-        
-        const [approvedUsers] = await pool.query(
-            `SELECT * FROM approved_users 
-             WHERE LOWER(email) = LOWER(?) AND contact_number = ? AND is_registered = FALSE AND approval_status = 'approved'`,
-            [normalizedEmail, normalizedContact]
-        );
+
+        let query = `SELECT * FROM approved_users
+                     WHERE LOWER(email) = LOWER(?) AND contact_number = ? AND is_registered = FALSE`;
+        if (approvalStatusSupported) {
+            query += ` AND approval_status = 'approved'`;
+        }
+
+        const [approvedUsers] = await pool.query(query, [normalizedEmail, normalizedContact]);
         
         return approvedUsers && approvedUsers.length > 0 ? approvedUsers[0] : null;
     } catch (error) {
@@ -938,7 +936,7 @@ const getAllApprovedUsers = async (filters = {}) => {
             params.push(isRegistered);
         }
 
-        if (approvalStatus && approvalStatus !== 'all') {
+        if (approvalStatusSupported && approvalStatus && approvalStatus !== 'all') {
             query += ' AND approval_status = ?';
             params.push(approvalStatus);
         }
@@ -1022,22 +1020,42 @@ const addApprovedUser = async (userData) => {
         }
         
         // Insert approved user
-        const [result] = await pool.query(
-            `INSERT INTO approved_users 
-             (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', NOW())`,
-            [
-                normalizedName,
-                normalizedEmail,
-                normalizedContact,
-                role,
-                normalizedStudentId,
-                normalizedTeacherId,
-                department || null,
-                semester || null,
-                section || null
-            ]
-        );
+        let result;
+        if (approvalStatusSupported) {
+            [result] = await pool.query(
+                `INSERT INTO approved_users 
+                 (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', NOW())`,
+                [
+                    normalizedName,
+                    normalizedEmail,
+                    normalizedContact,
+                    role,
+                    normalizedStudentId,
+                    normalizedTeacherId,
+                    department || null,
+                    semester || null,
+                    section || null
+                ]
+            );
+        } else {
+            [result] = await pool.query(
+                `INSERT INTO approved_users 
+                 (name, email, contact_number, role, student_id, teacher_id, department, semester, section, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                [
+                    normalizedName,
+                    normalizedEmail,
+                    normalizedContact,
+                    role,
+                    normalizedStudentId,
+                    normalizedTeacherId,
+                    department || null,
+                    semester || null,
+                    section || null
+                ]
+            );
+        }
         
         // Fetch and return created approved user
         const [approvedUsers] = await pool.query(
@@ -1171,20 +1189,65 @@ const submitSignupRequest = async (requestData) => {
                 throw new ValidationError('This account is already registered. Please login.');
             }
 
-            if (row.approval_status === 'approved') {
+            if (approvalStatusSupported && row.approval_status === 'approved') {
                 throw new ValidationError('Your account is already approved. Please complete registration.');
             }
 
-            if (row.approval_status === 'pending') {
+            if ((approvalStatusSupported && row.approval_status === 'pending') || !approvalStatusSupported) {
                 throw new ValidationError('Your signup request is already pending admin approval.');
             }
 
-            await pool.query(
-                `UPDATE approved_users
-                 SET name = ?, email = ?, contact_number = ?, role = ?, student_id = ?, teacher_id = ?,
-                     department = ?, semester = ?, section = ?, approval_status = 'pending',
-                     pending_password_hash = ?, updated_at = NOW(), is_registered = FALSE, registered_user_id = NULL
-                 WHERE id = ?`,
+            if (approvalStatusSupported || pendingPasswordHashSupported) {
+                const updates = [
+                    'name = ?',
+                    'email = ?',
+                    'contact_number = ?',
+                    'role = ?',
+                    'student_id = ?',
+                    'teacher_id = ?',
+                    'department = ?',
+                    'semester = ?',
+                    'section = ?',
+                    'updated_at = NOW()',
+                    'is_registered = FALSE',
+                    'registered_user_id = NULL'
+                ];
+                const values = [
+                    normalizedName,
+                    normalizedEmail,
+                    normalizedContact,
+                    role,
+                    normalizedStudentId,
+                    normalizedTeacherId,
+                    department || null,
+                    semester || null,
+                    section || null,
+                ];
+
+                if (approvalStatusSupported) {
+                    updates.push(`approval_status = 'pending'`);
+                }
+                if (pendingPasswordHashSupported) {
+                    updates.push('pending_password_hash = ?');
+                    values.push(hashedPassword);
+                }
+
+                values.push(row.id);
+                await pool.query(
+                    `UPDATE approved_users SET ${updates.join(', ')} WHERE id = ?`,
+                    values
+                );
+            }
+
+            return { requestId: row.id, status: 'pending' };
+        }
+
+        let insertResult;
+        if (approvalStatusSupported && pendingPasswordHashSupported) {
+            [insertResult] = await pool.query(
+                `INSERT INTO approved_users
+                 (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, pending_password_hash, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())`,
                 [
                     normalizedName,
                     normalizedEmail,
@@ -1195,31 +1258,27 @@ const submitSignupRequest = async (requestData) => {
                     department || null,
                     semester || null,
                     section || null,
-                    hashedPassword,
-                    row.id
+                    hashedPassword
                 ]
             );
-
-            return { requestId: row.id, status: 'pending' };
+        } else {
+            [insertResult] = await pool.query(
+                `INSERT INTO approved_users
+                 (name, email, contact_number, role, student_id, teacher_id, department, semester, section, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                [
+                    normalizedName,
+                    normalizedEmail,
+                    normalizedContact,
+                    role,
+                    normalizedStudentId,
+                    normalizedTeacherId,
+                    department || null,
+                    semester || null,
+                    section || null
+                ]
+            );
         }
-
-        const [insertResult] = await pool.query(
-            `INSERT INTO approved_users
-             (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, pending_password_hash, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())`,
-            [
-                normalizedName,
-                normalizedEmail,
-                normalizedContact,
-                role,
-                normalizedStudentId,
-                normalizedTeacherId,
-                department || null,
-                semester || null,
-                section || null,
-                hashedPassword
-            ]
-        );
 
         return { requestId: insertResult.insertId, status: 'pending' };
     } catch (error) {
@@ -1233,6 +1292,10 @@ const submitSignupRequest = async (requestData) => {
 const updateApprovedUserStatus = async (approvedUserId, nextStatus) => {
     try {
         await ensureApprovalSchema();
+
+        if (!approvalStatusSupported) {
+            throw new ValidationError('Approval status workflow is not available on this database schema yet.');
+        }
 
         if (!['approved', 'rejected'].includes(nextStatus)) {
             throw new ValidationError('Status must be either approved or rejected.');
