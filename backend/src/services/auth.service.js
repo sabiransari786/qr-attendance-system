@@ -1337,45 +1337,52 @@ const submitSignupRequest = async (requestData) => {
                 throw new ValidationError('Your signup request is already pending admin approval.');
             }
 
-            if (approvalStatusSupported || pendingPasswordHashSupported) {
-                const updates = [
-                    'name = ?',
-                    'email = ?',
-                    'contact_number = ?',
-                    'role = ?',
-                    'student_id = ?',
-                    'teacher_id = ?',
-                    'department = ?',
-                    'semester = ?',
-                    'section = ?',
-                    'updated_at = NOW()',
-                    'is_registered = FALSE',
-                    'registered_user_id = NULL'
-                ];
-                const values = [
-                    normalizedName,
-                    normalizedEmail,
-                    normalizedContact,
-                    role,
-                    normalizedStudentId,
-                    normalizedTeacherId,
-                    normalizedDepartment,
-                    normalizedSemester,
-                    normalizedSection,
-                ];
+            const updateValuesWithPassword = [
+                normalizedName,
+                normalizedEmail,
+                normalizedContact,
+                role,
+                normalizedStudentId,
+                normalizedTeacherId,
+                normalizedDepartment,
+                normalizedSemester,
+                normalizedSection,
+                hashedPassword,
+                row.id,
+            ];
 
-                if (approvalStatusSupported) {
-                    updates.push(`approval_status = 'pending'`);
-                }
-                if (pendingPasswordHashSupported) {
-                    updates.push('pending_password_hash = ?');
-                    values.push(hashedPassword);
-                }
-
-                values.push(row.id);
+            try {
                 await pool.query(
-                    `UPDATE approved_users SET ${updates.join(', ')} WHERE id = ?`,
-                    values
+                    `UPDATE approved_users
+                     SET name = ?, email = ?, contact_number = ?, role = ?, student_id = ?, teacher_id = ?,
+                         department = ?, semester = ?, section = ?, approval_status = 'pending',
+                         pending_password_hash = ?, updated_at = NOW(), is_registered = FALSE, registered_user_id = NULL
+                     WHERE id = ?`,
+                    updateValuesWithPassword
+                );
+            } catch (updateError) {
+                if (updateError.code !== 'ER_BAD_FIELD_ERROR') {
+                    throw updateError;
+                }
+
+                await pool.query(
+                    `UPDATE approved_users
+                     SET name = ?, email = ?, contact_number = ?, role = ?, student_id = ?, teacher_id = ?,
+                         department = ?, semester = ?, section = ?, updated_at = NOW(),
+                         is_registered = FALSE, registered_user_id = NULL
+                     WHERE id = ?`,
+                    [
+                        normalizedName,
+                        normalizedEmail,
+                        normalizedContact,
+                        role,
+                        normalizedStudentId,
+                        normalizedTeacherId,
+                        normalizedDepartment,
+                        normalizedSemester,
+                        normalizedSection,
+                        row.id,
+                    ]
                 );
             }
 
@@ -1383,7 +1390,7 @@ const submitSignupRequest = async (requestData) => {
         }
 
         let insertResult;
-        if (approvalStatusSupported && pendingPasswordHashSupported) {
+        try {
             [insertResult] = await pool.query(
                 `INSERT INTO approved_users
                  (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, pending_password_hash, created_at)
@@ -1401,7 +1408,11 @@ const submitSignupRequest = async (requestData) => {
                     hashedPassword
                 ]
             );
-        } else {
+        } catch (insertError) {
+            if (insertError.code !== 'ER_BAD_FIELD_ERROR') {
+                throw insertError;
+            }
+
             [insertResult] = await pool.query(
                 `INSERT INTO approved_users
                  (name, email, contact_number, role, student_id, teacher_id, department, semester, section, created_at)

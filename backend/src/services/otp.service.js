@@ -28,14 +28,88 @@ const sendOTPToEmail = async (email) => {
       [normalizedEmail]
     );
 
-    if (users.length === 0) {
-      return {
-        success: false,
-        message: 'User not found with this email'
+    let user = users[0] || null;
+
+    if (!user) {
+      const [approvals] = await pool.query(
+        'SELECT * FROM approved_users WHERE LOWER(email) = LOWER(?) LIMIT 1',
+        [normalizedEmail]
+      );
+
+      if (!approvals || approvals.length === 0) {
+        return {
+          success: false,
+          message: 'User not found with this email'
+        };
+      }
+
+      const approval = approvals[0];
+      const approvalStatus = approval.approval_status || 'pending';
+
+      if (approvalStatus === 'rejected') {
+        return {
+          success: false,
+          message: 'Your signup request was rejected. Please contact admin.'
+        };
+      }
+
+      if (approvalStatus !== 'approved') {
+        return {
+          success: false,
+          message: 'Your signup request is pending admin approval.'
+        };
+      }
+
+      if (!approval.pending_password_hash) {
+        return {
+          success: false,
+          message: 'Your account is approved but not activated yet. Please sign up again with the same email.'
+        };
+      }
+
+      const [inserted] = await pool.query(
+        `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, department, semester, section, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        [
+          approval.name,
+          approval.email,
+          approval.contact_number,
+          approval.pending_password_hash,
+          approval.role,
+          approval.student_id || null,
+          approval.teacher_id || null,
+          approval.department || null,
+          approval.semester || null,
+          approval.section || null,
+        ]
+      );
+
+      try {
+        await pool.query(
+          `UPDATE approved_users
+           SET is_registered = TRUE, registered_user_id = ?, pending_password_hash = NULL, updated_at = NOW()
+           WHERE id = ?`,
+          [inserted.insertId, approval.id]
+        );
+      } catch (updateError) {
+        if (updateError.code === 'ER_BAD_FIELD_ERROR') {
+          await pool.query(
+            `UPDATE approved_users
+             SET is_registered = TRUE, registered_user_id = ?, updated_at = NOW()
+             WHERE id = ?`,
+            [inserted.insertId, approval.id]
+          );
+        } else {
+          throw updateError;
+        }
+      }
+
+      user = {
+        id: inserted.insertId,
+        name: approval.name,
       };
     }
 
-    const user = users[0];
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
 
