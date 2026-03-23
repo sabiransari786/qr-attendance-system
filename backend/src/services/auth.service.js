@@ -1203,6 +1203,11 @@ const submitSignupRequest = async (requestData) => {
         const normalizedName = name.trim();
         const normalizedStudentId = resolvedStudentId ? resolvedStudentId.trim().toUpperCase() : null;
         const normalizedTeacherId = resolvedTeacherId ? resolvedTeacherId.trim().toUpperCase() : null;
+        const normalizedDepartment = typeof department === 'string' && department.trim() ? department.trim() : null;
+        const normalizedSection = typeof section === 'string' && section.trim() ? section.trim() : null;
+        const rawSemester = semester === undefined || semester === null ? '' : String(semester).trim();
+        const semesterMatch = rawSemester.match(/\d+/);
+        const normalizedSemester = semesterMatch ? Number.parseInt(semesterMatch[0], 10) : null;
         const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
         const [existingUser] = await pool.query(
@@ -1256,9 +1261,9 @@ const submitSignupRequest = async (requestData) => {
                     role,
                     normalizedStudentId,
                     normalizedTeacherId,
-                    department || null,
-                    semester || null,
-                    section || null,
+                    normalizedDepartment,
+                    normalizedSemester,
+                    normalizedSection,
                 ];
 
                 if (approvalStatusSupported) {
@@ -1292,9 +1297,9 @@ const submitSignupRequest = async (requestData) => {
                     role,
                     normalizedStudentId,
                     normalizedTeacherId,
-                    department || null,
-                    semester || null,
-                    section || null,
+                    normalizedDepartment,
+                    normalizedSemester,
+                    normalizedSection,
                     hashedPassword
                 ]
             );
@@ -1310,9 +1315,9 @@ const submitSignupRequest = async (requestData) => {
                     role,
                     normalizedStudentId,
                     normalizedTeacherId,
-                    department || null,
-                    semester || null,
-                    section || null
+                    normalizedDepartment,
+                    normalizedSemester,
+                    normalizedSection
                 ]
             );
         }
