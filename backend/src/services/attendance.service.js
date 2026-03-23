@@ -339,16 +339,43 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // ---------------------------------------------------------------------
         // STEP 3: Student Validation
         // ---------------------------------------------------------------------
-        const [students] = await connection.query(
-            `SELECT u.id, u.name, u.student_id, u.email, u.department, u.semester, d.id AS dept_id
+        let [students] = await connection.query(
+            `SELECT u.id, u.name, u.student_id, u.email, u.department, u.semester, u.role, d.id AS dept_id
              FROM users u
              LEFT JOIN departments d ON d.name = u.department
-             WHERE u.id = ? AND u.role = 'student'`,
+             WHERE u.id = ?`,
             [studentId]
         );
 
+        // Fallback: some legacy tokens may carry approved_users.id instead of users.id.
         if (!students || students.length === 0) {
-            throw new StudentNotFoundError();
+            const [approvalRows] = await connection.query(
+                `SELECT registered_user_id FROM approved_users
+                 WHERE id = ? AND is_registered = TRUE AND registered_user_id IS NOT NULL
+                 LIMIT 1`,
+                [studentId]
+            );
+
+            if (approvalRows && approvalRows.length > 0) {
+                [students] = await connection.query(
+                    `SELECT u.id, u.name, u.student_id, u.email, u.department, u.semester, u.role, d.id AS dept_id
+                     FROM users u
+                     LEFT JOIN departments d ON d.name = u.department
+                     WHERE u.id = ?`,
+                    [approvalRows[0].registered_user_id]
+                );
+            }
+        }
+
+        if (!students || students.length === 0) {
+            throw new StudentNotFoundError('Student account not found. Please logout and login again.');
+        }
+
+        const student = students[0];
+        if (student.role !== 'student') {
+            const err = new Error('Only student accounts can mark attendance.');
+            err.statusCode = 403;
+            throw err;
         }
 
         // ---------------------------------------------------------------------
@@ -356,11 +383,11 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // Student sirf apni branch ke sessions mein attendance mark kar sakta hai
         // ---------------------------------------------------------------------
         if (session.department_id) {
-            const studentDeptId = students[0].dept_id;
+            const studentDeptId = student.dept_id;
             if (!studentDeptId || Number(studentDeptId) !== Number(session.department_id)) {
                 const err = new Error(
                     `Branch mismatch: This session does not belong to your branch. ` +
-                    `You can only mark attendance for sessions in your own branch (${students[0].department || 'unset'}).`
+                    `You can only mark attendance for sessions in your own branch (${student.department || 'unset'}).`
                 );
                 err.statusCode = 403;
                 throw err;
@@ -374,7 +401,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // ---------------------------------------------------------------------
         if (session.course_semester) {
             const semesterMap = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
-            const rawStudentSemester = students[0].semester;
+            const rawStudentSemester = student.semester;
             const normalizedStudentSemester = rawStudentSemester === null || rawStudentSemester === undefined
                 ? ''
                 : String(rawStudentSemester).trim().toLowerCase();
