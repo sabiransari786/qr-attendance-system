@@ -12,6 +12,11 @@ import { API_BASE_URL } from '../utils/constants';
 import '../styles/dashboard.css';
 import '../styles/admin-pages.css';
 
+const clampAttendanceValue = (value) => {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(10, Math.max(1, Math.trunc(value)));
+};
+
 function FacultyQRGeneration() {
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
@@ -24,6 +29,7 @@ function FacultyQRGeneration() {
   const [loadingSessions, setLoadingSessions] = useState(true);
 
   const [attendanceValue, setAttendanceValue] = useState(1);
+  const [attendanceInput, setAttendanceInput] = useState('1');
   const [duration, setDuration] = useState(1);
   const [customDuration, setCustomDuration] = useState('');
   const [radius, setRadius] = useState(20);
@@ -202,6 +208,27 @@ function FacultyQRGeneration() {
   /* ── helpers ────────────────────────────────────────────────────────── */
   const selectedSession = sessions.find((s) => s.id === selectedSessionId);
 
+  const handleAttendanceInputChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setAttendanceInput(raw);
+    if (!raw) return;
+    setAttendanceValue(clampAttendanceValue(Number(raw)));
+  };
+
+  const commitAttendanceInput = () => {
+    const normalized = clampAttendanceValue(Number(attendanceInput));
+    setAttendanceValue(normalized);
+    setAttendanceInput(String(normalized));
+  };
+
+  const stepAttendanceValue = (delta) => {
+    setAttendanceValue((prev) => {
+      const next = clampAttendanceValue(prev + delta);
+      setAttendanceInput(String(next));
+      return next;
+    });
+  };
+
   /* ── render ─────────────────────────────────────────────────────────── */
   return (
     <div className="ap">
@@ -294,16 +321,52 @@ function FacultyQRGeneration() {
                 <p style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary)', marginBottom: '0.85rem' }}>
                   Enter points between 1–10. All marked as Present (P).
                 </p>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={attendanceValue}
-                  onChange={(e) => setAttendanceValue(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                  className="ap__search"
-                  style={{ maxWidth: 140, textAlign: 'center', fontSize: '1.1rem', fontWeight: 700 }}
-                  placeholder="1-10"
-                />
+                <div className="faculty-qr__attendance-controls">
+                  <button
+                    type="button"
+                    className="ap__btn ap__btn--outline faculty-qr__step-btn"
+                    onClick={() => stepAttendanceValue(-1)}
+                    disabled={attendanceValue <= 1}
+                    aria-label="Decrease attendance points"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={attendanceInput}
+                    onChange={handleAttendanceInputChange}
+                    onBlur={commitAttendanceInput}
+                    className="ap__search faculty-qr__attendance-input"
+                    placeholder="1-10"
+                    aria-label="Attendance points"
+                  />
+                  <button
+                    type="button"
+                    className="ap__btn ap__btn--outline faculty-qr__step-btn"
+                    onClick={() => stepAttendanceValue(1)}
+                    disabled={attendanceValue >= 10}
+                    aria-label="Increase attendance points"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="faculty-qr__quick-values" role="group" aria-label="Quick attendance values">
+                  {[1, 3, 5, 8, 10].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={attendanceValue === value ? 'ap__btn ap__btn--primary' : 'ap__btn ap__btn--outline'}
+                      onClick={() => {
+                        setAttendanceValue(value);
+                        setAttendanceInput(String(value));
+                      }}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -448,15 +511,15 @@ function FacultyQRGeneration() {
                   {timeRemaining === 'EXPIRED' ? 'EXPIRED' : timeRemaining}
                 </span>
               </div>
-              <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-                <div style={{ background: '#fff', padding: '1rem', borderRadius: 12 }}>
-                  <QRCodeCanvas value={qrData} size={280} level="H" includeMargin={true} />
+              <div className="faculty-qr__qr-card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+                <div className="faculty-qr__qr-frame">
+                  <QRCodeCanvas className="faculty-qr__qr-canvas" value={qrData} size={280} level="H" includeMargin={true} />
                 </div>
 
                 {/* Live attendance count */}
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>Live Attendance Count</p>
-                  <div style={{ fontSize: '3rem', fontWeight: 800, background: 'linear-gradient(135deg, #319cb5, #67d4ed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  <div className="faculty-qr__live-count" style={{ fontWeight: 800, background: 'linear-gradient(135deg, #319cb5, #67d4ed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                     {attendanceCount}
                   </div>
                   <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)' }}>Students Attended</p>

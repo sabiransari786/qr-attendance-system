@@ -969,6 +969,107 @@
   margin-top: 0.05rem;
 }
 
+/* Faculty QR generation specific controls */
+.faculty-qr__attendance-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.faculty-qr__step-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.faculty-qr__attendance-input {
+  flex: 0 0 110px;
+  min-width: 110px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.faculty-qr__quick-values {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.faculty-qr__quick-values .ap__btn {
+  justify-content: center;
+}
+
+.faculty-qr__qr-card-body {
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+.faculty-qr__qr-frame {
+  background: #fff;
+  padding: clamp(0.6rem, 2.5vw, 1rem);
+  border-radius: 12px;
+  width: min(100%, 340px);
+  display: flex;
+  justify-content: center;
+}
+
+.faculty-qr__qr-frame canvas,
+.faculty-qr__qr-canvas {
+  width: min(100%, 280px) !important;
+  height: auto !important;
+}
+
+.faculty-qr__live-count {
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1.05;
+}
+
+@media (max-width: 768px) {
+  .faculty-qr__attendance-input {
+    flex-basis: 96px;
+    min-width: 96px;
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  .faculty-qr__quick-values {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .faculty-qr__quick-values .ap__btn {
+    width: 100%;
+  }
+
+  .faculty-qr__step-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .faculty-qr__live-count {
+    font-size: clamp(1.9rem, 13vw, 2.75rem);
+  }
+}
+
+@media (max-width: 420px) {
+  .faculty-qr__attendance-controls {
+    gap: 0.45rem;
+  }
+
+  .faculty-qr__attendance-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .faculty-qr__quick-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .ap { padding: calc(72px + 1.5rem) 1rem 2rem; }

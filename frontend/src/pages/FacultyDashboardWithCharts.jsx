@@ -124,8 +124,8 @@ function FacultyDashboardWithCharts() {
         {!loading && attendanceData.length > 0 && (
           <motion.div variants={fadeInUp} style={{ marginBottom: '2rem' }}>
             <div className="adp__section-header"><h2 className="adp__section-title">Attendance Analytics</h2><div className="adp__section-line" /></div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1.5rem' }}>
-              <div className="ap__panel">
+            <div className="adp__analytics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1.5rem' }}>
+              <div className="ap__panel adp__analytics-card">
                 <div className="ap__panel-header"><h3 className="ap__panel-title">By Session</h3></div>
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={attendanceData}>
@@ -141,7 +141,7 @@ function FacultyDashboardWithCharts() {
                 </ResponsiveContainer>
               </div>
               {pieData.length > 0 && (
-                <div className="ap__panel">
+                <div className="ap__panel adp__analytics-card">
                   <div className="ap__panel-header"><h3 className="ap__panel-title">Overall Summary</h3></div>
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
@@ -153,7 +153,7 @@ function FacultyDashboardWithCharts() {
                   </ResponsiveContainer>
                 </div>
               )}
-              <div className="ap__panel" style={{ gridColumn: '1 / -1' }}>
+              <div className="ap__panel adp__analytics-card adp__analytics-card--wide" style={{ gridColumn: '1 / -1' }}>
                 <div className="ap__panel-header"><h3 className="ap__panel-title">Attendance Trend</h3></div>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={attendanceData}>

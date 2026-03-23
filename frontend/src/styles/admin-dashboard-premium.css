@@ -309,6 +309,19 @@
 }
 
 @media (max-width: 768px) {
+  .adp__analytics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .adp__analytics-card {
+    min-width: 0;
+  }
+
+  .adp__analytics-card--wide {
+    grid-column: auto !important;
+  }
+
   .adp__nav-grid {
     grid-template-columns: 1fr;
   }
