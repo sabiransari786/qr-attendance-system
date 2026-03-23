@@ -494,6 +494,27 @@ const register = async (userData) => {
         const approvedUser = await getApprovedUser(normalizedEmail, normalizedContact);
         
         if (!approvedUser) {
+            if ([ROLE.STUDENT, ROLE.FACULTY].includes(userRole)) {
+                const signupRequest = await submitSignupRequest({
+                    name: normalizedName,
+                    email: normalizedEmail,
+                    contactNumber: normalizedContact,
+                    role: userRole,
+                    studentId,
+                    teacherId,
+                    department: extraFields.department,
+                    semester: extraFields.semester,
+                    section: extraFields.section,
+                    password,
+                });
+
+                return {
+                    request_submitted: true,
+                    approval_status: signupRequest.status,
+                    request_id: signupRequest.requestId,
+                };
+            }
+
             throw new ValidationError(
                 'User approval not found. Please contact the administrator to get your email and contact number approved before registration.'
             );
@@ -1081,16 +1102,23 @@ const submitSignupRequest = async (requestData) => {
             name,
             email,
             contactNumber,
+            contact_number,
             role = ROLE.STUDENT,
             studentId,
+            student_id,
             teacherId,
+            teacher_id,
             department,
             semester,
             section,
             password
         } = requestData;
 
-        if (!name || !email || !contactNumber || !password) {
+        const resolvedContactNumber = (contactNumber || contact_number || '').toString();
+        const resolvedStudentId = studentId || student_id;
+        const resolvedTeacherId = teacherId || teacher_id;
+
+        if (!name || !email || !resolvedContactNumber || !password) {
             throw new ValidationError('Name, email, contact number, and password are required.');
         }
 
@@ -1107,19 +1135,19 @@ const submitSignupRequest = async (requestData) => {
             throw new ValidationError('Role must be student or faculty.');
         }
 
-        if (role === 'student' && !studentId) {
+        if (role === 'student' && !resolvedStudentId) {
             throw new ValidationError('Student ID is required for student role.');
         }
 
-        if (role === 'faculty' && !teacherId) {
+        if (role === 'faculty' && !resolvedTeacherId) {
             throw new ValidationError('Teacher ID is required for faculty role.');
         }
 
         const normalizedEmail = email.trim().toLowerCase();
-        const normalizedContact = contactNumber.trim();
+        const normalizedContact = resolvedContactNumber.trim();
         const normalizedName = name.trim();
-        const normalizedStudentId = studentId ? studentId.trim().toUpperCase() : null;
-        const normalizedTeacherId = teacherId ? teacherId.trim().toUpperCase() : null;
+        const normalizedStudentId = resolvedStudentId ? resolvedStudentId.trim().toUpperCase() : null;
+        const normalizedTeacherId = resolvedTeacherId ? resolvedTeacherId.trim().toUpperCase() : null;
         const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
         const [existingUser] = await pool.query(

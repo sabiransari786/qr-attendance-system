@@ -484,6 +484,14 @@ const register = async (req, res, next) => {
         // - Optional: JWT token generate karna (auto-login ke liye)
         const newUser = await authService.register(userData);
 
+        if (newUser?.request_submitted) {
+            return res.status(202).json({
+                success: true,
+                message: 'Signup request submitted successfully. Please wait for admin approval.',
+                data: newUser
+            });
+        }
+
         // ---------------------------------------------------------------------
         // STEP 5: Success Response bhejo
         // ---------------------------------------------------------------------

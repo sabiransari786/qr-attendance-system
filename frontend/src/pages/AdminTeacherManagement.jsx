@@ -629,7 +629,6 @@ export default function AdminTeacherManagement() {
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="e.g. Dr. Ramesh Kumar"
                     required
                     style={inputStyle}
                   />
@@ -645,7 +644,6 @@ export default function AdminTeacherManagement() {
                       type="email"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="teacher@college.edu"
                       required
                       style={inputStyle}
                     />
@@ -658,7 +656,6 @@ export default function AdminTeacherManagement() {
                       type="tel"
                       value={form.contactNumber}
                       onChange={(e) => setForm({ ...form, contactNumber: e.target.value })}
-                      placeholder="9876543210"
                       maxLength={10}
                       required
                       style={inputStyle}
@@ -678,7 +675,6 @@ export default function AdminTeacherManagement() {
                       onChange={(e) =>
                         setForm({ ...form, teacherId: e.target.value.toUpperCase() })
                       }
-                      placeholder="e.g. FAC-2025-001"
                       required
                       style={{ ...inputStyle, fontFamily: "monospace", letterSpacing: "0.05em" }}
                     />
@@ -714,7 +710,6 @@ export default function AdminTeacherManagement() {
                         type={showPassword ? "text" : "password"}
                         value={form.password}
                         onChange={(e) => setForm({ ...form, password: e.target.value })}
-                        placeholder="Set a strong password"
                         required
                         style={{ ...inputStyle, paddingRight: "2.5rem" }}
                       />
@@ -750,7 +745,6 @@ export default function AdminTeacherManagement() {
                         type={showConfirmPassword ? "text" : "password"}
                         value={form.confirmPassword}
                         onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                        placeholder="Repeat the password"
                         required
                         style={{
                           ...inputStyle,

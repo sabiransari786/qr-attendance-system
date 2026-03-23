@@ -195,7 +195,13 @@ router.post('/register', register);
 
 router.post('/signup-request', async (req, res) => {
   try {
-    const result = await authService.submitSignupRequest(req.body);
+    const payload = {
+      ...req.body,
+      contactNumber: req.body?.contactNumber || req.body?.contact_number,
+      studentId: req.body?.studentId || req.body?.student_id,
+      teacherId: req.body?.teacherId || req.body?.teacher_id,
+    };
+    const result = await authService.submitSignupRequest(payload);
     return res.status(202).json({
       success: true,
       message: 'Signup request submitted. Please wait for admin approval.',

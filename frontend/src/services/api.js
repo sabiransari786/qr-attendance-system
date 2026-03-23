@@ -36,12 +36,21 @@ export const login = async (payload) => {
 };
 
 export const registerStudent = async (payload) => {
+	const normalizedPayload = {
+		name: payload?.name,
+		email: payload?.email,
+		password: payload?.password,
+		role: "student",
+		contactNumber: payload?.contactNumber || payload?.contact_number,
+		studentId: payload?.studentId || payload?.student_id,
+		department: payload?.department,
+		semester: payload?.semester,
+		section: payload?.section,
+	};
+
 	return request("/auth/signup-request", {
 		method: "POST",
-		body: JSON.stringify({
-			...payload,
-			role: "student",
-		}),
+		body: JSON.stringify(normalizedPayload),
 	});
 };
 
