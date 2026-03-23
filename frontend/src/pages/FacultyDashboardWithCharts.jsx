@@ -10,7 +10,7 @@ import { API_BASE_URL } from "../utils/constants";
 import { fadeInUp, staggerContainer } from "../animations/animationConfig";
 import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from "recharts";
 import "../styles/dashboard.css";
 import "../styles/admin-pages.css";
@@ -35,8 +35,16 @@ function FacultyDashboardWithCharts() {
   const [sessions, setSessions] = useState([]);
   const [attendanceData, setAttendanceData] = useState([]);
   const [pieData, setPieData] = useState([]);
+  const [viewportWidth, setViewportWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1200));
   const [stats, setStats] = useState({ totalSessions: 0, activeSessions: 0, totalStudentsMarked: 0, averageAttendance: 0, totalPresent: 0, totalLate: 0, totalAbsent: 0 });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleResize = () => setViewportWidth(window.innerWidth || 1200);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -95,6 +103,13 @@ function FacultyDashboardWithCharts() {
 
   const fullName = user?.name || "Faculty";
   const tooltipStyle = { background: 'var(--color-surface)', border: '1px solid rgba(49,156,181,0.25)', borderRadius: '10px', color: 'var(--color-text)' };
+  const isNarrowViewport = viewportWidth <= 768;
+  const sideChartWidth = isNarrowViewport
+    ? Math.max(260, viewportWidth - 64)
+    : Math.max(420, Math.min(680, Math.floor((viewportWidth - 200) / 2)));
+  const trendChartWidth = isNarrowViewport
+    ? Math.max(260, viewportWidth - 64)
+    : Math.max(720, Math.min(1200, viewportWidth - 180));
 
   return (
     <motion.div className="dashboard ap" variants={staggerContainer} initial="hidden" animate="visible">
@@ -127,8 +142,8 @@ function FacultyDashboardWithCharts() {
             <div className="adp__analytics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1.5rem' }}>
               <div className="ap__panel adp__analytics-card">
                 <div className="ap__panel-header"><h3 className="ap__panel-title">By Session</h3></div>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={attendanceData}>
+                <div className="adp__chart-scroll" role="region" aria-label="Attendance by session chart">
+                  <BarChart width={sideChartWidth} height={280} data={attendanceData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(49,156,181,0.12)" />
                     <XAxis dataKey="name" stroke="var(--color-text-secondary)" fontSize={12} />
                     <YAxis stroke="var(--color-text-secondary)" fontSize={12} />
@@ -138,25 +153,25 @@ function FacultyDashboardWithCharts() {
                     <Bar dataKey="late" fill={CHART_COLORS.late} name="Late" radius={[4,4,0,0]} />
                     <Bar dataKey="absent" fill={CHART_COLORS.absent} name="Absent" radius={[4,4,0,0]} />
                   </BarChart>
-                </ResponsiveContainer>
+                </div>
               </div>
               {pieData.length > 0 && (
                 <div className="ap__panel adp__analytics-card">
                   <div className="ap__panel-header"><h3 className="ap__panel-title">Overall Summary</h3></div>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
+                  <div className="adp__chart-scroll" role="region" aria-label="Attendance summary pie chart">
+                    <PieChart width={sideChartWidth} height={280}>
                       <Pie data={pieData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={90} dataKey="value">
                         {pieData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
                       </Pie>
                       <Tooltip contentStyle={tooltipStyle} />
                     </PieChart>
-                  </ResponsiveContainer>
+                  </div>
                 </div>
               )}
               <div className="ap__panel adp__analytics-card adp__analytics-card--wide" style={{ gridColumn: '1 / -1' }}>
                 <div className="ap__panel-header"><h3 className="ap__panel-title">Attendance Trend</h3></div>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={attendanceData}>
+                <div className="adp__chart-scroll" role="region" aria-label="Attendance trend chart">
+                  <LineChart width={trendChartWidth} height={280} data={attendanceData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(49,156,181,0.12)" />
                     <XAxis dataKey="name" stroke="var(--color-text-secondary)" fontSize={12} />
                     <YAxis domain={[0, 100]} stroke="var(--color-text-secondary)" fontSize={12} />
@@ -164,7 +179,7 @@ function FacultyDashboardWithCharts() {
                     <Legend />
                     <Line type="monotone" dataKey="attendance" stroke="#319cb5" name="Attendance %" strokeWidth={2.5} dot={{ fill: '#319cb5', r: 5 }} />
                   </LineChart>
-                </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -36,7 +36,7 @@ export const login = async (payload) => {
 };
 
 export const registerStudent = async (payload) => {
-	return request("/auth/register", {
+	return request("/auth/signup-request", {
 		method: "POST",
 		body: JSON.stringify({
 			...payload,

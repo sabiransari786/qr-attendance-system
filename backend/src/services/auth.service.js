@@ -96,6 +96,7 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
  * 10 rounds industry standard hai - balance between security aur performance
  */
 const BCRYPT_SALT_ROUNDS = 10;
+let approvalSchemaReady = false;
 
 // =============================================================================
 // CUSTOM ERROR CLASSES
@@ -260,6 +261,37 @@ const prepareUserResponse = (user) => {
     const { password, ...userWithoutPassword } = user;
     
     return userWithoutPassword;
+};
+
+const ensureApprovalSchema = async () => {
+    if (approvalSchemaReady) return;
+
+    const [statusColumn] = await pool.query(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'approval_status'`
+    );
+
+    if (!statusColumn || statusColumn.length === 0) {
+        await pool.query(
+            `ALTER TABLE approved_users
+             ADD COLUMN approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved' AFTER section`
+        );
+        await pool.query(`CREATE INDEX idx_approved_status ON approved_users (approval_status)`);
+    }
+
+    const [passwordHashColumn] = await pool.query(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'pending_password_hash'`
+    );
+
+    if (!passwordHashColumn || passwordHashColumn.length === 0) {
+        await pool.query(
+            `ALTER TABLE approved_users
+             ADD COLUMN pending_password_hash VARCHAR(255) NULL AFTER approval_status`
+        );
+    }
+
+    approvalSchemaReady = true;
 };
 
 // =============================================================================
@@ -465,6 +497,11 @@ const register = async (userData) => {
             throw new ValidationError(
                 'User approval not found. Please contact the administrator to get your email and contact number approved before registration.'
             );
+        }
+
+        if (approvedUser.approval_status && approvedUser.approval_status !== 'approved') {
+            const statusLabel = approvedUser.approval_status === 'rejected' ? 'rejected' : 'pending admin review';
+            throw new ValidationError(`Your signup request is ${statusLabel}. Please contact the administrator.`);
         }
         
         // Approved user ke role se match karna chahiye (optional - extra security)
@@ -818,12 +855,13 @@ const getProfilePhoto = async (userId) => {
  */
 const getApprovedUser = async (email, contactNumber) => {
     try {
+        await ensureApprovalSchema();
         const normalizedEmail = email.trim().toLowerCase();
         const normalizedContact = contactNumber.trim();
         
         const [approvedUsers] = await pool.query(
             `SELECT * FROM approved_users 
-             WHERE LOWER(email) = LOWER(?) AND contact_number = ? AND is_registered = FALSE`,
+             WHERE LOWER(email) = LOWER(?) AND contact_number = ? AND is_registered = FALSE AND approval_status = 'approved'`,
             [normalizedEmail, normalizedContact]
         );
         
@@ -863,7 +901,8 @@ const markApprovedUserAsRegistered = async (approvedUserId, registeredUserId) =>
  */
 const getAllApprovedUsers = async (filters = {}) => {
     try {
-        const { role, isRegistered, search } = filters;
+        await ensureApprovalSchema();
+        const { role, isRegistered, search, approvalStatus } = filters;
         
         let query = 'SELECT * FROM approved_users WHERE 1=1';
         const params = [];
@@ -876,6 +915,11 @@ const getAllApprovedUsers = async (filters = {}) => {
         if (typeof isRegistered === 'boolean') {
             query += ' AND is_registered = ?';
             params.push(isRegistered);
+        }
+
+        if (approvalStatus && approvalStatus !== 'all') {
+            query += ' AND approval_status = ?';
+            params.push(approvalStatus);
         }
         
         if (search && search.trim()) {
@@ -903,6 +947,7 @@ const getAllApprovedUsers = async (filters = {}) => {
  */
 const addApprovedUser = async (userData) => {
     try {
+        await ensureApprovalSchema();
         const { name, email, contactNumber, role, studentId, teacherId, department, semester, section } = userData;
         
         // Validation
@@ -958,8 +1003,8 @@ const addApprovedUser = async (userData) => {
         // Insert approved user
         const [result] = await pool.query(
             `INSERT INTO approved_users 
-             (name, email, contact_number, role, student_id, teacher_id, department, semester, section, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+             (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', NOW())`,
             [
                 normalizedName,
                 normalizedEmail,
@@ -998,6 +1043,7 @@ const addApprovedUser = async (userData) => {
  */
 const deleteApprovedUser = async (approvedUserId) => {
     try {
+        await ensureApprovalSchema();
         // Check if user hasn't registered yet
         const [approvedUsers] = await pool.query(
             `SELECT is_registered FROM approved_users WHERE id = ?`,
@@ -1027,6 +1073,217 @@ const deleteApprovedUser = async (approvedUserId) => {
     }
 };
 
+const submitSignupRequest = async (requestData) => {
+    try {
+        await ensureApprovalSchema();
+
+        const {
+            name,
+            email,
+            contactNumber,
+            role = ROLE.STUDENT,
+            studentId,
+            teacherId,
+            department,
+            semester,
+            section,
+            password
+        } = requestData;
+
+        if (!name || !email || !contactNumber || !password) {
+            throw new ValidationError('Name, email, contact number, and password are required.');
+        }
+
+        if (!validateEmailFormat(email)) {
+            throw new ValidationError('Invalid email format.');
+        }
+
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.valid) {
+            throw new ValidationError(passwordValidation.message);
+        }
+
+        if (!['student', 'faculty'].includes(role)) {
+            throw new ValidationError('Role must be student or faculty.');
+        }
+
+        if (role === 'student' && !studentId) {
+            throw new ValidationError('Student ID is required for student role.');
+        }
+
+        if (role === 'faculty' && !teacherId) {
+            throw new ValidationError('Teacher ID is required for faculty role.');
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedContact = contactNumber.trim();
+        const normalizedName = name.trim();
+        const normalizedStudentId = studentId ? studentId.trim().toUpperCase() : null;
+        const normalizedTeacherId = teacherId ? teacherId.trim().toUpperCase() : null;
+        const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+
+        const [existingUser] = await pool.query(
+            `SELECT id FROM users WHERE LOWER(email) = LOWER(?)`,
+            [normalizedEmail]
+        );
+
+        if (existingUser && existingUser.length > 0) {
+            throw new ValidationError('This email is already registered. Please login instead.');
+        }
+
+        const [existingApproval] = await pool.query(
+            `SELECT * FROM approved_users WHERE LOWER(email) = LOWER(?) OR contact_number = ? LIMIT 1`,
+            [normalizedEmail, normalizedContact]
+        );
+
+        if (existingApproval && existingApproval.length > 0) {
+            const row = existingApproval[0];
+
+            if (row.is_registered) {
+                throw new ValidationError('This account is already registered. Please login.');
+            }
+
+            if (row.approval_status === 'approved') {
+                throw new ValidationError('Your account is already approved. Please complete registration.');
+            }
+
+            if (row.approval_status === 'pending') {
+                throw new ValidationError('Your signup request is already pending admin approval.');
+            }
+
+            await pool.query(
+                `UPDATE approved_users
+                 SET name = ?, email = ?, contact_number = ?, role = ?, student_id = ?, teacher_id = ?,
+                     department = ?, semester = ?, section = ?, approval_status = 'pending',
+                     pending_password_hash = ?, updated_at = NOW(), is_registered = FALSE, registered_user_id = NULL
+                 WHERE id = ?`,
+                [
+                    normalizedName,
+                    normalizedEmail,
+                    normalizedContact,
+                    role,
+                    normalizedStudentId,
+                    normalizedTeacherId,
+                    department || null,
+                    semester || null,
+                    section || null,
+                    hashedPassword,
+                    row.id
+                ]
+            );
+
+            return { requestId: row.id, status: 'pending' };
+        }
+
+        const [insertResult] = await pool.query(
+            `INSERT INTO approved_users
+             (name, email, contact_number, role, student_id, teacher_id, department, semester, section, approval_status, pending_password_hash, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, NOW())`,
+            [
+                normalizedName,
+                normalizedEmail,
+                normalizedContact,
+                role,
+                normalizedStudentId,
+                normalizedTeacherId,
+                department || null,
+                semester || null,
+                section || null,
+                hashedPassword
+            ]
+        );
+
+        return { requestId: insertResult.insertId, status: 'pending' };
+    } catch (error) {
+        if (error.name && error.statusCode) {
+            throw error;
+        }
+        throw new Error(`Failed to submit signup request: ${error.message}`);
+    }
+};
+
+const updateApprovedUserStatus = async (approvedUserId, nextStatus) => {
+    try {
+        await ensureApprovalSchema();
+
+        if (!['approved', 'rejected'].includes(nextStatus)) {
+            throw new ValidationError('Status must be either approved or rejected.');
+        }
+
+        const [rows] = await pool.query(
+            `SELECT * FROM approved_users WHERE id = ? LIMIT 1`,
+            [approvedUserId]
+        );
+
+        if (!rows || rows.length === 0) {
+            throw new ValidationError('Approved user not found.');
+        }
+
+        const row = rows[0];
+
+        if (row.is_registered) {
+            throw new ValidationError('This user is already registered. Status cannot be changed.');
+        }
+
+        if (nextStatus === 'rejected') {
+            await pool.query(
+                `UPDATE approved_users SET approval_status = 'rejected', pending_password_hash = NULL, updated_at = NOW() WHERE id = ?`,
+                [approvedUserId]
+            );
+            return { id: approvedUserId, approval_status: 'rejected', is_registered: false };
+        }
+
+        if (row.pending_password_hash) {
+            const [existingUsers] = await pool.query(
+                `SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`,
+                [row.email]
+            );
+
+            if (existingUsers && existingUsers.length > 0) {
+                throw new ValidationError('A user account already exists with this email.');
+            }
+
+            const [inserted] = await pool.query(
+                `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, department, semester, section, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                [
+                    row.name,
+                    row.email,
+                    row.contact_number,
+                    row.pending_password_hash,
+                    row.role,
+                    row.student_id || null,
+                    row.teacher_id || null,
+                    row.department || null,
+                    row.semester || null,
+                    row.section || null
+                ]
+            );
+
+            await pool.query(
+                `UPDATE approved_users
+                 SET approval_status = 'approved', is_registered = TRUE, registered_user_id = ?, pending_password_hash = NULL, updated_at = NOW()
+                 WHERE id = ?`,
+                [inserted.insertId, approvedUserId]
+            );
+
+            return { id: approvedUserId, approval_status: 'approved', is_registered: true, registered_user_id: inserted.insertId };
+        }
+
+        await pool.query(
+            `UPDATE approved_users SET approval_status = 'approved', updated_at = NOW() WHERE id = ?`,
+            [approvedUserId]
+        );
+
+        return { id: approvedUserId, approval_status: 'approved', is_registered: false };
+    } catch (error) {
+        if (error.name && error.statusCode) {
+            throw error;
+        }
+        throw new Error(`Failed to update approval status: ${error.message}`);
+    }
+};
+
 module.exports = {
     login,
     register,
@@ -1038,6 +1295,8 @@ module.exports = {
     markApprovedUserAsRegistered,
     getAllApprovedUsers,
     addApprovedUser,
-    deleteApprovedUser
+    deleteApprovedUser,
+    submitSignupRequest,
+    updateApprovedUserStatus
 };
 

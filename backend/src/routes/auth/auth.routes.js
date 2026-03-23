@@ -193,6 +193,29 @@ router.get('/me', authMiddleware, getCurrentUser);
  */
 router.post('/register', register);
 
+router.post('/signup-request', async (req, res) => {
+  try {
+    const result = await authService.submitSignupRequest(req.body);
+    return res.status(202).json({
+      success: true,
+      message: 'Signup request submitted. Please wait for admin approval.',
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit signup request.',
+      error: error.message,
+    });
+  }
+});
+
 /**
  * GET /students - Get All Students (Admin Only)
  * 
@@ -568,12 +591,13 @@ router.get('/photo/:userId', getProfilePhoto);
  */
 router.get('/admin/approved-users', authMiddleware, requireAdmin, async (req, res) => {
   try {
-    const { role, isRegistered, search } = req.query;
+    const { role, isRegistered, search, approvalStatus } = req.query;
     
     const filters = {
       role: role || 'all',
       isRegistered: isRegistered === 'true' ? true : isRegistered === 'false' ? false : null,
-      search: search?.trim() || ''
+      search: search?.trim() || '',
+      approvalStatus: approvalStatus || 'all',
     };
     
     const approvedUsers = await authService.getAllApprovedUsers(filters);
@@ -589,6 +613,48 @@ router.get('/admin/approved-users', authMiddleware, requireAdmin, async (req, re
       success: false,
       message: 'Failed to fetch approved users',
       error: error.message
+    });
+  }
+});
+
+router.patch('/admin/approved-users/:id/status', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body || {};
+
+    if (!id || Number.isNaN(Number(id))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid approved user ID.',
+      });
+    }
+
+    const result = await authService.updateApprovedUserStatus(Number(id), status);
+
+    req.activityLogContext = {
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      action: status === 'approved' ? 'ADMIN_APPROVE_SIGNUP_REQUEST' : 'ADMIN_REJECT_SIGNUP_REQUEST',
+      entityType: 'approvedUser',
+      entityId: id,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: status === 'approved' ? 'User request approved.' : 'User request rejected.',
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update approval status.',
+      error: error.message,
     });
   }
 });

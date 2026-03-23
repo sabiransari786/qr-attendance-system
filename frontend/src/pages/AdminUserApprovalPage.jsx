@@ -21,6 +21,7 @@ function AdminUserApprovalPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [registrationFilter, setRegistrationFilter] = useState("all");
+  const [approvalFilter, setApprovalFilter] = useState("all");
   const [toast, setToast] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
@@ -185,6 +186,9 @@ function AdminUserApprovalPage() {
       if (registrationFilter !== "all") {
         url += `${url.includes("?") ? "&" : "?"}isRegistered=${registrationFilter === "registered"}`;
       }
+      if (approvalFilter !== "all") {
+        url += `${url.includes("?") ? "&" : "?"}approvalStatus=${approvalFilter}`;
+      }
 
       const response = await fetch(url, {
         headers: {
@@ -284,6 +288,33 @@ function AdminUserApprovalPage() {
     }
   };
 
+  const handleUpdateApprovalStatus = async (id, status) => {
+    const actionLabel = status === "approved" ? "approve" : "reject";
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this signup request?`)) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/approved-users/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authContext?.token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showToast(status === "approved" ? "Request approved successfully" : "Request rejected successfully");
+        fetchApprovedUsers();
+      } else {
+        showToast(data.message || "Failed to update request status", "error");
+      }
+    } catch (error) {
+      console.error("Error updating approval status:", error);
+      showToast("Error updating request status", "error");
+    }
+  };
+
   const filteredUsers = approvedUsers.filter((user) => {
     const matchesSearch = searchTerm
       ? `${user.name} ${user.email} ${user.contact_number}`
@@ -294,10 +325,10 @@ function AdminUserApprovalPage() {
   });
 
   const stats = [
-    { label: "Total Approved", value: approvedUsers.length, sub: "Users" },
-    { label: "Students", value: approvedUsers.filter((u) => u.role === "student").length, sub: "Approved" },
-    { label: "Faculty", value: approvedUsers.filter((u) => u.role === "faculty").length, sub: "Approved" },
-    { label: "Registered", value: approvedUsers.filter((u) => u.is_registered).length, sub: "Completed" },
+    { label: "Total Requests", value: approvedUsers.length, sub: "All" },
+    { label: "Pending", value: approvedUsers.filter((u) => u.approval_status === "pending").length, sub: "Review" },
+    { label: "Approved", value: approvedUsers.filter((u) => u.approval_status === "approved").length, sub: "Allowed" },
+    { label: "Registered", value: approvedUsers.filter((u) => u.is_registered).length, sub: "Created" },
   ];
 
   const getInitials = (name = "") =>
@@ -346,7 +377,7 @@ function AdminUserApprovalPage() {
               <p className="ap__eyebrow">Admin Panel</p>
               <h1 className="ap__title">User Approvals</h1>
               <p className="ap__subtitle">
-                Pre-approve users before they register. Verify email, phone, and role.
+                Review signup requests, then approve or reject. Account creation follows approval.
               </p>
             </div>
           </div>
@@ -414,7 +445,6 @@ function AdminUserApprovalPage() {
                     name="name"
                     value={formData.name}
                     onChange={handleFormChange}
-                    placeholder="John Doe"
                     required
                     style={{ width: "100%", boxSizing: "border-box" }}
                   />
@@ -432,7 +462,6 @@ function AdminUserApprovalPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleFormChange}
-                      placeholder="john@example.com"
                       required
                       style={{ width: "100%", boxSizing: "border-box" }}
                     />
@@ -447,7 +476,6 @@ function AdminUserApprovalPage() {
                       name="contactNumber"
                       value={formData.contactNumber}
                       onChange={handleFormChange}
-                      placeholder="9876543210"
                       pattern="^\d{10}$"
                       required
                       style={{ width: "100%", boxSizing: "border-box" }}
@@ -506,7 +534,6 @@ function AdminUserApprovalPage() {
                           name="studentId"
                           value={formData.studentId}
                           onChange={handleFormChange}
-                          placeholder="STU001"
                           required
                           style={{ width: "100%", boxSizing: "border-box" }}
                         />
@@ -521,7 +548,6 @@ function AdminUserApprovalPage() {
                           name="semester"
                           value={formData.semester}
                           onChange={handleFormChange}
-                          placeholder="4"
                           min="1"
                           max="8"
                           style={{ width: "100%", boxSizing: "border-box" }}
@@ -539,7 +565,6 @@ function AdminUserApprovalPage() {
                         name="teacherId"
                         value={formData.teacherId}
                         onChange={handleFormChange}
-                        placeholder="TEACH001"
                         required
                         style={{ width: "100%", boxSizing: "border-box" }}
                       />
@@ -856,7 +881,7 @@ function AdminUserApprovalPage() {
             >
               <div className="ap__panel-header">
                 <h2 className="ap__panel-title">
-                  Approved Users{" "}
+                  Signup Requests & Approvals{" "}
                   <span className="ap__panel-count">
                     ({isLoading ? "…" : filteredUsers.length} users)
                   </span>
@@ -895,6 +920,16 @@ function AdminUserApprovalPage() {
                   <option value="all">All Status</option>
                   <option value="pending">Not Yet Registered</option>
                   <option value="registered">Already Registered</option>
+                </select>
+                <select
+                  className="ap__select"
+                  value={approvalFilter}
+                  onChange={(e) => setApprovalFilter(e.target.value)}
+                >
+                  <option value="all">All Approval</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
                 </select>
               </div>
 
@@ -984,12 +1019,30 @@ function AdminUserApprovalPage() {
                           </td>
                           <td>
                             <span
-                              className={`ap__badge ${user.is_registered ? "ap__badge--active" : "ap__badge--warn"}`}
+                              className={`ap__badge ${
+                                user.is_registered
+                                  ? "ap__badge--active"
+                                  : user.approval_status === "approved"
+                                  ? "ap__badge--ok"
+                                  : user.approval_status === "rejected"
+                                  ? "ap__badge--error"
+                                  : "ap__badge--warn"
+                              }`}
                             >
                               {user.is_registered ? (
                                 <>
                                   <CheckCircle size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "2px" }} />
                                   Registered
+                                </>
+                              ) : user.approval_status === "approved" ? (
+                                <>
+                                  <CheckCircle size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "2px" }} />
+                                  Approved
+                                </>
+                              ) : user.approval_status === "rejected" ? (
+                                <>
+                                  <X size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "2px" }} />
+                                  Rejected
                                 </>
                               ) : (
                                 <>
@@ -1000,16 +1053,40 @@ function AdminUserApprovalPage() {
                             </span>
                           </td>
                           <td>
-                            <button
-                              className="ap__btn ap__btn--danger"
-                              style={{ padding: "0.3rem 0.75rem", fontSize: "0.78rem" }}
-                              onClick={() => handleDeleteApproval(user.id)}
-                              disabled={user.is_registered}
-                              title={user.is_registered ? "Cannot delete registered users" : "Remove approval"}
-                            >
-                              <Trash2 size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
-                              Remove
-                            </button>
+                            <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                              {user.approval_status === "pending" && !user.is_registered && (
+                                <>
+                                  <button
+                                    className="ap__btn ap__btn--primary"
+                                    style={{ padding: "0.3rem 0.6rem", fontSize: "0.78rem" }}
+                                    onClick={() => handleUpdateApprovalStatus(user.id, "approved")}
+                                    title="Approve request"
+                                  >
+                                    <Check size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
+                                    Approve
+                                  </button>
+                                  <button
+                                    className="ap__btn ap__btn--danger"
+                                    style={{ padding: "0.3rem 0.6rem", fontSize: "0.78rem" }}
+                                    onClick={() => handleUpdateApprovalStatus(user.id, "rejected")}
+                                    title="Reject request"
+                                  >
+                                    <X size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                className="ap__btn ap__btn--danger"
+                                style={{ padding: "0.3rem 0.75rem", fontSize: "0.78rem" }}
+                                onClick={() => handleDeleteApproval(user.id)}
+                                disabled={user.is_registered}
+                                title={user.is_registered ? "Cannot delete registered users" : "Remove approval record"}
+                              >
+                                <Trash2 size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: "3px" }} />
+                                Remove
+                              </button>
+                            </div>
                           </td>
                         </motion.tr>
                       ))

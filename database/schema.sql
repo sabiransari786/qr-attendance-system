@@ -294,6 +294,8 @@ CREATE TABLE IF NOT EXISTS `approved_users` (
   `department` VARCHAR(100) COMMENT 'Department name',
   `semester` INT COMMENT 'Semester (for students)',
   `section` VARCHAR(50) COMMENT 'Class section',
+  `approval_status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved' COMMENT 'Admin review status for signup request',
+  `pending_password_hash` VARCHAR(255) NULL COMMENT 'Temporary password hash captured at signup-request time',
   `is_registered` BOOLEAN DEFAULT FALSE COMMENT 'Has user already signed up?',
   `registered_user_id` INT COMMENT 'Reference to created user in users table',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'When admin added this user',
@@ -303,6 +305,7 @@ CREATE TABLE IF NOT EXISTS `approved_users` (
   INDEX `idx_approved_email` (`email`),
   INDEX `idx_approved_contact` (`contact_number`),
   INDEX `idx_approved_role` (`role`),
+  INDEX `idx_approved_status` (`approval_status`),
   INDEX `idx_approved_registered` (`is_registered`),
   INDEX `idx_approved_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

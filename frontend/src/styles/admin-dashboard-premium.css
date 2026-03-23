@@ -97,6 +97,13 @@
   background: linear-gradient(90deg, rgba(49,156,181,0.3), transparent 90%);
 }
 
+.adp__chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ── Navigation Cards Grid ───────────────────────────────────────────────── */
 .adp__nav-grid {
   display: grid;

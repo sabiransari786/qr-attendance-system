@@ -158,7 +158,7 @@ function Signup() {
         confirmPassword: "",
       });
 
-      // Redirect to login page after 2 seconds
+      // Redirect to login page after request submission
       setTimeout(() => {
         navigate("/login");
       }, 2000);
@@ -196,7 +196,7 @@ function Signup() {
       {/* Success Toast */}
       {showSuccessToast && (
         <Toast
-          message="Account created successfully! Redirecting to login..."
+          message="Signup request sent! Admin approval ke baad account activate hoga."
           type="success"
           duration={2000}
           onClose={() => setShowSuccessToast(false)}
