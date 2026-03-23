@@ -269,6 +269,43 @@ const ensureApprovalSchema = async () => {
     if (approvalSchemaReady) return;
 
     try {
+        const [tableRows] = await pool.query(
+            `SELECT TABLE_NAME FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users'`
+        );
+
+        if (!tableRows || tableRows.length === 0) {
+            await pool.query(
+                `CREATE TABLE IF NOT EXISTS approved_users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    contact_number VARCHAR(20) NOT NULL,
+                    role ENUM('student', 'faculty') NOT NULL DEFAULT 'student',
+                    student_id VARCHAR(100) NULL,
+                    teacher_id VARCHAR(100) NULL,
+                    department VARCHAR(100) NULL,
+                    semester INT NULL,
+                    section VARCHAR(50) NULL,
+                    approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+                    pending_password_hash VARCHAR(255) NULL,
+                    is_registered BOOLEAN DEFAULT FALSE,
+                    registered_user_id INT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_approved_email (email),
+                    INDEX idx_approved_contact (contact_number),
+                    INDEX idx_approved_role (role),
+                    INDEX idx_approved_status (approval_status),
+                    INDEX idx_approved_registered (is_registered)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+            );
+            approvalStatusSupported = true;
+            pendingPasswordHashSupported = true;
+            approvalSchemaReady = true;
+            return;
+        }
+
         const [statusColumn] = await pool.query(
             `SELECT COLUMN_NAME FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'approved_users' AND COLUMN_NAME = 'approval_status'`
