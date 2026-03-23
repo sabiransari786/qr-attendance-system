@@ -432,16 +432,80 @@ const login = async (email, password) => {
 
             const approvalRow = approvalRows[0];
             const status = approvalStatusSupported ? approvalRow.approval_status : 'pending';
+            const isRegisteredFlag = approvalRow.is_registered === true || Number(approvalRow.is_registered) === 1;
 
-            if (status === 'rejected') {
+            if (approvalRow.registered_user_id) {
+                const [linkedUsers] = await pool.query(
+                    `SELECT id, name, email, password, role, is_active, created_at
+                     FROM users
+                     WHERE id = ? LIMIT 1`,
+                    [approvalRow.registered_user_id]
+                );
+
+                if (linkedUsers && linkedUsers.length > 0) {
+                    user = linkedUsers[0];
+                }
+            }
+
+            if (!user && isRegisteredFlag) {
+                // Recovery path for inconsistent data where approved_users says registered
+                // but users row is missing. Recreate account with current login password.
+                const recoveredPasswordHash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+                const [recreatedUser] = await pool.query(
+                    `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, department, semester, section, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [
+                        approvalRow.name,
+                        approvalRow.email,
+                        approvalRow.contact_number,
+                        recoveredPasswordHash,
+                        approvalRow.role,
+                        approvalRow.student_id || null,
+                        approvalRow.teacher_id || null,
+                        approvalRow.department || null,
+                        approvalRow.semester || null,
+                        approvalRow.section || null,
+                    ]
+                );
+
+                try {
+                    await pool.query(
+                        `UPDATE approved_users
+                         SET registered_user_id = ?, pending_password_hash = NULL, updated_at = NOW()
+                         WHERE id = ?`,
+                        [recreatedUser.insertId, approvalRow.id]
+                    );
+                } catch (updateError) {
+                    if (updateError.code === 'ER_BAD_FIELD_ERROR') {
+                        await pool.query(
+                            `UPDATE approved_users
+                             SET registered_user_id = ?, updated_at = NOW()
+                             WHERE id = ?`,
+                            [recreatedUser.insertId, approvalRow.id]
+                        );
+                    } else {
+                        throw updateError;
+                    }
+                }
+
+                const [createdUsers] = await pool.query(
+                    `SELECT id, name, email, password, role, is_active, created_at
+                     FROM users
+                     WHERE id = ? LIMIT 1`,
+                    [recreatedUser.insertId]
+                );
+                user = createdUsers && createdUsers.length > 0 ? createdUsers[0] : null;
+            }
+
+            if (!user && status === 'rejected') {
                 throw new ValidationError('Your signup request was rejected. Please contact admin.');
             }
 
-            if (status !== 'approved') {
+            if (!user && status !== 'approved') {
                 throw new ValidationError('Your signup request is pending admin approval. Please wait.');
             }
 
-            if (approvalRow.pending_password_hash) {
+            if (!user && approvalRow.pending_password_hash) {
                 const [insertResult] = await pool.query(
                     `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, department, semester, section, created_at)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
