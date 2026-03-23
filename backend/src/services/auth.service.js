@@ -1330,7 +1330,56 @@ const submitSignupRequest = async (requestData) => {
             }
 
             if (approvalStatusSupported && row.approval_status === 'approved') {
-                throw new ValidationError('Your account is already approved. Please complete registration.');
+                // Re-signup support: approved but unregistered user can submit password again.
+                // Login flow will auto-provision users row using this hash.
+                try {
+                    await pool.query(
+                        `UPDATE approved_users
+                         SET pending_password_hash = ?, updated_at = NOW()
+                         WHERE id = ?`,
+                        [hashedPassword, row.id]
+                    );
+                } catch (approvedUpdateError) {
+                    if (approvedUpdateError.code !== 'ER_BAD_FIELD_ERROR') {
+                        throw approvedUpdateError;
+                    }
+
+                    // Legacy schema without pending_password_hash: create users row immediately.
+                    const [existingUsers] = await pool.query(
+                        `SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`,
+                        [normalizedEmail]
+                    );
+
+                    if (existingUsers && existingUsers.length > 0) {
+                        return { requestId: row.id, status: 'approved', accountReady: true };
+                    }
+
+                    const [insertedUser] = await pool.query(
+                        `INSERT INTO users (name, email, contact_number, password, role, student_id, teacher_id, department, semester, section, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                        [
+                            normalizedName,
+                            normalizedEmail,
+                            normalizedContact,
+                            hashedPassword,
+                            role,
+                            normalizedStudentId,
+                            normalizedTeacherId,
+                            normalizedDepartment,
+                            normalizedSemester,
+                            normalizedSection,
+                        ]
+                    );
+
+                    await pool.query(
+                        `UPDATE approved_users
+                         SET is_registered = TRUE, registered_user_id = ?, updated_at = NOW()
+                         WHERE id = ?`,
+                        [insertedUser.insertId, row.id]
+                    );
+                }
+
+                return { requestId: row.id, status: 'approved', accountReady: true };
             }
 
             if ((approvalStatusSupported && row.approval_status === 'pending') || !approvalStatusSupported) {
