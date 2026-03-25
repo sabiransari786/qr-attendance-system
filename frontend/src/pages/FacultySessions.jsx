@@ -77,6 +77,13 @@ function FacultySessions() {
 
   const formatDate = (dateString) => new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+  const toUtcIsoFromLocalInput = (dateTimeLocalValue) => {
+    if (!dateTimeLocalValue) return null;
+    const parsed = new Date(dateTimeLocalValue);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString();
+  };
+
   const handleGenerateQR = (sessionId) => navigate(`/faculty/qr-generation?sessionId=${sessionId}`);
 
   const handleOpenEdit = (session) => {
@@ -89,7 +96,9 @@ function FacultySessions() {
   const handleEditSession = async (e) => {
     e.preventDefault(); setEditLoading(true); setEditError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: editSession.subject.trim(), location: editSession.location.trim(), startTime: editSession.startTime, duration: parseInt(editSession.duration) }) });
+      const startTimeIso = toUtcIsoFromLocalInput(editSession.startTime);
+      if (!startTimeIso) throw new Error('Invalid start time');
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: editSession.subject.trim(), location: editSession.location.trim(), startTime: startTimeIso, duration: parseInt(editSession.duration) }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to update session');
       setSessions(prev => prev.map(s => s.id === selectedSession.id ? data.data : s));
@@ -144,7 +153,9 @@ function FacultySessions() {
   const handleCreateSession = async (e) => {
     e.preventDefault(); setCreateLoading(true); setCreateError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/session`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: newSession.subject.trim(), location: newSession.location.trim(), startTime: newSession.startTime, duration: parseInt(newSession.duration), courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined }) });
+      const startTimeIso = toUtcIsoFromLocalInput(newSession.startTime);
+      if (!startTimeIso) throw new Error('Invalid start time');
+      const response = await fetch(`${API_BASE_URL}/session`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: newSession.subject.trim(), location: newSession.location.trim(), startTime: startTimeIso, duration: parseInt(newSession.duration), courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to create session');
       setSessions(prev => [data.data, ...prev]);
