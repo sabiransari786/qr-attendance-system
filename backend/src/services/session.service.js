@@ -266,6 +266,31 @@ const calculateQRExpiryTime = (startTime) => {
     return expiryTime;
 };
 
+/**
+ * Parse client-provided local datetime with explicit timezone offset
+ * and convert it to an exact UTC Date object.
+ */
+const parseClientLocalDateTime = (dateTimeLocalValue, timezoneOffsetMinutes) => {
+    if (!dateTimeLocalValue || typeof timezoneOffsetMinutes !== 'number') return null;
+
+    const match = String(dateTimeLocalValue).match(
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/
+    );
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const hour = Number(match[4]);
+    const minute = Number(match[5]);
+    const second = Number(match[6] || 0);
+
+    const utcMs = Date.UTC(year, month - 1, day, hour, minute, second) + (timezoneOffsetMinutes * 60 * 1000);
+    const parsed = new Date(utcMs);
+
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 // =============================================================================
 // SERVICE FUNCTIONS
 // =============================================================================
@@ -303,7 +328,7 @@ const createSession = async (facultyId, sessionData) => {
         // ---------------------------------------------------------------------
         // STEP 1: Input Validation
         // ---------------------------------------------------------------------
-        const { subject, location, startTime, duration, courseId } = sessionData;
+        const { subject, location, startTime, startTimeLocal, clientTimezoneOffsetMinutes, duration, courseId } = sessionData;
         
         // Required fields check
         if (!subject || !location || !startTime || !duration) {
@@ -331,7 +356,18 @@ const createSession = async (facultyId, sessionData) => {
         }
         
         // Start time validation
-        const startTimeDate = new Date(startTime);
+        const hasTimezoneInStartTime =
+            typeof startTime === 'string' && /([zZ]|[+-]\d{2}:\d{2})$/.test(startTime);
+
+        const localParsedDate = parseClientLocalDateTime(
+            startTimeLocal || startTime,
+            Number(clientTimezoneOffsetMinutes)
+        );
+
+        const startTimeDate = hasTimezoneInStartTime
+            ? new Date(startTime)
+            : (localParsedDate || new Date(startTime));
+
         if (isNaN(startTimeDate.getTime())) {
             throw new InvalidSessionDataError('Invalid start time format.');
         }

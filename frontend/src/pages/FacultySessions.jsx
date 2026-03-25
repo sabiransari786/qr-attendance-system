@@ -84,6 +84,8 @@ function FacultySessions() {
     return parsed.toISOString();
   };
 
+  const getClientTimezoneOffsetMinutes = () => new Date().getTimezoneOffset();
+
   const handleGenerateQR = (sessionId) => navigate(`/faculty/qr-generation?sessionId=${sessionId}`);
 
   const handleOpenEdit = (session) => {
@@ -98,7 +100,7 @@ function FacultySessions() {
     try {
       const startTimeIso = toUtcIsoFromLocalInput(editSession.startTime);
       if (!startTimeIso) throw new Error('Invalid start time');
-      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: editSession.subject.trim(), location: editSession.location.trim(), startTime: startTimeIso, duration: parseInt(editSession.duration) }) });
+      const response = await fetch(`${API_BASE_URL}/session/${selectedSession.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: editSession.subject.trim(), location: editSession.location.trim(), startTime: startTimeIso, startTimeLocal: editSession.startTime, clientTimezoneOffsetMinutes: getClientTimezoneOffsetMinutes(), duration: parseInt(editSession.duration) }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to update session');
       setSessions(prev => prev.map(s => s.id === selectedSession.id ? data.data : s));
@@ -155,7 +157,7 @@ function FacultySessions() {
     try {
       const startTimeIso = toUtcIsoFromLocalInput(newSession.startTime);
       if (!startTimeIso) throw new Error('Invalid start time');
-      const response = await fetch(`${API_BASE_URL}/session`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: newSession.subject.trim(), location: newSession.location.trim(), startTime: startTimeIso, duration: parseInt(newSession.duration), courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined }) });
+      const response = await fetch(`${API_BASE_URL}/session`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ subject: newSession.subject.trim(), location: newSession.location.trim(), startTime: startTimeIso, startTimeLocal: newSession.startTime, clientTimezoneOffsetMinutes: getClientTimezoneOffsetMinutes(), duration: parseInt(newSession.duration), courseId: newSession.courseId ? parseInt(newSession.courseId) : undefined }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to create session');
       setSessions(prev => [data.data, ...prev]);
