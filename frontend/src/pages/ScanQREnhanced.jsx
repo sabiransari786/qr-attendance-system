@@ -179,8 +179,47 @@ function ScanQREnhanced() {
     throw lastError || new Error('Unable to access camera');
   };
 
+  const normalizeScannedToken = (rawValue) => {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return '';
+
+    if (raw.startsWith('q2.') || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)) {
+      return raw;
+    }
+
+    if ((raw.startsWith('{') && raw.endsWith('}')) || (raw.startsWith('"') && raw.endsWith('"'))) {
+      try {
+        const parsed = JSON.parse(raw);
+        const candidate = parsed?.qr_token || parsed?.token || parsed?.request_id;
+        if (candidate) return String(candidate).trim();
+      } catch {
+        // ignore invalid JSON
+      }
+    }
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      try {
+        const url = new URL(raw);
+        const qp = url.searchParams.get('qr_token') || url.searchParams.get('token') || url.searchParams.get('request_id');
+        if (qp) return qp.trim();
+
+        const segments = url.pathname.split('/').filter(Boolean);
+        if (segments.length > 0) {
+          const tail = segments[segments.length - 1];
+          if (tail.startsWith('q2.') || /^[0-9a-f-]{36}$/i.test(tail)) {
+            return tail;
+          }
+        }
+      } catch {
+        // ignore invalid URL
+      }
+    }
+
+    return raw;
+  };
+
   const verifyQrCode = async (code = null) => {
-    const c = (code || qrCode || '').trim();
+    const c = normalizeScannedToken(code || qrCode || '');
     if (!c) {
       setMessage({ type: 'error', text: 'Please enter or scan a QR code' });
       return;
@@ -209,8 +248,13 @@ function ScanQREnhanced() {
       });
 
       const valData = await valRes.json();
+      if (!valRes.ok) {
+        setMessage({ type: 'error', text: valData.message || valData.reason || 'QR validation failed' });
+        return;
+      }
+
       if (!valData.valid) {
-        setMessage({ type: 'error', text: valData.reason || 'Invalid QR code' });
+        setMessage({ type: 'error', text: valData.reason || valData.message || 'Invalid QR code' });
         return;
       }
 
