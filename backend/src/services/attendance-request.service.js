@@ -81,6 +81,11 @@ class AttendanceRequestService {
     }
   }
 
+  static isUuidLike(value) {
+    if (!value || typeof value !== 'string') return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
   static issueDynamicQrToken(request_id) {
     const issuedAt = Date.now();
     const payload = {
@@ -347,21 +352,38 @@ class AttendanceRequestService {
    * Validate QR request
    */
   static async validateQRRequest({ qr_token, location_samples, student_id, device_id, scan_timestamp }) {
-    const decoded = this.verifySignedPayload(qr_token);
-    if (decoded.type !== 'qr' || !decoded.request_id || !decoded.ts) {
+    const normalizedToken = String(qr_token || '').trim();
+    let requestId = null;
+    let tokenTimestamp = null;
+    let isLegacyQr = false;
+
+    if (normalizedToken.includes('.')) {
+      const decoded = this.verifySignedPayload(normalizedToken);
+      if (decoded.type !== 'qr' || !decoded.request_id || !decoded.ts) {
+        throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
+      }
+      requestId = decoded.request_id;
+      tokenTimestamp = Number(decoded.ts);
+    } else if (this.isUuidLike(normalizedToken)) {
+      // Backward compatibility for previously generated static QR values.
+      requestId = normalizedToken;
+      isLegacyQr = true;
+    } else {
       throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
     }
 
-    const ageMs = Date.now() - Number(decoded.ts);
-    if (ageMs < 0 || ageMs > MAX_QR_SCAN_WINDOW_SECONDS * 1000) {
-      return {
-        valid: false,
-        reason: 'QR code has expired. Ask faculty to refresh.',
-        reason_code: 'QR_EXPIRED'
-      };
+    if (!isLegacyQr) {
+      const ageMs = Date.now() - tokenTimestamp;
+      if (ageMs < 0 || ageMs > MAX_QR_SCAN_WINDOW_SECONDS * 1000) {
+        return {
+          valid: false,
+          reason: 'QR code has expired. Ask faculty to refresh.',
+          reason_code: 'QR_EXPIRED'
+        };
+      }
     }
 
-    const request = await AttendanceRequest.getByRequestId(decoded.request_id);
+    const request = await AttendanceRequest.getByRequestId(requestId);
     if (!request) {
       return {
         valid: false,
@@ -421,7 +443,7 @@ class AttendanceRequestService {
     const challengePayload = {
       v: 1,
       type: 'precheck',
-      request_id: decoded.request_id,
+      request_id: requestId,
       session_id: request.session_id,
       student_id,
       device_id: device_id || null,

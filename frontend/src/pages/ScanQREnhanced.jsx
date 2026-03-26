@@ -40,8 +40,8 @@ function ScanQREnhanced() {
   const [firstCheckAt, setFirstCheckAt] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
 
-  const SCAN_INTERVAL_MS = 120;
-  const SCAN_FRAME_SIZE = 420;
+  const SCAN_INTERVAL_MS = 80;
+  const SCAN_FRAME_SIZE = 360;
 
   useEffect(() => () => stopCamera(), []);
 
@@ -132,7 +132,7 @@ function ScanQREnhanced() {
 
   /* ── Verify QR ─────────────────────────────────────────────── */
   const verifyQrCode = async (code = null) => {
-    const c = code || qrCode;
+    const c = (code || qrCode || '').trim();
     if (!c.trim()) { setMessage({ type: 'error', text: 'Please enter or scan a QR code' }); return; }
     setLoading(true);
     setPrecheckToken('');
@@ -300,7 +300,7 @@ function ScanQREnhanced() {
       if (!vw || !vh) return null;
 
       // Center-crop a square region for faster and more stable decode on mobile cameras.
-      const side = Math.floor(Math.min(vw, vh) * 0.72);
+      const side = Math.floor(Math.min(vw, vh) * 0.9);
       const sx = Math.floor((vw - side) / 2);
       const sy = Math.floor((vh - side) / 2);
 
@@ -310,10 +310,25 @@ function ScanQREnhanced() {
 
       const imageData = ctx.getImageData(0, 0, SCAN_FRAME_SIZE, SCAN_FRAME_SIZE);
 
-      const tryBoth = scanAttemptsRef.current % 7 === 0;
-      return jsQR(imageData.data, imageData.width, imageData.height, {
+      const tryBoth = scanAttemptsRef.current % 5 === 0;
+      let result = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: tryBoth ? 'attemptBoth' : 'dontInvert',
       });
+
+      // Fallback every few attempts: decode full frame to avoid strict-center misses.
+      if (!result && scanAttemptsRef.current % 4 === 0) {
+        const fw = Math.min(vw, 720);
+        const fh = Math.min(vh, 720);
+        canvas.width = fw;
+        canvas.height = fh;
+        ctx.drawImage(video, 0, 0, fw, fh);
+        const fullFrame = ctx.getImageData(0, 0, fw, fh);
+        result = jsQR(fullFrame.data, fullFrame.width, fullFrame.height, {
+          inversionAttempts: 'attemptBoth',
+        });
+      }
+
+      return result;
     };
 
     const scan = () => {
