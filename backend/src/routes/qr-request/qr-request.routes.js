@@ -13,6 +13,7 @@ const { qrGenerateLimiter } = require('../../middleware/rate-limit.middleware');
 const {
   generateQRRequest,
   validateQRRequest,
+  refreshQRToken,
   getAttendanceCount,
   getFacultyRequests,
   recordAcceptance
@@ -51,6 +52,13 @@ router.post('/generate', qrGenerateLimiter, authMiddleware, requireFaculty, gene
  * }
  */
 router.post('/validate', authMiddleware, requireStudent, validateQRRequest);
+
+/**
+ * POST /api/qr-request/:request_id/refresh
+ * Rotate dynamic QR token while keeping request active.
+ * Faculty only.
+ */
+router.post('/:request_id/refresh', authMiddleware, requireFaculty, refreshQRToken);
 
 /**
  * GET /api/qr-request/:request_id/attendance-count

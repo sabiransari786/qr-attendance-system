@@ -1,16 +1,187 @@
 /**
  * Attendance Request Service
- * 
- * Handles business logic for QR code generation
- * - Location validation
- * - Expiry time calculation
- * - Previous QR invalidation
+ *
+ * Handles QR generation and secure scan validation.
  */
 
+const crypto = require('crypto');
 const AttendanceRequest = require('../models/attendance-request.model');
 const { pool } = require('../config');
 
+const QR_TOKEN_VALIDITY_SECONDS = 45;
+const QR_REFRESH_INTERVAL_SECONDS = 12;
+const MAX_QR_SCAN_WINDOW_SECONDS = 60;
+const MAX_DISTANCE_METERS = 120;
+const MAX_ACCURACY_METERS = 30;
+const SECOND_CHECK_DELAY_SECONDS = 12;
+const PRECHECK_TTL_SECONDS = 120;
+const LOCATION_SAMPLE_COUNT = 3;
+
+class ValidationError extends Error {
+  constructor(message, statusCode = 400, code = 'VALIDATION_ERROR') {
+    super(message);
+    this.name = 'ValidationError';
+    this.statusCode = statusCode;
+    this.code = code;
+  }
+}
+
 class AttendanceRequestService {
+  static getSigningSecret() {
+    return process.env.ATTENDANCE_QR_SECRET || process.env.JWT_SECRET || 'qr-attendance-fallback-secret';
+  }
+
+  static base64UrlEncode(input) {
+    const b64 = Buffer.from(input).toString('base64');
+    return b64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
+
+  static base64UrlDecode(input) {
+    const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+    return Buffer.from(padded, 'base64').toString('utf8');
+  }
+
+  static signPayload(payload) {
+    const payloadJson = JSON.stringify(payload);
+    const encodedPayload = this.base64UrlEncode(payloadJson);
+    const signature = crypto
+      .createHmac('sha256', this.getSigningSecret())
+      .update(encodedPayload)
+      .digest('base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    return `${encodedPayload}.${signature}`;
+  }
+
+  static verifySignedPayload(token) {
+    if (!token || typeof token !== 'string' || !token.includes('.')) {
+      throw new ValidationError('Invalid QR token format', 400, 'INVALID_QR_TOKEN');
+    }
+
+    const [encodedPayload, signature] = token.split('.');
+    const expected = crypto
+      .createHmac('sha256', this.getSigningSecret())
+      .update(encodedPayload)
+      .digest('base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    if (signature !== expected) {
+      throw new ValidationError('Invalid QR signature', 400, 'INVALID_QR_SIGNATURE');
+    }
+
+    try {
+      return JSON.parse(this.base64UrlDecode(encodedPayload));
+    } catch (error) {
+      throw new ValidationError('Invalid QR payload', 400, 'INVALID_QR_PAYLOAD');
+    }
+  }
+
+  static issueDynamicQrToken(request_id) {
+    const issuedAt = Date.now();
+    const payload = {
+      v: 1,
+      type: 'qr',
+      request_id,
+      ts: issuedAt,
+      nonce: crypto.randomBytes(8).toString('hex')
+    };
+
+    return {
+      qr_token: this.signPayload(payload),
+      token_issued_at: new Date(issuedAt).toISOString(),
+      token_expires_at: new Date(issuedAt + QR_TOKEN_VALIDITY_SECONDS * 1000).toISOString(),
+      refresh_after_seconds: QR_REFRESH_INTERVAL_SECONDS,
+      token_validity_seconds: QR_TOKEN_VALIDITY_SECONDS
+    };
+  }
+
+  static normalizeLocationSamples(location_samples) {
+    if (!Array.isArray(location_samples) || location_samples.length < LOCATION_SAMPLE_COUNT) {
+      throw new ValidationError('Provide at least 3 location readings', 400, 'INSUFFICIENT_LOCATION_READINGS');
+    }
+
+    return location_samples.slice(0, LOCATION_SAMPLE_COUNT).map((sample, index) => {
+      const latitude = Number(sample?.latitude);
+      const longitude = Number(sample?.longitude);
+      const accuracy = Number(sample?.accuracy);
+      const timestamp = Number(sample?.timestamp || Date.now());
+
+      if (
+        !Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(accuracy) || !Number.isFinite(timestamp)
+      ) {
+        throw new ValidationError(`Invalid location sample at index ${index}`, 400, 'INVALID_LOCATION_SAMPLE');
+      }
+
+      return { latitude, longitude, accuracy, timestamp };
+    });
+  }
+
+  static assessLocation(request, location_samples) {
+    const samples = this.normalizeLocationSamples(location_samples);
+
+    const distances = samples.map((sample) =>
+      this.calculateDistance(request.latitude, request.longitude, sample.latitude, sample.longitude)
+    );
+    const accuracies = samples.map((sample) => sample.accuracy);
+
+    const avgDistance = distances.reduce((sum, value) => sum + value, 0) / distances.length;
+    const avgAccuracy = accuracies.reduce((sum, value) => sum + value, 0) / accuracies.length;
+    const maxAccuracy = Math.max(...accuracies);
+
+    const passesAccuracy = avgAccuracy <= MAX_ACCURACY_METERS && maxAccuracy <= MAX_ACCURACY_METERS;
+    const passesDistance = avgDistance <= MAX_DISTANCE_METERS;
+
+    return {
+      samples,
+      distances,
+      accuracies,
+      average_distance_meters: Number(avgDistance.toFixed(2)),
+      average_accuracy_meters: Number(avgAccuracy.toFixed(2)),
+      max_accuracy_meters: Number(maxAccuracy.toFixed(2)),
+      passes_accuracy: passesAccuracy,
+      passes_distance: passesDistance,
+      passes_all: passesAccuracy && passesDistance
+    };
+  }
+
+  static async ensureSessionTimeWindow(session_id) {
+    const [sessions] = await pool.execute(
+      `SELECT id, status, start_time, end_time
+       FROM sessions
+       WHERE id = ?
+       LIMIT 1`,
+      [session_id]
+    );
+
+    const session = sessions[0];
+    if (!session) {
+      throw new ValidationError('Session not found', 404, 'SESSION_NOT_FOUND');
+    }
+
+    if (session.status !== 'active') {
+      throw new ValidationError('Session is not active', 400, 'SESSION_NOT_ACTIVE');
+    }
+
+    const now = new Date();
+    const start = new Date(session.start_time);
+    const end = session.end_time ? new Date(session.end_time) : null;
+
+    if (now < start) {
+      throw new ValidationError('Attendance is not open yet for this session', 400, 'SESSION_NOT_STARTED');
+    }
+
+    if (end && now > end) {
+      throw new ValidationError('Session time is over. Attendance is closed.', 400, 'SESSION_ENDED');
+    }
+
+    return session;
+  }
+
   /**
    * Generate QR request with location validation
    */
@@ -98,9 +269,9 @@ class AttendanceRequestService {
         throw new Error('Invalid attendance value. Must be 1, 2, or 3');
       }
 
-      // Validate radius
-      if (![10, 20, 50].includes(radius_meters)) {
-        throw new Error('Invalid radius. Must be 10, 20, or 50 meters');
+      // Validate radius (geofence still includes accuracy + time checks later)
+      if (!Number.isInteger(radius_meters) || radius_meters < 20 || radius_meters > 120) {
+        throw new Error('Invalid radius. Must be between 20 and 120 meters');
       }
 
       // Validate duration
@@ -116,7 +287,7 @@ class AttendanceRequestService {
       // Invalidate previous active requests for this session
       await AttendanceRequest.invalidateSessionRequests(session_id, faculty_id);
 
-      // Calculate expiry time
+      // Calculate request expiry time (session-wide scan window)
       const now = new Date();
       const expiryTime = new Date(now.getTime() + duration_minutes * 60000);
 
@@ -133,13 +304,22 @@ class AttendanceRequestService {
 
       const result = await AttendanceRequest.create(requestData);
 
+      const tokenBundle = this.issueDynamicQrToken(result.request_id);
+
       return {
         success: true,
         request_id: result.request_id,
         expires_at: expiryTime,
         duration_minutes,
         radius_meters,
-        attendance_value
+        attendance_value,
+        ...tokenBundle,
+        security: {
+          location_sample_count: LOCATION_SAMPLE_COUNT,
+          max_accuracy_meters: MAX_ACCURACY_METERS,
+          max_distance_meters: MAX_DISTANCE_METERS,
+          second_check_delay_seconds: SECOND_CHECK_DELAY_SECONDS
+        }
       };
     } catch (error) {
       throw error;
@@ -147,76 +327,190 @@ class AttendanceRequestService {
   }
 
   /**
+   * Refresh dynamic QR token for an active request.
+   */
+  static async refreshDynamicQrToken(request_id, faculty_id) {
+    const request = await AttendanceRequest.getByRequestIdAndFaculty(request_id, faculty_id);
+    if (!request) {
+      throw new ValidationError('Active QR request not found', 404, 'QR_REQUEST_NOT_FOUND');
+    }
+
+    return {
+      success: true,
+      request_id,
+      expires_at: request.expires_at,
+      ...this.issueDynamicQrToken(request_id)
+    };
+  }
+
+  /**
    * Validate QR request
    */
-  static async validateQRRequest(request_id, student_latitude, student_longitude) {
-    try {
-      const request = await AttendanceRequest.getByRequestId(request_id);
-
-      if (!request) {
-        return {
-          valid: false,
-          reason: 'QR code not found or expired'
-        };
-      }
-
-      // Check if expired
-      const now = new Date();
-      if (new Date(request.expires_at) <= now) {
-        await AttendanceRequest.updateStatus(request_id, 'expired');
-        return {
-          valid: false,
-          reason: 'QR code has expired'
-        };
-      }
-
-      // Skip location check if:
-      // 1. Student location unavailable (sent as 0,0)
-      // 2. SKIP_LOCATION_CHECK env var is set (dev/testing)
-      const locationUnavailable =
-        (student_latitude === 0 && student_longitude === 0) ||
-        student_latitude === null || student_longitude === null;
-      const skipLocationCheck =
-        process.env.SKIP_LOCATION_CHECK === 'true' || locationUnavailable;
-
-      if (!skipLocationCheck) {
-        const distance = this.calculateDistance(
-          request.latitude,
-          request.longitude,
-          student_latitude,
-          student_longitude
-        );
-
-        if (distance > request.radius_meters) {
-          return {
-            valid: false,
-            reason: `You are ${distance.toFixed(1)}m away from the classroom (allowed: ${request.radius_meters}m)`
-          };
-        }
-
-        return {
-          valid: true,
-          request_id,
-          attendance_value: request.attendance_value,
-          session_id: request.session_id,
-          faculty_id: request.faculty_id,
-          distance: distance.toFixed(1)
-        };
-      }
-
-      // Location unavailable — skip distance check, still allow attendance
-      return {
-        valid: true,
-        request_id,
-        attendance_value: request.attendance_value,
-        session_id: request.session_id,
-        faculty_id: request.faculty_id,
-        distance: null,
-        locationNote: locationUnavailable ? 'Location unavailable, distance check skipped' : 'Distance check disabled'
-      };
-    } catch (error) {
-      throw error;
+  static async validateQRRequest({ qr_token, location_samples, student_id, device_id, scan_timestamp }) {
+    const decoded = this.verifySignedPayload(qr_token);
+    if (decoded.type !== 'qr' || !decoded.request_id || !decoded.ts) {
+      throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
     }
+
+    const ageMs = Date.now() - Number(decoded.ts);
+    if (ageMs < 0 || ageMs > MAX_QR_SCAN_WINDOW_SECONDS * 1000) {
+      return {
+        valid: false,
+        reason: 'QR code has expired. Ask faculty to refresh.',
+        reason_code: 'QR_EXPIRED'
+      };
+    }
+
+    const request = await AttendanceRequest.getByRequestId(decoded.request_id);
+    if (!request) {
+      return {
+        valid: false,
+        reason: 'QR code not found or expired',
+        reason_code: 'QR_REQUEST_NOT_FOUND'
+      };
+    }
+
+    const now = new Date();
+    if (new Date(request.expires_at) <= now) {
+      await AttendanceRequest.updateStatus(decoded.request_id, 'expired');
+      return {
+        valid: false,
+        reason: 'QR code has expired',
+        reason_code: 'QR_REQUEST_EXPIRED'
+      };
+    }
+
+    await this.ensureSessionTimeWindow(request.session_id);
+
+    const [existing] = await pool.execute(
+      `SELECT id FROM attendance
+       WHERE student_id = ? AND session_id = ? AND DATE(marked_at) = CURDATE()
+       LIMIT 1`,
+      [student_id, request.session_id]
+    );
+
+    if (existing.length > 0) {
+      return {
+        valid: false,
+        reason: 'Attendance already marked for this session',
+        reason_code: 'ALREADY_MARKED'
+      };
+    }
+
+    const assessment = this.assessLocation(request, location_samples);
+
+    if (!assessment.passes_accuracy) {
+      return {
+        valid: false,
+        reason: 'Fetching accurate location, please wait...',
+        reason_code: 'LOW_ACCURACY',
+        retryable: true,
+        metrics: assessment
+      };
+    }
+
+    if (!assessment.passes_distance) {
+      return {
+        valid: false,
+        reason: `Average distance ${assessment.average_distance_meters}m is outside allowed range`,
+        reason_code: 'OUTSIDE_GEOFENCE',
+        metrics: assessment
+      };
+    }
+
+    const challengePayload = {
+      v: 1,
+      type: 'precheck',
+      request_id: decoded.request_id,
+      session_id: request.session_id,
+      student_id,
+      device_id: device_id || null,
+      issued_at: Date.now(),
+      scan_timestamp: scan_timestamp || Date.now(),
+      first_check: {
+        average_distance_meters: assessment.average_distance_meters,
+        average_accuracy_meters: assessment.average_accuracy_meters
+      }
+    };
+
+    return {
+      valid: true,
+      request_id: decoded.request_id,
+      attendance_value: request.attendance_value,
+      session_id: request.session_id,
+      faculty_id: request.faculty_id,
+      precheck_token: this.signPayload(challengePayload),
+      second_check_after_seconds: SECOND_CHECK_DELAY_SECONDS,
+      metrics: assessment
+    };
+  }
+
+  /**
+   * Final verification before attendance mark.
+   */
+  static async validateSecondCheck({
+    precheck_token,
+    student_id,
+    session_id,
+    device_id,
+    location_samples,
+    timestamp
+  }) {
+    const decoded = this.verifySignedPayload(precheck_token);
+
+    if (decoded.type !== 'precheck') {
+      throw new ValidationError('Invalid verification challenge', 400, 'INVALID_PRECHECK_TOKEN');
+    }
+
+    if (Number(decoded.student_id) !== Number(student_id)) {
+      throw new ValidationError('Challenge does not belong to this user', 403, 'PRECHECK_USER_MISMATCH');
+    }
+
+    if (Number(decoded.session_id) !== Number(session_id)) {
+      throw new ValidationError('Challenge does not match this session', 400, 'PRECHECK_SESSION_MISMATCH');
+    }
+
+    if (decoded.device_id && device_id && decoded.device_id !== device_id) {
+      throw new ValidationError('Device mismatch detected', 403, 'DEVICE_MISMATCH');
+    }
+
+    const ttlMs = PRECHECK_TTL_SECONDS * 1000;
+    if (!decoded.issued_at || Date.now() - Number(decoded.issued_at) > ttlMs) {
+      throw new ValidationError('Verification window expired. Scan again.', 400, 'PRECHECK_EXPIRED');
+    }
+
+    const minDelayMs = SECOND_CHECK_DELAY_SECONDS * 1000;
+    const referenceTs = Number(decoded.scan_timestamp || decoded.issued_at);
+    const currentTs = Number(timestamp || Date.now());
+    if (currentTs - referenceTs < minDelayMs) {
+      throw new ValidationError('Second location check attempted too early', 400, 'SECOND_CHECK_TOO_EARLY');
+    }
+
+    const request = await AttendanceRequest.getByRequestId(decoded.request_id);
+    if (!request) {
+      throw new ValidationError('QR request is no longer active', 400, 'QR_REQUEST_INACTIVE');
+    }
+
+    await this.ensureSessionTimeWindow(request.session_id);
+
+    const secondAssessment = this.assessLocation(request, location_samples);
+    if (!secondAssessment.passes_accuracy) {
+      throw new ValidationError('Second location check failed: low accuracy', 400, 'SECOND_CHECK_LOW_ACCURACY');
+    }
+
+    if (!secondAssessment.passes_distance) {
+      throw new ValidationError('Second location check failed: outside geofence', 400, 'SECOND_CHECK_DISTANCE_FAIL');
+    }
+
+    return {
+      passed: true,
+      request_id: decoded.request_id,
+      first_check: decoded.first_check,
+      second_check: {
+        average_distance_meters: secondAssessment.average_distance_meters,
+        average_accuracy_meters: secondAssessment.average_accuracy_meters
+      }
+    };
   }
 
   /**
@@ -292,7 +586,7 @@ class AttendanceRequestService {
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c * 1000; // Convert to meters
-    return Math.round(distance);
+    return Number(distance.toFixed(2));
   }
 }
 

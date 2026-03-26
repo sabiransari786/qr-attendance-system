@@ -59,6 +59,20 @@ class AttendanceRequestModel {
   }
 
   /**
+   * Get active request by request_id and faculty ownership
+   */
+  static async getByRequestIdAndFaculty(request_id, faculty_id) {
+    const query = `
+      SELECT * FROM attendance_request
+      WHERE request_id = ? AND faculty_id = ? AND status = 'active' AND expires_at > NOW()
+      LIMIT 1
+    `;
+
+    const [results] = await pool.execute(query, [request_id, faculty_id]);
+    return results[0] || null;
+  }
+
+  /**
    * Get requests by faculty_id
    */
   static async getByFacultyId(faculty_id, limit = 10) {

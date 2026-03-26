@@ -42,6 +42,7 @@ function FacultyQRGeneration() {
   const [currentLocation, setCurrentLocation] = useState(null);
 
   const [qrData, setQrData] = useState(null);
+  const [requestId, setRequestId] = useState(null);
   const [generateError, setGenerateError] = useState(null);
   const [expiryTime, setExpiryTime] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -52,6 +53,7 @@ function FacultyQRGeneration() {
   const [showConfig, setShowConfig] = useState(true);
   const [showQRDisplay, setShowQRDisplay] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
+  const refreshIntervalRef = useRef(null);
 
   /* ── auth guard ────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -145,7 +147,7 @@ function FacultyQRGeneration() {
     const radiusVal = useCustomRadius ? parseInt(customRadius) : radius;
 
     if (!Number.isInteger(durationVal) || durationVal < 1) { setGenerateError('Please enter a valid duration'); setGeneratingQR(false); return; }
-    if (!Number.isInteger(radiusVal) || radiusVal < 1) { setGenerateError('Please enter a valid radius'); setGeneratingQR(false); return; }
+    if (!Number.isInteger(radiusVal) || radiusVal < 20 || radiusVal > 120) { setGenerateError('Please enter a radius between 20m and 120m'); setGeneratingQR(false); return; }
 
     try {
       const res = await fetch(`${API_BASE_URL}/qr-request/generate`, {
@@ -164,7 +166,8 @@ function FacultyQRGeneration() {
       try { data = await res.json(); } catch { throw new Error('Invalid response from server'); }
       if (!res.ok) throw new Error(data.message || 'Failed to generate QR');
 
-      setQrData(data.request_id);
+      setRequestId(data.request_id);
+      setQrData(data.qr_token || data.request_id);
       setExpiryTime(data.expires_at);
       setShowConfig(false);
       setShowQRDisplay(true);
@@ -196,10 +199,56 @@ function FacultyQRGeneration() {
 
   useEffect(() => () => { if (pollingInterval.current) clearInterval(pollingInterval.current); }, []);
 
+  const refreshDynamicQr = async (activeRequestId) => {
+    if (!activeRequestId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/qr-request/${activeRequestId}/refresh`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to refresh QR token');
+      }
+
+      if (data.qr_token) {
+        setQrData(data.qr_token);
+      }
+      if (data.expires_at) {
+        setExpiryTime(data.expires_at);
+      }
+    } catch (error) {
+      setGenerateError(error.message || 'Failed to refresh QR token');
+    }
+  };
+
+  useEffect(() => {
+    if (!showQRDisplay || !requestId) {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      return;
+    }
+
+    refreshIntervalRef.current = setInterval(() => {
+      refreshDynamicQr(requestId);
+    }, 12000);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
+  }, [showQRDisplay, requestId]);
+
   /* ── regenerate ────────────────────────────────────────────────────── */
   const handleRegenerateQR = () => {
     stopAttendancePolling();
     setQrData(null);
+    setRequestId(null);
     setShowConfig(true);
     setShowQRDisplay(false);
     setTimeRemaining(null);
@@ -418,7 +467,7 @@ function FacultyQRGeneration() {
               </div>
               <div style={{ padding: '1.25rem' }}>
                 <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: useCustomRadius ? '0.85rem' : 0 }}>
-                  {[10, 20, 50].map((r) => (
+                  {[20, 50, 80, 120].map((r) => (
                     <button
                       key={r}
                       type="button"
@@ -441,10 +490,11 @@ function FacultyQRGeneration() {
                 {useCustomRadius && (
                   <input
                     type="number"
-                    min="1"
+                    min="20"
+                    max="120"
                     value={customRadius}
                     onChange={(e) => setCustomRadius(e.target.value)}
-                    placeholder="Enter meters"
+                    placeholder="20-120 meters"
                     className="ap__search"
                     style={{ maxWidth: 180 }}
                   />

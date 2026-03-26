@@ -84,7 +84,15 @@ const markAttendance = async (req, res, next) => {
         // STEP 1: Request body se required data extract karo
         // ---------------------------------------------------------------------
         // Destructuring use kar rahe hain - clean aur readable hai
-        const { sessionId, qrData, timestamp } = req.body;
+        const {
+            sessionId,
+            qrData,
+            timestamp,
+            qrPrecheckToken,
+            secondLocationSamples,
+            deviceId,
+            selfieCaptured
+        } = req.body;
 
         // ---------------------------------------------------------------------
         // STEP 2: Logged-in student ki info nikalo
@@ -136,7 +144,13 @@ const markAttendance = async (req, res, next) => {
             studentId,
             sessionId,
             qrData,
-            timestamp
+            timestamp,
+            {
+                qrPrecheckToken,
+                secondLocationSamples,
+                deviceId,
+                selfieCaptured
+            }
         );
 
         // ---------------------------------------------------------------------

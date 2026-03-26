@@ -83,22 +83,48 @@ const generateQRRequest = async (req, res, next) => {
  */
 const validateQRRequest = async (req, res, next) => {
   try {
-    const { request_id, student_latitude, student_longitude } = req.body;
+    const { qr_token, location_samples, device_id, scan_timestamp } = req.body;
 
-    if (!request_id || student_latitude === undefined || student_longitude === undefined) {
+    if (!qr_token || !Array.isArray(location_samples)) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: request_id, student_latitude, student_longitude'
+        message: 'Missing required fields: qr_token, location_samples'
       });
     }
 
-    const result = await AttendanceRequestService.validateQRRequest(
-      request_id,
-      parseFloat(student_latitude),
-      parseFloat(student_longitude)
-    );
+    const result = await AttendanceRequestService.validateQRRequest({
+      qr_token,
+      location_samples,
+      student_id: req.user.id,
+      device_id,
+      scan_timestamp
+    });
 
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Refresh dynamic QR token for active request
+ *
+ * POST /api/qr-request/:request_id/refresh
+ */
+const refreshQRToken = async (req, res, next) => {
+  try {
+    const { request_id } = req.params;
+    const faculty_id = req.user.id;
+
+    if (!request_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'request_id is required'
+      });
+    }
+
+    const result = await AttendanceRequestService.refreshDynamicQrToken(request_id, faculty_id);
+    return res.json(result);
   } catch (error) {
     next(error);
   }
@@ -192,6 +218,7 @@ const recordAcceptance = async (req, res, next) => {
 module.exports = {
   generateQRRequest,
   validateQRRequest,
+  refreshQRToken,
   getAttendanceCount,
   getFacultyRequests,
   recordAcceptance

@@ -21,6 +21,8 @@ function ScanQREnhanced() {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const animationRef = useRef(null);
+  const lastDecodeTsRef = useRef(0);
+  const scanAttemptsRef = useRef(0);
 
   const [qrCode, setQrCode] = useState('');
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -32,6 +34,14 @@ function ScanQREnhanced() {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [locationVerified, setLocationVerified] = useState(false);
   const [deviceVerified, setDeviceVerified] = useState(false);
+  const [precheckToken, setPrecheckToken] = useState('');
+  const [secondCheckDelaySeconds, setSecondCheckDelaySeconds] = useState(12);
+  const [boundDeviceId, setBoundDeviceId] = useState('');
+  const [firstCheckAt, setFirstCheckAt] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const SCAN_INTERVAL_MS = 120;
+  const SCAN_FRAME_SIZE = 420;
 
   useEffect(() => () => stopCamera(), []);
 
@@ -52,20 +62,71 @@ function ScanQREnhanced() {
   };
 
   /* ── Location ──────────────────────────────────────────────── */
-  const verifyLocation = () => new Promise((resolve) => {
-    if (!navigator.geolocation) { resolve({ verified: false, latitude: 0, longitude: 0 }); return; }
+  const getSingleLocationReading = () => new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported on this device'));
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setLocationVerified(true); resolve({ verified: true, latitude: pos.coords.latitude, longitude: pos.coords.longitude }); },
-      () => { resolve({ verified: false, latitude: 0, longitude: 0 }); },
-      { timeout: 8000 }
+      (pos) => {
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          timestamp: Date.now(),
+        });
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          reject(new Error('Location permission denied. Please allow location access.'));
+          return;
+        }
+        reject(new Error('Unable to fetch location. Please try again.'));
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 12000,
+      }
     );
   });
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const collectAccurateLocationSamples = async (targetCount = 3) => {
+    const samples = [];
+    let attempts = 0;
+
+    while (samples.length < targetCount && attempts < 15) {
+      attempts += 1;
+      const reading = await getSingleLocationReading();
+
+      if (reading.accuracy > 30) {
+        setMessage({ type: 'info', text: 'Fetching accurate location, please wait…' });
+        await wait(1200);
+        continue;
+      }
+
+      samples.push(reading);
+      if (samples.length < targetCount) {
+        await wait(800);
+      }
+    }
+
+    if (samples.length < targetCount) {
+      throw new Error('Could not get accurate location (<= 30m). Please stay in open area and retry.');
+    }
+
+    return samples;
+  };
 
   /* ── Device ────────────────────────────────────────────────── */
   const verifyDevice = () => {
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) { deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('deviceId', deviceId); }
     setDeviceVerified(true);
+    setBoundDeviceId(deviceId);
     return { verified: true, deviceId };
   };
 
@@ -74,15 +135,23 @@ function ScanQREnhanced() {
     const c = code || qrCode;
     if (!c.trim()) { setMessage({ type: 'error', text: 'Please enter or scan a QR code' }); return; }
     setLoading(true);
-    setMessage({ type: 'info', text: 'Getting your location…' });
+    setPrecheckToken('');
+    setMessage({ type: 'info', text: 'Collecting accurate location samples…' });
     try {
       const token = sessionStorage.getItem('authToken');
-      const loc = await verifyLocation();
+      const samples = await collectAccurateLocationSamples(3);
+      setLocationVerified(true);
+      const device = verifyDevice();
       setMessage({ type: 'info', text: 'Validating QR code…' });
       const valRes = await fetch(`${API_BASE_URL}/qr-request/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ request_id: c, student_latitude: loc.latitude || 0, student_longitude: loc.longitude || 0 }),
+        body: JSON.stringify({
+          qr_token: c,
+          location_samples: samples,
+          device_id: device.deviceId,
+          scan_timestamp: Date.now(),
+        }),
       });
       const valData = await valRes.json();
       if (!valData.valid) { setMessage({ type: 'error', text: valData.reason || 'Invalid QR code' }); setLoading(false); return; }
@@ -92,11 +161,14 @@ function ScanQREnhanced() {
         const sessData = await sessRes.json();
         const session = sessData.data;
         if (session.status !== 'active') { setMessage({ type: 'error', text: 'Session is not active' }); setLoading(false); return; }
-        setSessionInfo({ ...session, requestId: c });
+        setSessionInfo({ ...session, requestId: valData.request_id });
+        setPrecheckToken(valData.precheck_token || '');
+        setFirstCheckAt(Date.now());
+        setSecondCheckDelaySeconds(valData.second_check_after_seconds || 12);
         setLocationVerified(true);
         setDeviceVerified(true);
-        const distMsg = valData.distance ? ` (${valData.distance}m from class)` : '';
-        setMessage({ type: 'success', text: `QR verified${distMsg}. Click Accept to mark attendance.` });
+        const distMsg = valData.metrics?.average_distance_meters ? ` Avg distance: ${valData.metrics.average_distance_meters}m.` : '';
+        setMessage({ type: 'success', text: `QR verified.${distMsg} Wait ${valData.second_check_after_seconds || 12}s, then click Accept.` });
       } else {
         const err = await sessRes.json();
         setMessage({ type: 'error', text: err.message || 'Could not fetch session info' });
@@ -108,20 +180,47 @@ function ScanQREnhanced() {
 
   /* ── Submit ────────────────────────────────────────────────── */
   const submitAttendance = async () => {
-    if (!sessionInfo) return;
+    if (!sessionInfo || !precheckToken) return;
     setLoading(true);
-    setMessage({ type: 'info', text: 'Marking attendance…' });
+    setMessage({ type: 'info', text: 'Running second location verification…' });
     try {
       const token = sessionStorage.getItem('authToken');
-      if (sessionInfo.requestId) { try { await fetch(`${API_BASE_URL}/qr-request/${sessionInfo.requestId}/accept`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); } catch {} }
+
+      if (firstCheckAt) {
+        const elapsed = Date.now() - firstCheckAt;
+        const minDelay = secondCheckDelaySeconds * 1000;
+        if (elapsed < minDelay) {
+          await wait(minDelay - elapsed);
+        }
+      }
+
+      const secondSamples = await collectAccurateLocationSamples(3);
+
       const res = await fetch(`${API_BASE_URL}/attendance/mark`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ sessionId: sessionInfo.id, timestamp: Date.now() }),
+        body: JSON.stringify({
+          sessionId: sessionInfo.id,
+          timestamp: Date.now(),
+          qrPrecheckToken: precheckToken,
+          secondLocationSamples: secondSamples,
+          deviceId: boundDeviceId || localStorage.getItem('deviceId') || '',
+          selfieCaptured: false,
+        }),
       });
       if (res.ok) {
+        if (sessionInfo.requestId) {
+          try {
+            await fetch(`${API_BASE_URL}/qr-request/${sessionInfo.requestId}/accept`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } catch {
+            // no-op: live counter is best-effort
+          }
+        }
         setMessage({ type: 'success', text: 'Attendance marked successfully!' });
-        setQrCode(''); setSessionInfo(null);
+        setQrCode(''); setSessionInfo(null); setPrecheckToken('');
         setTimeout(() => navigate('/student-dashboard'), 2000);
       } else {
         const err = await res.json();
@@ -138,31 +237,112 @@ function ScanQREnhanced() {
   const activateCamera = async () => {
     try {
       setCameraActive(true);
+      setIsScanning(true);
       setMessage({ type: 'info', text: 'Starting camera…' });
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 960, max: 1280 },
+          height: { ideal: 540, max: 720 },
+          frameRate: { ideal: 30, max: 30 },
+        },
+        audio: false,
+      });
       streamRef.current = stream;
-      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); scanQRFromCamera(); }
+
+      const [track] = stream.getVideoTracks();
+      if (track && track.getCapabilities) {
+        const capabilities = track.getCapabilities();
+        const advanced = [];
+        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+          advanced.push({ focusMode: 'continuous' });
+        }
+        if (capabilities.exposureMode && capabilities.exposureMode.includes('continuous')) {
+          advanced.push({ exposureMode: 'continuous' });
+        }
+        if (advanced.length > 0) {
+          try {
+            await track.applyConstraints({ advanced });
+          } catch {
+            // ignore capability mismatches on older browsers
+          }
+        }
+      }
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        await videoRef.current.play();
+        scanQRFromCamera();
+      }
       setMessage({ type: 'success', text: 'Camera active. Point at QR code…' });
-    } catch { setMessage({ type: 'error', text: 'Failed to access camera' }); setCameraActive(false); }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to access camera' });
+      setCameraActive(false);
+      setIsScanning(false);
+    }
   };
 
   const scanQRFromCamera = () => {
     if (!videoRef.current || !canvasRef.current) return;
-    const canvas = canvasRef.current; const video = videoRef.current; const ctx = canvas.getContext('2d');
-    const scan = () => {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(data.data, data.width, data.height);
-        if (code) { setScannedCode(code.data); setQrCode(code.data); stopCamera(); verifyQrCode(code.data); return; }
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    const decodeFrame = () => {
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+        return null;
       }
+
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (!vw || !vh) return null;
+
+      // Center-crop a square region for faster and more stable decode on mobile cameras.
+      const side = Math.floor(Math.min(vw, vh) * 0.72);
+      const sx = Math.floor((vw - side) / 2);
+      const sy = Math.floor((vh - side) / 2);
+
+      canvas.width = SCAN_FRAME_SIZE;
+      canvas.height = SCAN_FRAME_SIZE;
+      ctx.drawImage(video, sx, sy, side, side, 0, 0, SCAN_FRAME_SIZE, SCAN_FRAME_SIZE);
+
+      const imageData = ctx.getImageData(0, 0, SCAN_FRAME_SIZE, SCAN_FRAME_SIZE);
+
+      const tryBoth = scanAttemptsRef.current % 7 === 0;
+      return jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: tryBoth ? 'attemptBoth' : 'dontInvert',
+      });
+    };
+
+    const scan = () => {
+      if (!isScanning) return;
+
+      const now = Date.now();
+      if (now - lastDecodeTsRef.current >= SCAN_INTERVAL_MS) {
+        lastDecodeTsRef.current = now;
+        scanAttemptsRef.current += 1;
+
+        const code = decodeFrame();
+        if (code) {
+          setScannedCode(code.data);
+          setQrCode(code.data);
+          setMessage({ type: 'info', text: 'QR detected. Verifying…' });
+          stopCamera();
+          verifyQrCode(code.data);
+          return;
+        }
+      }
+
       animationRef.current = requestAnimationFrame(scan);
     };
+
     scan();
   };
 
   const stopCamera = () => {
+    setIsScanning(false);
     if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -208,7 +388,16 @@ function ScanQREnhanced() {
                 </div>
               ) : (
                 <>
-                  <video ref={videoRef} style={{ width: '100%', borderRadius: 10, background: '#000' }} playsInline />
+                  <div style={{ position: 'relative' }}>
+                    <video ref={videoRef} style={{ width: '100%', borderRadius: 10, background: '#000' }} playsInline muted />
+                    <div style={{
+                      position: 'absolute',
+                      inset: '12% 12%',
+                      border: '2px solid rgba(16,185,129,0.9)',
+                      borderRadius: 14,
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.2)'
+                    }} />
+                  </div>
                   <button className="ap__btn ap__btn--outline" onClick={stopCamera} style={{ width: '100%', marginTop: '0.75rem' }}>Stop Camera</button>
                 </>
               )}

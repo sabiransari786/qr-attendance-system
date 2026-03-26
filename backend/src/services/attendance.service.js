@@ -49,6 +49,7 @@
  */
 
 const { pool, ATTENDANCE_STATUS, SESSION_STATUS, QR_EXPIRY_TIME } = require('../config');
+const AttendanceRequestService = require('./attendance-request.service');
 
 // =============================================================================
 // CUSTOM ERROR CLASSES
@@ -297,7 +298,7 @@ const determineAttendanceStatus = (sessionStartTime, scanTime, lateThresholdMinu
  * @param {number} timestamp - Client scan timestamp (milliseconds)
  * @returns {Promise<Object>} Created attendance record
  */
-const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
+const markAttendance = async (studentId, sessionId, qrData, timestamp, verificationContext = {}) => {
     // =========================================================================
     // HFR16: Attendance Submission Transaction Control
     // =========================================================================
@@ -351,6 +352,38 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         if (session.status !== SESSION_STATUS.ACTIVE) {
             throw new SessionNotActiveError(`Session status is '${session.status}'. Only active sessions accept attendance.`);
         }
+
+        // Session time window validation
+        const nowTs = Number(timestamp || Date.now());
+        const now = new Date(nowTs);
+        const sessionStart = new Date(session.start_time);
+        const sessionEnd = session.end_time ? new Date(session.end_time) : null;
+        if (now < sessionStart) {
+            const err = new Error('Attendance is not open yet for this session.');
+            err.statusCode = 400;
+            throw err;
+        }
+        if (sessionEnd && now > sessionEnd) {
+            const err = new Error('Session time is over. Attendance is closed.');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Mandatory second-level geo verification challenge
+        if (!verificationContext.qrPrecheckToken || !Array.isArray(verificationContext.secondLocationSamples)) {
+            const err = new Error('Second-level verification is required before marking attendance.');
+            err.statusCode = 400;
+            throw err;
+        }
+
+        await AttendanceRequestService.validateSecondCheck({
+            precheck_token: verificationContext.qrPrecheckToken,
+            student_id: studentId,
+            session_id: sessionId,
+            device_id: verificationContext.deviceId || null,
+            location_samples: verificationContext.secondLocationSamples,
+            timestamp: nowTs
+        });
 
         // ---------------------------------------------------------------------
         // STEP 3: Student Validation
@@ -476,7 +509,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         // ---------------------------------------------------------------------
         const attendanceStatus = determineAttendanceStatus(
             session.start_time,
-            timestamp,
+            nowTs,
             15
         );
 
@@ -486,7 +519,7 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp) => {
         const [result] = await connection.query(
             `INSERT INTO attendance (student_id, session_id, status, marked_at, created_at)
              VALUES (?, ?, ?, FROM_UNIXTIME(?/1000), NOW())`,
-            [studentId, sessionId, attendanceStatus, timestamp]
+            [studentId, sessionId, attendanceStatus, nowTs]
         );
 
         const attendanceId = result.insertId;
