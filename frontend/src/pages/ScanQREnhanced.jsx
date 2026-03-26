@@ -1,5 +1,5 @@
 /**
- * Scan QR Enhanced — ap__* unified design
+ * Scan QR Enhanced - ap__* unified design
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -23,6 +23,7 @@ function ScanQREnhanced() {
   const animationRef = useRef(null);
   const lastDecodeTsRef = useRef(0);
   const scanAttemptsRef = useRef(0);
+  const scanningActiveRef = useRef(false);
 
   const [qrCode, setQrCode] = useState('');
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -30,7 +31,7 @@ function ScanQREnhanced() {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [cameraActive, setCameraActive] = useState(false);
   const [scannedCode, setScannedCode] = useState(null);
-  const [facingMode, setFacingMode] = useState('environment');
+  const [facingMode] = useState('environment');
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [locationVerified, setLocationVerified] = useState(false);
   const [deviceVerified, setDeviceVerified] = useState(false);
@@ -38,7 +39,6 @@ function ScanQREnhanced() {
   const [secondCheckDelaySeconds, setSecondCheckDelaySeconds] = useState(12);
   const [boundDeviceId, setBoundDeviceId] = useState('');
   const [firstCheckAt, setFirstCheckAt] = useState(null);
-  const [isScanning, setIsScanning] = useState(false);
 
   const SCAN_INTERVAL_MS = 80;
   const SCAN_FRAME_SIZE = 360;
@@ -50,7 +50,10 @@ function ScanQREnhanced() {
       const interval = setInterval(() => {
         const diff = Math.max(0, Math.floor((new Date(sessionInfo.qr_expiry_time) - new Date()) / 1000));
         setTimeRemaining(diff);
-        if (diff <= 0) { setMessage({ type: 'error', text: 'QR Code has expired' }); setSessionInfo(null); }
+        if (diff <= 0) {
+          setMessage({ type: 'error', text: 'QR Code has expired' });
+          setSessionInfo(null);
+        }
       }, 1000);
       return () => clearInterval(interval);
     }
@@ -61,7 +64,8 @@ function ScanQREnhanced() {
     return `${Math.floor(sec / 60).toString().padStart(2, '0')}:${(sec % 60).toString().padStart(2, '0')}`;
   };
 
-  /* ── Location ──────────────────────────────────────────────── */
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const getSingleLocationReading = () => new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported on this device'));
@@ -92,8 +96,6 @@ function ScanQREnhanced() {
     );
   });
 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
   const collectAccurateLocationSamples = async (targetCount = 3) => {
     const samples = [];
     let attempts = 0;
@@ -103,7 +105,7 @@ function ScanQREnhanced() {
       const reading = await getSingleLocationReading();
 
       if (reading.accuracy > 30) {
-        setMessage({ type: 'info', text: 'Fetching accurate location, please wait…' });
+        setMessage({ type: 'info', text: 'Fetching accurate location, please wait...' });
         await wait(1200);
         continue;
       }
@@ -121,28 +123,80 @@ function ScanQREnhanced() {
     return samples;
   };
 
-  /* ── Device ────────────────────────────────────────────────── */
   const verifyDevice = () => {
     let deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) { deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); localStorage.setItem('deviceId', deviceId); }
+    if (!deviceId) {
+      deviceId = `device_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+      localStorage.setItem('deviceId', deviceId);
+    }
     setDeviceVerified(true);
     setBoundDeviceId(deviceId);
     return { verified: true, deviceId };
   };
 
-  /* ── Verify QR ─────────────────────────────────────────────── */
+  const getCompatibleCameraStream = async () => {
+    const candidates = [
+      {
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 960, max: 1280 },
+          height: { ideal: 540, max: 720 },
+          frameRate: { ideal: 30, max: 30 },
+        },
+        audio: false,
+      },
+      {
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 640, max: 960 },
+          height: { ideal: 480, max: 720 },
+        },
+        audio: false,
+      },
+      {
+        video: {
+          facingMode: facingMode,
+        },
+        audio: false,
+      },
+      {
+        video: true,
+        audio: false,
+      },
+    ];
+
+    let lastError = null;
+    for (const constraints of candidates) {
+      try {
+        // Try progressively simpler constraints for maximum device compatibility.
+        // eslint-disable-next-line no-await-in-loop
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError || new Error('Unable to access camera');
+  };
+
   const verifyQrCode = async (code = null) => {
     const c = (code || qrCode || '').trim();
-    if (!c.trim()) { setMessage({ type: 'error', text: 'Please enter or scan a QR code' }); return; }
+    if (!c) {
+      setMessage({ type: 'error', text: 'Please enter or scan a QR code' });
+      return;
+    }
+
     setLoading(true);
     setPrecheckToken('');
-    setMessage({ type: 'info', text: 'Collecting accurate location samples…' });
+    setMessage({ type: 'info', text: 'Collecting accurate location samples...' });
+
     try {
       const token = sessionStorage.getItem('authToken');
       const samples = await collectAccurateLocationSamples(3);
       setLocationVerified(true);
       const device = verifyDevice();
-      setMessage({ type: 'info', text: 'Validating QR code…' });
+
+      setMessage({ type: 'info', text: 'Validating QR code...' });
       const valRes = await fetch(`${API_BASE_URL}/qr-request/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -153,36 +207,60 @@ function ScanQREnhanced() {
           scan_timestamp: Date.now(),
         }),
       });
-      const valData = await valRes.json();
-      if (!valData.valid) { setMessage({ type: 'error', text: valData.reason || 'Invalid QR code' }); setLoading(false); return; }
 
-      const sessRes = await fetch(`${API_BASE_URL}/session/${valData.session_id}`, { headers: { Authorization: `Bearer ${token}` } });
-      if (sessRes.ok) {
-        const sessData = await sessRes.json();
-        const session = sessData.data;
-        if (session.status !== 'active') { setMessage({ type: 'error', text: 'Session is not active' }); setLoading(false); return; }
-        setSessionInfo({ ...session, requestId: valData.request_id });
-        setPrecheckToken(valData.precheck_token || '');
-        setFirstCheckAt(Date.now());
-        setSecondCheckDelaySeconds(valData.second_check_after_seconds || 12);
-        setLocationVerified(true);
-        setDeviceVerified(true);
-        const distMsg = valData.metrics?.average_distance_meters ? ` Avg distance: ${valData.metrics.average_distance_meters}m.` : '';
-        setMessage({ type: 'success', text: `QR verified.${distMsg} Wait ${valData.second_check_after_seconds || 12}s, then click Accept.` });
-      } else {
+      const valData = await valRes.json();
+      if (!valData.valid) {
+        setMessage({ type: 'error', text: valData.reason || 'Invalid QR code' });
+        return;
+      }
+
+      const sessRes = await fetch(`${API_BASE_URL}/session/${valData.session_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!sessRes.ok) {
         const err = await sessRes.json();
         setMessage({ type: 'error', text: err.message || 'Could not fetch session info' });
         setSessionInfo(null);
+        return;
       }
-    } catch { setMessage({ type: 'error', text: 'Failed to verify QR code.' }); setSessionInfo(null); }
-    finally { setLoading(false); }
+
+      const sessData = await sessRes.json();
+      const session = sessData.data;
+      if (session.status !== 'active') {
+        setMessage({ type: 'error', text: 'Session is not active' });
+        return;
+      }
+
+      setSessionInfo({ ...session, requestId: valData.request_id });
+      setPrecheckToken(valData.precheck_token || '');
+      setFirstCheckAt(Date.now());
+      setSecondCheckDelaySeconds(valData.second_check_after_seconds || 12);
+      setLocationVerified(true);
+      setDeviceVerified(true);
+
+      const distMsg = valData.metrics?.average_distance_meters
+        ? ` Avg distance: ${valData.metrics.average_distance_meters}m.`
+        : '';
+
+      setMessage({
+        type: 'success',
+        text: `QR verified.${distMsg} Wait ${valData.second_check_after_seconds || 12}s, then click Accept.`
+      });
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to verify QR code.' });
+      setSessionInfo(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* ── Submit ────────────────────────────────────────────────── */
   const submitAttendance = async () => {
     if (!sessionInfo || !precheckToken) return;
+
     setLoading(true);
-    setMessage({ type: 'info', text: 'Running second location verification…' });
+    setMessage({ type: 'info', text: 'Running second location verification...' });
+
     try {
       const token = sessionStorage.getItem('authToken');
 
@@ -208,46 +286,47 @@ function ScanQREnhanced() {
           selfieCaptured: false,
         }),
       });
-      if (res.ok) {
-        if (sessionInfo.requestId) {
-          try {
-            await fetch(`${API_BASE_URL}/qr-request/${sessionInfo.requestId}/accept`, {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}` }
-            });
-          } catch {
-            // no-op: live counter is best-effort
-          }
-        }
-        setMessage({ type: 'success', text: 'Attendance marked successfully!' });
-        setQrCode(''); setSessionInfo(null); setPrecheckToken('');
-        setTimeout(() => navigate('/student-dashboard'), 2000);
-      } else {
+
+      if (!res.ok) {
         const err = await res.json();
         let msg = err.message || 'Failed to mark attendance';
         if (msg.includes('duplicate') || msg.includes('already')) msg = 'Already marked for this session';
         if (msg.includes('enrolled') || msg.includes('course')) msg = 'Not enrolled in this course';
         setMessage({ type: 'error', text: msg });
+        return;
       }
-    } catch { setMessage({ type: 'error', text: 'Failed to submit attendance.' }); }
-    finally { setLoading(false); }
+
+      if (sessionInfo.requestId) {
+        try {
+          await fetch(`${API_BASE_URL}/qr-request/${sessionInfo.requestId}/accept`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch {
+          // no-op: live counter is best-effort
+        }
+      }
+
+      setMessage({ type: 'success', text: 'Attendance marked successfully!' });
+      setQrCode('');
+      setSessionInfo(null);
+      setPrecheckToken('');
+      setTimeout(() => navigate('/student-dashboard'), 2000);
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to submit attendance.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* ── Camera ────────────────────────────────────────────────── */
   const activateCamera = async () => {
     try {
       setCameraActive(true);
-      setIsScanning(true);
-      setMessage({ type: 'info', text: 'Starting camera…' });
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: facingMode },
-          width: { ideal: 960, max: 1280 },
-          height: { ideal: 540, max: 720 },
-          frameRate: { ideal: 30, max: 30 },
-        },
-        audio: false,
-      });
+      scanningActiveRef.current = true;
+      setMessage({ type: 'info', text: 'Starting camera...' });
+
+      const stream = await getCompatibleCameraStream();
+
       streamRef.current = stream;
 
       const [track] = stream.getVideoTracks();
@@ -264,7 +343,7 @@ function ScanQREnhanced() {
           try {
             await track.applyConstraints({ advanced });
           } catch {
-            // ignore capability mismatches on older browsers
+            // Ignore unsupported advanced constraints.
           }
         }
       }
@@ -276,30 +355,29 @@ function ScanQREnhanced() {
         await videoRef.current.play();
         scanQRFromCamera();
       }
-      setMessage({ type: 'success', text: 'Camera active. Point at QR code…' });
+
+      setMessage({ type: 'success', text: 'Camera active. Point at QR code...' });
     } catch {
       setMessage({ type: 'error', text: 'Failed to access camera' });
       setCameraActive(false);
-      setIsScanning(false);
+      scanningActiveRef.current = false;
     }
   };
 
   const scanQRFromCamera = () => {
     if (!videoRef.current || !canvasRef.current) return;
+
     const canvas = canvasRef.current;
     const video = videoRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     const decodeFrame = () => {
-      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-        return null;
-      }
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) return null;
 
       const vw = video.videoWidth;
       const vh = video.videoHeight;
       if (!vw || !vh) return null;
 
-      // Center-crop a square region for faster and more stable decode on mobile cameras.
       const side = Math.floor(Math.min(vw, vh) * 0.9);
       const sx = Math.floor((vw - side) / 2);
       const sy = Math.floor((vh - side) / 2);
@@ -309,13 +387,12 @@ function ScanQREnhanced() {
       ctx.drawImage(video, sx, sy, side, side, 0, 0, SCAN_FRAME_SIZE, SCAN_FRAME_SIZE);
 
       const imageData = ctx.getImageData(0, 0, SCAN_FRAME_SIZE, SCAN_FRAME_SIZE);
-
       const tryBoth = scanAttemptsRef.current % 5 === 0;
+
       let result = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: tryBoth ? 'attemptBoth' : 'dontInvert',
       });
 
-      // Fallback every few attempts: decode full frame to avoid strict-center misses.
       if (!result && scanAttemptsRef.current % 4 === 0) {
         const fw = Math.min(vw, 720);
         const fh = Math.min(vh, 720);
@@ -332,7 +409,7 @@ function ScanQREnhanced() {
     };
 
     const scan = () => {
-      if (!isScanning) return;
+      if (!scanningActiveRef.current) return;
 
       const now = Date.now();
       if (now - lastDecodeTsRef.current >= SCAN_INTERVAL_MS) {
@@ -343,7 +420,7 @@ function ScanQREnhanced() {
         if (code) {
           setScannedCode(code.data);
           setQrCode(code.data);
-          setMessage({ type: 'info', text: 'QR detected. Verifying…' });
+          setMessage({ type: 'info', text: 'QR detected. Verifying...' });
           stopCamera();
           verifyQrCode(code.data);
           return;
@@ -357,14 +434,16 @@ function ScanQREnhanced() {
   };
 
   const stopCamera = () => {
-    setIsScanning(false);
-    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
+    scanningActiveRef.current = false;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraActive(false);
   };
 
-  /* ── Render ────────────────────────────────────────────────── */
   return (
     <div className="ap">
       <div className="ap__objects" aria-hidden="true">
@@ -374,7 +453,6 @@ function ScanQREnhanced() {
       </div>
 
       <div className="ap__inner">
-        {/* Header */}
         <header className="ap__header">
           <div className="ap__header-left">
             <button className="ap__back-btn" onClick={() => navigate('/student-dashboard')}>
@@ -386,9 +464,7 @@ function ScanQREnhanced() {
           </div>
         </header>
 
-        {/* Camera Scan Panel */}
         <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-          {/* Camera */}
           <div className="ap__panel">
             <div className="ap__panel-header">
               <h2 className="ap__panel-title"><CameraIcon size={18} /> Camera Scan</h2>
@@ -421,7 +497,6 @@ function ScanQREnhanced() {
           </div>
         </div>
 
-        {/* Message */}
         {message.text && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{
             marginTop: '1.25rem', padding: '0.85rem 1.2rem', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem',
@@ -436,7 +511,6 @@ function ScanQREnhanced() {
           </motion.div>
         )}
 
-        {/* Session Details */}
         {sessionInfo && (
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '1.25rem' }}>
             <div className="ap__panel">
@@ -445,7 +519,6 @@ function ScanQREnhanced() {
                 <span className="ap__badge ap__badge--active">Verified</span>
               </div>
               <div style={{ padding: '1.25rem' }}>
-                {/* Info grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
                   {[
                     { label: 'Subject', value: sessionInfo.subject },
@@ -460,7 +533,6 @@ function ScanQREnhanced() {
                   ))}
                 </div>
 
-                {/* Timer */}
                 {timeRemaining !== null && (
                   <div style={{ padding: '0.75rem 1rem', borderRadius: 10, background: timeRemaining < 60 ? 'rgba(239,68,68,0.08)' : 'rgba(49,156,181,0.06)', border: `1px solid ${timeRemaining < 60 ? 'rgba(239,68,68,0.2)' : 'rgba(49,156,181,0.15)'}`, textAlign: 'center', marginBottom: '1rem' }}>
                     <span style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>Time Remaining</span>
@@ -468,36 +540,34 @@ function ScanQREnhanced() {
                   </div>
                 )}
 
-                {/* Verification */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
                   <div style={{ padding: '0.75rem', borderRadius: 10, background: locationVerified ? 'rgba(16,185,129,0.06)' : 'rgba(49,156,181,0.04)', border: `1px solid ${locationVerified ? 'rgba(16,185,129,0.2)' : 'rgba(49,156,181,0.1)'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {locationVerified ? <CheckCircle size={20} color="#10b981" /> : <Loader size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />}
-                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Location {locationVerified ? 'Verified' : 'Checking…'}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Location {locationVerified ? 'Verified' : 'Checking...'}</span>
                   </div>
                   <div style={{ padding: '0.75rem', borderRadius: 10, background: deviceVerified ? 'rgba(16,185,129,0.06)' : 'rgba(49,156,181,0.04)', border: `1px solid ${deviceVerified ? 'rgba(16,185,129,0.2)' : 'rgba(49,156,181,0.1)'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
                     {deviceVerified ? <CheckCircle size={20} color="#10b981" /> : <Loader size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />}
-                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Device {deviceVerified ? 'Verified' : 'Checking…'}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Device {deviceVerified ? 'Verified' : 'Checking...'}</span>
                   </div>
                 </div>
 
                 <button className="ap__btn ap__btn--primary" onClick={submitAttendance} disabled={loading || !sessionInfo || timeRemaining === 0} style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', fontWeight: 700, gap: 8 }}>
-                  {loading ? 'Submitting…' : <><Check size={18} /> Accept & Mark Attendance</>}
+                  {loading ? 'Submitting...' : <><Check size={18} /> Accept & Mark Attendance</>}
                 </button>
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Instructions */}
         <div className="ap__panel" style={{ marginTop: '1.25rem' }}>
           <div className="ap__panel-header">
             <h2 className="ap__panel-title"><BookOpenText size={18} /> Instructions</h2>
           </div>
           <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
             {[
-              { icon: <CameraIcon size={14} />, text: 'Choose: Camera, Upload Image, or Manual Entry' },
+              { icon: <CameraIcon size={14} />, text: 'Use Camera Scan only to mark attendance' },
               { icon: <CheckCircle size={14} />, text: 'Ensure you are within the class location for verification' },
-              { icon: <AlertTriangle size={14} />, text: 'QR code expires after set time — scan before expiry' },
+              { icon: <AlertTriangle size={14} />, text: 'QR code expires after set time - scan before expiry' },
               { icon: <XCircle size={14} />, text: 'Only one device can be used per session' },
               { icon: <ClipboardList size={14} />, text: 'Cannot mark attendance twice for the same session' },
               { icon: <Check size={14} />, text: 'After verification, click "Accept" to confirm' },
