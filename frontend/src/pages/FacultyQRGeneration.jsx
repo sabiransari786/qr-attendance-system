@@ -563,7 +563,7 @@ function FacultyQRGeneration() {
               </div>
               <div className="faculty-qr__qr-card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
                 <div className="faculty-qr__qr-frame">
-                  <QRCodeCanvas className="faculty-qr__qr-canvas" value={qrData} size={300} level="M" includeMargin={true} />
+                  <QRCodeCanvas className="faculty-qr__qr-canvas" value={qrData} size={340} level="M" includeMargin={true} />
                 </div>
 
                 {/* Live attendance count */}

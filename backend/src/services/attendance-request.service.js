@@ -56,9 +56,48 @@ class AttendanceRequestService {
     return `${encodedPayload}.${signature}`;
   }
 
+  static signCompactQrParts(request_id, ts, nonce) {
+    const payload = `${request_id}|${ts}|${nonce}`;
+    // Short signature for compact QR while still HMAC-protected.
+    return crypto
+      .createHmac('sha256', this.getSigningSecret())
+      .update(payload)
+      .digest('base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .slice(0, 22);
+  }
+
   static verifySignedPayload(token) {
     if (!token || typeof token !== 'string' || !token.includes('.')) {
       throw new ValidationError('Invalid QR token format', 400, 'INVALID_QR_TOKEN');
+    }
+
+    // Compact QR format: q2.<request_id>.<ts>.<nonce>.<sig>
+    if (token.startsWith('q2.')) {
+      const parts = token.split('.');
+      if (parts.length !== 5) {
+        throw new ValidationError('Invalid compact QR token', 400, 'INVALID_QR_TOKEN');
+      }
+
+      const [, request_id, ts, nonce, sig] = parts;
+      if (!this.isUuidLike(request_id) || !/^\d{10,}$/.test(ts) || !/^[a-f0-9]{4}$/i.test(nonce)) {
+        throw new ValidationError('Invalid compact QR payload', 400, 'INVALID_QR_PAYLOAD');
+      }
+
+      const expectedSig = this.signCompactQrParts(request_id, ts, nonce);
+      if (sig !== expectedSig) {
+        throw new ValidationError('Invalid QR signature', 400, 'INVALID_QR_SIGNATURE');
+      }
+
+      return {
+        v: 2,
+        type: 'qr',
+        request_id,
+        ts: Number(ts),
+        nonce
+      };
     }
 
     const [encodedPayload, signature] = token.split('.');
@@ -88,16 +127,12 @@ class AttendanceRequestService {
 
   static issueDynamicQrToken(request_id) {
     const issuedAt = Date.now();
-    const payload = {
-      v: 1,
-      type: 'qr',
-      request_id,
-      ts: issuedAt,
-      nonce: crypto.randomBytes(8).toString('hex')
-    };
+    const nonce = crypto.randomBytes(2).toString('hex');
+    const signature = this.signCompactQrParts(request_id, issuedAt, nonce);
+    const compactToken = `q2.${request_id}.${issuedAt}.${nonce}.${signature}`;
 
     return {
-      qr_token: this.signPayload(payload),
+      qr_token: compactToken,
       token_issued_at: new Date(issuedAt).toISOString(),
       token_expires_at: new Date(issuedAt + QR_TOKEN_VALIDITY_SECONDS * 1000).toISOString(),
       refresh_after_seconds: QR_REFRESH_INTERVAL_SECONDS,
