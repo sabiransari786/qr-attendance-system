@@ -69,11 +69,31 @@ function FacultySessions() {
     const fetchCourses = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/faculty/my-courses`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (response.ok) { const data = await response.json(); setCourses(data.data || []); }
+        if (response.ok) {
+          const data = await response.json();
+          let list = data.data || [];
+          // If logged-in user is a Computer Engineering faculty, restrict to Diploma subjects
+          if (user?.role === 'faculty' && user?.department && user.department.toLowerCase().includes('computer')) {
+            const canon = code => (code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            const allowed = new Set(DIPLOMA_CODES.map(c => canon(c)));
+            list = list.filter(c => allowed.has(canon(c.code)));
+          }
+          setCourses(list);
+        }
       } catch (err) { console.error('Error fetching courses:', err); }
     };
     if (token) fetchCourses();
   }, [token]);
+
+  // Diploma-in-Computer-Engineering (2019) course codes — used to restrict dropdown for CS teachers
+  const DIPLOMA_CODES = [
+    'DCOS101','DCOM102','DEE103','DME104','DCO105','DEE113','DME116','DME117','DCO115',
+    'DCOM201','DCOP202','DEL203','DCOC204','DCO205','DCOP212','DEL213','DCOC214','DCO215',
+    'DCO301','DCO302','DEE303','DCO304','DEL306','DCO312','DCO314','DCO315','DEL316',
+    'DCOS401','DCO402','DCO403','DCO404','DEL405','DCO412','DCO413','DCO414','DEL415',
+    'DCO501','DCO502','DCO503','DCO504','DCO505','DCO511','DCO512','DCO513','DCO515','DCO520',
+    'DCO601','DCO602','DCO603','DCO604','DCO605','DCO606','DCO608','DCO611','DCO612','DCO620','DCO630'
+  ];
 
   const formatDate = (dateString) => new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
