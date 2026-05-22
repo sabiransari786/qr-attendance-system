@@ -170,3 +170,54 @@ router.post('/set-course-semesters', authMiddleware, requireAdmin, async (req, r
     return res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// POST /api/admin/import-diploma-sessions
+// Create future sessions for Computer Engineering faculty for each Diploma course (idempotent)
+router.post('/import-diploma-sessions', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    // Find Computer Engineering department id
+    const [deptRows] = await pool.query(`SELECT id FROM departments WHERE name LIKE ? LIMIT 1`, ['%Computer Engineering%']);
+    if (!deptRows || deptRows.length === 0) return res.status(400).json({ success: false, message: 'Computer Engineering department not found' });
+    const deptId = deptRows[0].id;
+
+    // Find faculty in this department (prefer demo teacher if available)
+    const [facRows] = await pool.query(`SELECT id FROM users WHERE role = 'faculty' AND (department = ? OR LOWER(department) LIKE ?)`, ['Computer Engineering', '%computer%']);
+    let facultyIds = (facRows || []).map(r => r.id);
+    if (!facultyIds || facultyIds.length === 0) {
+      const [demo] = await pool.query(`SELECT id FROM users WHERE LOWER(email) = 'teacher@demo.com' LIMIT 1`);
+      if (demo && demo.length > 0) facultyIds = [demo[0].id];
+    }
+    if (!facultyIds || facultyIds.length === 0) return res.status(400).json({ success: false, message: 'No faculty found to assign sessions' });
+
+    // Diploma course codes (canonical)
+    const codes = ['DCOS101','DCOM102','DEE103','DME104','DCO105','DEE113','DME116','DME117','DCO115','DCOM201','DCOP202','DEL203','DCOC204','DCO205','DCOP212','DEL213','DCOC214','DCO215','DCO301','DCO302','DEE303','DCO304','DEL306','DCO312','DCO314','DCO315','DEL316','DCOS401','DCO402','DCO403','DCO404','DEL405','DCO412','DCO413','DCO414','DEL415','DCO501','DCO502','DCO503','DCO504','DCO505','DCO511','DCO512','DCO513','DCO515','DCO520','DCO601','DCO602','DCO603','DCO604','DCO605','DCO606','DCO608','DCO611','DCO612','DCO620','DCO630'];
+
+    let created = 0;
+    // Assign sessions round-robin to available faculty
+    let idx = 0;
+    for (const code of codes) {
+      // find course id
+      const [cRows] = await pool.query(`SELECT id, name FROM courses WHERE UPPER(REPLACE(code, '-', '')) = ? LIMIT 1`, [code]);
+      if (!cRows || cRows.length === 0) continue;
+      const course = cRows[0];
+
+      const facultyId = facultyIds[idx % facultyIds.length];
+      idx++;
+
+      // Skip if a near-future session already exists for this course and faculty
+      const [exist] = await pool.query(`SELECT id FROM sessions WHERE course_id = ? AND faculty_id = ? AND DATE(start_time) >= CURDATE() LIMIT 1`, [course.id, facultyId]);
+      if (exist && exist.length > 0) continue;
+
+      // Create a session scheduled on successive days at 10:00 for clarity
+      const dayOffset = idx; // 1..n
+      await pool.query(`INSERT INTO sessions (faculty_id, course_id, department_id, subject, location, start_time, end_time, status)
+        VALUES (?, ?, ?, ?, ?, DATE_ADD(DATE(CONCAT(CURDATE(), ' 10:00:00')), INTERVAL ? DAY), DATE_ADD(DATE(CONCAT(CURDATE(), ' 11:00:00')), INTERVAL ? DAY), 'active')`, [facultyId, course.id, deptId, `${course.name} (${code})`, 'Room 101', dayOffset, dayOffset]);
+      created++;
+    }
+
+    return res.status(200).json({ success: true, message: `Imported diploma sessions. Created: ${created}` });
+  } catch (error) {
+    console.error('Import diploma sessions error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
