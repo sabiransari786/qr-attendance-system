@@ -78,14 +78,17 @@ Before deploying, ensure you have:
 2. **Set environment variables on Render**
    - `NODE_ENV=production`
    - `PORT=10000` or keep Render default and let it inject `PORT`
-   - `DATABASE_URL` or `MYSQL_URL` from Railway MySQL public connection string
-   - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` if you prefer split vars
+   - `DB_HOST=kodama.proxy.rlwy.net`
+   - `DB_PORT=33775`
+   - `DB_USER=root`
+   - `DB_PASSWORD=your_railway_mysql_password`
+   - `DB_NAME=railway`
    - `JWT_SECRET=your_secret`
    - `CORS_ORIGIN=https://your-vercel-domain.vercel.app`
 
-3. **If you already have Railway DB tables/data**
-   - Keep the Railway MySQL public URL in `DATABASE_URL`/`MYSQL_URL`
-   - Do not use `mysql.railway.internal` on Render; that hostname is only reachable inside Railway
+3. **Important**
+   - `mysql.railway.internal` Render pe use mat karo
+   - `DATABASE_URL` ki zaroorat nahi hai if you are using split variables
 
 4. **Deploy the Render service**
 
@@ -108,8 +111,11 @@ Before deploying, ensure you have:
 4. **Set environment variables in Railway:**
    - `NODE_ENV=production`
    - `PORT=5001`
-   - `DATABASE_URL` or `MYSQL_URL` (preferred)
-   - or `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+   - `DB_HOST` (from Railway MySQL public host)
+   - `DB_PORT` (from Railway MySQL public port)
+   - `DB_USER` (from Railway MySQL)
+   - `DB_PASSWORD` (from Railway MySQL)
+   - `DB_NAME` (from Railway MySQL)
    - `JWT_SECRET=your_secret`
    - `CORS_ORIGIN=https://your-vercel-domain.vercel.app`
 
