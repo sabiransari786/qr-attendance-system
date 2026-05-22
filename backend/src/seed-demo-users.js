@@ -189,7 +189,7 @@ async function seedDemoUsers() {
       "SELECT id FROM users WHERE LOWER(email) = 'student@demo.com'"
     );
     const [teacherRows] = await pool.query(
-      "SELECT id FROM users WHERE LOWER(email) = 'teacher@demo.com'"
+      "SELECT id, department FROM users WHERE LOWER(email) = 'teacher@demo.com'"
     );
 
     if (studentRows.length && teacherRows.length) {
@@ -214,26 +214,65 @@ async function seedDemoUsers() {
         const locations = ['Room 301', 'Lab 201', 'Room 302', 'Lab 101', 'Room 303'];
 
         const sessionIds = [];
+
+        // Fetch available courses for this teacher's department (if set)
+        let deptCourseIds = [];
+        try {
+          const deptName = teacherRows[0].department;
+          if (deptName) {
+            const [deptRows] = await pool.query(
+              `SELECT id FROM departments WHERE name = ?`,
+              [deptName]
+            );
+            if (deptRows && deptRows.length > 0) {
+              const deptId = deptRows[0].id;
+              const [cRows] = await pool.query(
+                `SELECT id FROM courses WHERE department_id = ? ORDER BY id`,
+                [deptId]
+              );
+              deptCourseIds = cRows.map(r => r.id);
+            }
+          }
+        } catch (e) {
+          // ignore - continue with empty course mapping
+          deptCourseIds = [];
+        }
+
         for (let dayOffset = 1; dayOffset <= 10; dayOffset++) {
           for (let slotIdx = 0; slotIdx < 2; slotIdx++) {
             const subject = subjects[(dayOffset + slotIdx) % subjects.length];
             const location = locations[(dayOffset + slotIdx) % locations.length];
             const hour = slotIdx === 0 ? 10 : 14;
 
+            // Resolve a course id for this session if department courses exist
+            let chosenCourseId = null;
+            let chosenDeptId = null;
+            if (deptCourseIds.length > 0) {
+              const idx = (dayOffset + slotIdx) % deptCourseIds.length;
+              chosenCourseId = deptCourseIds[idx];
+              // derive department id from course (safe fallback)
+              try {
+                const [cInfo] = await pool.query(`SELECT department_id FROM courses WHERE id = ?`, [chosenCourseId]);
+                if (cInfo && cInfo.length > 0) chosenDeptId = cInfo[0].department_id;
+              } catch (e) {
+                chosenDeptId = null;
+              }
+            }
+
             try {
               const [result] = await pool.query(
-                `INSERT INTO sessions (faculty_id, subject, location, start_time, end_time, status, qr_code, qr_expiry_time)
-                 VALUES (?, ?, ?, 
+                `INSERT INTO sessions (faculty_id, course_id, department_id, subject, location, start_time, end_time, status, qr_code, qr_expiry_time)
+                 VALUES (?, ?, ?, ?, ?, 
                    DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? DAY), CONCAT('%Y-%m-%d ', LPAD(?, 2, '0'), ':00:00')),
                    DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? DAY), CONCAT('%Y-%m-%d ', LPAD(?, 2, '0'), ':30:00')),
                    'closed', 'demo-qr-seed',
                    DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? DAY), CONCAT('%Y-%m-%d ', LPAD(?, 2, '0'), ':15:00'))
                  )`,
-                [teacherId, subject, location, dayOffset, hour, dayOffset, hour + 1, dayOffset, hour]
+                [teacherId, chosenCourseId, chosenDeptId, subject, location, dayOffset, hour, dayOffset, hour + 1, dayOffset, hour]
               );
               sessionIds.push(result.insertId);
             } catch (err) {
-              // Skip if duplicate
+              // Skip if duplicate or insertion failure
             }
           }
         }

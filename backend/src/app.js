@@ -57,6 +57,7 @@ const qrRequestRoutes = require('./routes/qr-request/qr-request.routes');
 const otpRoutes = require('./routes/otp/otp.routes');
 // Faculty routes - my-courses aur faculty-specific endpoints ke liye
 const facultyRoutes = require('./routes/faculty/faculty.routes');
+const adminRoutes = require('./routes/admin/admin.routes');
 
 
 // ============================================================================
@@ -191,6 +192,8 @@ app.use('/api/qr-request', qrRequestRoutes);
 app.use('/api/otp', otpRoutes);
 // Faculty routes - courses, profile info etc.
 app.use('/api/faculty', facultyRoutes);
+// Admin routes - protected endpoints for administrative tasks (import courses, fix sessions)
+app.use('/api/admin', adminRoutes);
 
 
 // ============================================================================
