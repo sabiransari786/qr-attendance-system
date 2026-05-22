@@ -167,7 +167,8 @@ function FacultySessions() {
     // Pre-fill first available course (if any) so the modal shows subjects immediately
     const firstCourse = courses && courses.length > 0 ? courses[0] : null;
     setNewSession({ subject: firstCourse ? `${firstCourse.name} (${firstCourse.code})` : '', location: '', startTime: localIso, duration: 60, courseId: firstCourse ? String(firstCourse.id) : '' });
-    setCourseSearch(''); setShowCourseDropdown(false); setCreateError(null); setShowCreateModal(true);
+    // Auto-open the dropdown so courses are visible immediately when modal opens
+    setCourseSearch(''); setShowCourseDropdown(true); setCreateError(null); setShowCreateModal(true);
   };
 
   const handleCreateSession = async (e) => {
