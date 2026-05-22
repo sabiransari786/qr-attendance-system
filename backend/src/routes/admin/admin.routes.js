@@ -221,3 +221,123 @@ router.post('/import-diploma-sessions', authMiddleware, requireAdmin, async (req
     return res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// POST /api/admin/reset-cs-courses
+// Deletes all courses from the Computer Engineering department and inserts the new 2019 scheme.
+router.post('/reset-cs-courses', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // 1. Find Computer Engineering department ID
+    const [deptRows] = await connection.query(`SELECT id FROM departments WHERE name LIKE ? LIMIT 1`, ['%Computer Engineering%']);
+    if (!deptRows || deptRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Computer Engineering department not found.' });
+    }
+    const deptId = deptRows[0].id;
+
+    // 2. Delete existing courses from this department
+    const [deleteResult] = await connection.query('DELETE FROM courses WHERE department_id = ?', [deptId]);
+    const deletedCount = deleteResult.affectedRows;
+
+    // 3. New course data from the 2019 scheme
+    const courses = [
+      // Semester 1
+      { code: 'DCOS-101', name: 'Communication Skills – I', semester: 1 },
+      { code: 'DCOM-102', name: 'Applied Mathematics – I', semester: 1 },
+      { code: 'DEE-103', name: 'Electrical & Electronics Engineering', semester: 1 },
+      { code: 'DME-104', name: 'Elements of Mechanical Engineering', semester: 1 },
+      { code: 'DCO-105', name: 'Fundamentals of Computers', semester: 1 },
+      { code: 'DEE-113', name: 'Electrical & Electronics Engineering Lab', semester: 1 },
+      { code: 'DME-116', name: 'Workshop Practice', semester: 1 },
+      { code: 'DME-117', name: 'Engineering Drawing – I', semester: 1 },
+      { code: 'DCO-115', name: 'P.C. Software Lab', semester: 1 },
+      // Semester 2
+      { code: 'DCOM-201', name: 'Applied Mathematics – II', semester: 2 },
+      { code: 'DCOP-202', name: 'Applied Physics', semester: 2 },
+      { code: 'DEL-203', name: 'Electronics Devices & Applications', semester: 2 },
+      { code: 'DCOC-204', name: 'Engineering Chemistry & Environmental Science', semester: 2 },
+      { code: 'DCO-205', name: 'Programming in C', semester: 2 },
+      { code: 'DCOP-212', name: 'Applied Physics Lab', semester: 2 },
+      { code: 'DEL-213', name: 'Electronics Devices & Applications Lab', semester: 2 },
+      { code: 'DCOC-214', name: 'Engineering Chemistry Lab', semester: 2 },
+      { code: 'DCO-215', name: 'Programming in C Lab', semester: 2 },
+      // Semester 3
+      { code: 'DCO-301', name: 'Computer Oriented Numerical Methods', semester: 3 },
+      { code: 'DCO-302', name: 'Object Oriented Programming', semester: 3 },
+      { code: 'DEE-303', name: 'Signals & Systems', semester: 3 },
+      { code: 'DCO-304', name: 'Computer Architecture', semester: 3 },
+      { code: 'DEL-306', name: 'Digital Electronics', semester: 3 },
+      { code: 'DCO-312', name: 'Object Oriented Programming Lab', semester: 3 },
+      { code: 'DCO-314', name: 'Computer Workshop Lab', semester: 3 },
+      { code: 'DCO-315', name: 'Computer System & Maintenance Lab', semester: 3 },
+      { code: 'DEL-316', name: 'Digital Electronics Lab', semester: 3 },
+      // Semester 4
+      { code: 'DCOS-401', name: 'Communication Skills – II', semester: 4 },
+      { code: 'DCO-402', name: 'Database Management System', semester: 4 },
+      { code: 'DCO-403', name: 'Operating System', semester: 4 },
+      { code: 'DCO-404', name: 'Data Structures', semester: 4 },
+      { code: 'DEL-405', name: 'Microprocessor & Microcontroller', semester: 4 },
+      { code: 'DCO-412', name: 'Database Management System Lab', semester: 4 },
+      { code: 'DCO-413', name: 'Operating System Lab', semester: 4 },
+      { code: 'DCO-414', name: 'Data Structures Lab', semester: 4 },
+      { code: 'DEL-415', name: 'Microprocessor Programming Lab', semester: 4 },
+      // Semester 5
+      { code: 'DCO-501', name: 'Computer Graphics', semester: 5 },
+      { code: 'DCO-502', name: 'Web Technology', semester: 5 },
+      { code: 'DCO-503', name: 'Data Communication & Computer Networks', semester: 5 },
+      { code: 'DCO-504', name: 'Software Engineering', semester: 5 },
+      { code: 'DCO-505', name: 'Java Programming', semester: 5 },
+      { code: 'DCO-511', name: 'Computer Graphics & Multimedia Lab', semester: 5 },
+      { code: 'DCO-512', name: 'Web Technology Lab', semester: 5 },
+      { code: 'DCO-513', name: 'Computer Networks Lab', semester: 5 },
+      { code: 'DCO-515', name: 'Java Programming Lab', semester: 5 },
+      { code: 'DCO-520', name: 'Minor Project', semester: 5 },
+      // Semester 6
+      { code: 'DCO-601', name: 'Advanced RDBMS', semester: 6 },
+      { code: 'DCO-602', name: 'Visual Programming', semester: 6 },
+      { code: 'DCO-603', name: 'Information Security & Cyber Law', semester: 6 },
+      { code: 'DCO-604', name: 'Embedded System (Elective)', semester: 6 },
+      { code: 'DCO-605', name: 'Artificial Intelligence (Elective)', semester: 6 },
+      { code: 'DCO-606', name: 'Mobile Computing (Elective)', semester: 6 },
+      { code: 'DCO-608', name: 'ICT Management & Entrepreneurship Development', semester: 6 },
+      { code: 'DCO-611', name: 'RDBMS Lab', semester: 6 },
+      { code: 'DCO-612', name: 'Visual Programming Lab', semester: 6 },
+      { code: 'DCO-620', name: 'Project', semester: 6 },
+      { code: 'DCO-630', name: 'Industrial Training & Visits', semester: 6 },
+    ];
+
+    // 4. Insert new courses
+    let insertedCount = 0;
+    for (const course of courses) {
+      const { code, name, semester } = course;
+      const canonCode = (code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      await connection.query(
+        `INSERT INTO courses (name, code, semester, department_id) VALUES (?, ?, ?, ?)`,
+        [name, canonCode, semester, deptId]
+      );
+      insertedCount++;
+    }
+
+    await connection.commit();
+    connection.release();
+
+    return res.status(200).json({
+      success: true,
+      message: `Reset complete. Deleted ${deletedCount} old courses and inserted ${insertedCount} new courses for Computer Engineering.`,
+      deleted: deletedCount,
+      inserted: insertedCount,
+    });
+
+  } catch (error) {
+    console.error('Reset CS courses error:', error);
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+module.exports = router;
