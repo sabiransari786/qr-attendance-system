@@ -210,8 +210,8 @@ router.post('/import-diploma-sessions', authMiddleware, requireAdmin, async (req
 
       // Create a session scheduled on successive days at 10:00 for clarity
       const dayOffset = idx; // 1..n
-      await pool.query(`INSERT INTO sessions (faculty_id, course_id, department_id, subject, location, start_time, end_time, status)
-        VALUES (?, ?, ?, ?, ?, DATE_ADD(DATE(CONCAT(CURDATE(), ' 10:00:00')), INTERVAL ? DAY), DATE_ADD(DATE(CONCAT(CURDATE(), ' 11:00:00')), INTERVAL ? DAY), 'active')`, [facultyId, course.id, deptId, `${course.name} (${code})`, 'Room 101', dayOffset, dayOffset]);
+      await pool.query(`INSERT INTO sessions (faculty_id, course_id, department_id, subject, location, start_time, end_time, status, qr_code, qr_expiry_time)
+        VALUES (?, ?, ?, ?, ?, DATE_ADD(DATE(CONCAT(CURDATE(), ' 10:00:00')), INTERVAL ? DAY), DATE_ADD(DATE(CONCAT(CURDATE(), ' 11:00:00')), INTERVAL ? DAY), 'active', ?, DATE_ADD(DATE_ADD(DATE(CONCAT(CURDATE(), ' 10:00:00')), INTERVAL ? DAY), INTERVAL 15 MINUTE))`, [facultyId, course.id, deptId, `${course.name} (${code})`, 'Room 101', dayOffset, dayOffset, 'seeded', dayOffset]);
       created++;
     }
 
