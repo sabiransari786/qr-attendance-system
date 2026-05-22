@@ -34,9 +34,15 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
       }
     }
     
-    // Get all courses from this department OR assigned directly to this faculty
-    const [courses] = await pool.query(
-      `SELECT 
+    // Get all courses from this department OR assigned directly to this faculty.
+    // Fallbacks:
+    //  - If department_id lookup succeeded, use it.
+    //  - If department_id not found but department name exists, try fuzzy match on department name.
+    //  - Otherwise return courses assigned to the faculty only.
+    let coursesQuery;
+    let params = [];
+    if (departmentId) {
+      coursesQuery = `SELECT 
           c.id,
           c.name,
           c.code,
@@ -47,9 +53,38 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
        FROM courses c
        LEFT JOIN departments d ON c.department_id = d.id
        WHERE c.department_id = ? OR c.faculty_id = ?
-       ORDER BY c.semester, d.name, c.name`,
-      [departmentId, facultyId]
-    );
+       ORDER BY c.semester, d.name, c.name`;
+      params = [departmentId, facultyId];
+    } else if (departmentName) {
+      coursesQuery = `SELECT 
+          c.id,
+          c.name,
+          c.code,
+          c.semester,
+          c.department_id,
+          d.name AS department_name,
+          d.code AS department_code
+       FROM courses c
+       LEFT JOIN departments d ON c.department_id = d.id
+       WHERE (d.name LIKE ?) OR c.faculty_id = ?
+       ORDER BY c.semester, d.name, c.name`;
+      params = [`%${departmentName}%`, facultyId];
+    } else {
+      coursesQuery = `SELECT 
+          c.id,
+          c.name,
+          c.code,
+          c.semester,
+          c.department_id,
+          d.name AS department_name,
+          d.code AS department_code
+       FROM courses c
+       LEFT JOIN departments d ON c.department_id = d.id
+       WHERE c.faculty_id = ?
+       ORDER BY c.semester, d.name, c.name`;
+      params = [facultyId];
+    }
+    const [courses] = await pool.query(coursesQuery, params);
     return res.status(200).json({
       success: true,
       data: courses,
