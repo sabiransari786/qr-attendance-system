@@ -73,12 +73,8 @@ function FacultySessions() {
           const data = await response.json();
           let list = data.data || [];
           // If logged-in user is a Computer Engineering faculty, restrict to Diploma subjects
-          if (user?.role === 'faculty' && user?.department && user.department.toLowerCase().includes('computer')) {
-            const canon = code => (code || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-            const allowed = new Set(DIPLOMA_CODES.map(c => canon(c)));
-            list = list.filter(c => allowed.has(canon(c.code)));
-          }
-          setCourses(list);
+            // Do not restrict: show all department courses so faculty can choose any semester
+            setCourses(list);
         }
       } catch (err) { console.error('Error fetching courses:', err); }
     };
