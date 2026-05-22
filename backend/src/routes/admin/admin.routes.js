@@ -143,7 +143,37 @@ router.post('/fix-sessions', authMiddleware, requireAdmin, async (req, res) => {
   }
 });
 
-module.exports = router;
+// POST /api/admin/normalize-course-codes
+// Normalizes `courses.code` to uppercase alphanumeric (removes hyphens/spaces/etc) for Computer Engineering department
+router.post('/normalize-course-codes', authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [deptRows] = await connection.query(`SELECT id FROM departments WHERE name LIKE ? LIMIT 1`, ['%Computer Engineering%']);
+    if (!deptRows || deptRows.length === 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(404).json({ success: false, message: 'Computer Engineering department not found.' });
+    }
+    const deptId = deptRows[0].id;
+
+    // Update codes: remove non-alphanumeric characters and uppercase
+    // Use REGEXP_REPLACE when available, fallback to chained REPLACE
+    let result;
+    try {
+      [result] = await connection.query(`UPDATE courses SET code = UPPER(REGEXP_REPLACE(code, '[^A-Za-z0-9]', '')) WHERE department_id = ?`, [deptId]);
+    } catch (e) {
+      [result] = await connection.query(`UPDATE courses SET code = UPPER(REPLACE(REPLACE(REPLACE(REPLACE(code, '-', ''), ' ', ''), '.', ''), '_', '')) WHERE department_id = ?`, [deptId]);
+    }
+
+    await connection.commit();
+    connection.release();
+    return res.status(200).json({ success: true, message: `Normalized course codes for department ${deptId}`, affected: result && result.affectedRows ? result.affectedRows : 0 });
+  } catch (error) {
+    console.error('Normalize course codes error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // POST /api/admin/set-course-semesters
 // Sets semester numbers for known Diploma course codes (idempotent)
@@ -159,8 +189,16 @@ router.post('/set-course-semesters', authMiddleware, requireAdmin, async (req, r
     };
 
     let updated = 0;
+    // Try to normalize codes using REGEXP_REPLACE (MySQL 8+) for robustness, otherwise fall back to chained REPLACE
     for (const [code, sem] of Object.entries(mapping)) {
-      const [r] = await pool.query(`UPDATE courses SET semester = ? WHERE UPPER(REPLACE(code, '-', '')) = ? AND (semester IS NULL OR semester = 0)`, [sem, code]);
+      let r;
+      try {
+        // Remove any non-alphanumeric characters from code column and compare
+        [r] = await pool.query(`UPDATE courses SET semester = ? WHERE UPPER(REGEXP_REPLACE(code, '[^A-Za-z0-9]', '')) = ? AND (semester IS NULL OR semester = 0)`, [sem, code]);
+      } catch (e) {
+        // Fallback for MySQL versions without REGEXP_REPLACE: remove common separators
+        [r] = await pool.query(`UPDATE courses SET semester = ? WHERE UPPER(REPLACE(REPLACE(REPLACE(REPLACE(code, '-', ''), ' ', ''), '.', ''), '_', '')) = ? AND (semester IS NULL OR semester = 0)`, [sem, code]);
+      }
       if (r && r.affectedRows) updated += r.affectedRows;
     }
     const [remaining] = await pool.query(`SELECT COUNT(*) AS cnt FROM courses WHERE semester IS NULL OR semester = 0`);
@@ -240,6 +278,7 @@ router.post('/reset-cs-courses', authMiddleware, requireAdmin, async (req, res) 
     // 2. Delete existing courses from this department
     const [deleteResult] = await connection.query('DELETE FROM courses WHERE department_id = ?', [deptId]);
     const deletedCount = deleteResult.affectedRows;
+    console.log(`Deleted ${deletedCount} courses from department ID ${deptId}.`);
 
     // 3. New course data from the 2019 scheme
     const courses = [
