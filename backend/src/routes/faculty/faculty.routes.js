@@ -41,7 +41,12 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
     //  - Otherwise return courses assigned to the faculty only.
     let coursesQuery;
     let params = [];
-    if (departmentId) {
+    // If the faculty belongs to a Computer-type department, return all
+    // Computer department courses (semesters 1-6) plus Diploma department
+    // courses so CS teachers can create sessions across semesters.
+    const userEmail = req.user && req.user.email ? req.user.email.toLowerCase() : '';
+    const isComputerDept = departmentName && /computer/i.test(departmentName);
+    if (isComputerDept) {
       coursesQuery = `SELECT 
           c.id,
           c.name,
@@ -52,10 +57,29 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
           d.code AS department_code
        FROM courses c
        LEFT JOIN departments d ON c.department_id = d.id
-       WHERE c.department_id = ? OR c.faculty_id = ?
+       WHERE (d.name LIKE '%Computer%' OR d.name LIKE '%Diploma%') OR c.faculty_id = ?
+       ORDER BY c.semester, d.name, c.name`;
+      params = [facultyId];
+    } else if (departmentId) {
+      // Include courses that belong to the faculty's department,
+      // courses explicitly assigned to the faculty, and also courses
+      // from departments whose name contains 'Diploma' so diploma
+      // subjects are available to related faculty.
+      coursesQuery = `SELECT 
+          c.id,
+          c.name,
+          c.code,
+          c.semester,
+          c.department_id,
+          d.name AS department_name,
+          d.code AS department_code
+       FROM courses c
+       LEFT JOIN departments d ON c.department_id = d.id
+       WHERE (c.department_id = ? OR (d.name LIKE '%Diploma%')) OR c.faculty_id = ?
        ORDER BY c.semester, d.name, c.name`;
       params = [departmentId, facultyId];
     } else if (departmentName) {
+      // Fallback: try fuzzy matching on department name, also include Diploma depts
       coursesQuery = `SELECT 
           c.id,
           c.name,
@@ -66,10 +90,12 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
           d.code AS department_code
        FROM courses c
        LEFT JOIN departments d ON c.department_id = d.id
-       WHERE (d.name LIKE ?) OR c.faculty_id = ?
+       WHERE (d.name LIKE ? OR d.name LIKE '%Diploma%') OR c.faculty_id = ?
        ORDER BY c.semester, d.name, c.name`;
       params = [`%${departmentName}%`, facultyId];
     } else {
+      // As a last resort, return courses explicitly assigned to this faculty
+      // plus any diploma department courses so faculty can pick diploma subjects
       coursesQuery = `SELECT 
           c.id,
           c.name,
@@ -80,7 +106,7 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
           d.code AS department_code
        FROM courses c
        LEFT JOIN departments d ON c.department_id = d.id
-       WHERE c.faculty_id = ?
+       WHERE c.faculty_id = ? OR d.name LIKE '%Diploma%'
        ORDER BY c.semester, d.name, c.name`;
       params = [facultyId];
     }
