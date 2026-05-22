@@ -164,7 +164,9 @@ function FacultySessions() {
   const handleOpenCreate = () => {
     const now = new Date();
     const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    setNewSession({ subject: '', location: '', startTime: localIso, duration: 60, courseId: '' });
+    // Pre-fill first available course (if any) so the modal shows subjects immediately
+    const firstCourse = courses && courses.length > 0 ? courses[0] : null;
+    setNewSession({ subject: firstCourse ? `${firstCourse.name} (${firstCourse.code})` : '', location: '', startTime: localIso, duration: 60, courseId: firstCourse ? String(firstCourse.id) : '' });
     setCourseSearch(''); setShowCourseDropdown(false); setCreateError(null); setShowCreateModal(true);
   };
 
