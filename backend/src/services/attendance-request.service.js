@@ -294,11 +294,10 @@ class AttendanceRequestService {
         }
       }
 
-      // If session has a course, the course must be assigned to this faculty
-      if (session.course_id && session.course_faculty_id !== null &&
-          Number(session.course_faculty_id) !== Number(faculty_id)) {
-        throw new Error('This course is not assigned to you');
-      }
+      // Note: sessions are owned by a faculty (checked above). Do not block
+      // QR generation solely because the `courses.faculty_id` points to a
+      // different faculty — the session owner should be able to generate QR
+      // for their own session regardless of the course's assigned faculty.
 
       if (session.status !== 'active') {
         throw new Error('Session is not active');
