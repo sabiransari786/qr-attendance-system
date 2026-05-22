@@ -18,9 +18,14 @@ const getApiBaseUrl = () => {
     return url;
   }
   
-  // For any other IP address (network access from phone/tablet), use same IP with backend port
-  const url = `http://${hostname}:5001/api`;
-  return url;
+  // In production, prefer same-origin `/api` so deployments (Vercel/Netlify) can proxy or use env var.
+  // Fallback to host:5001 only if no other option (keeps compatibility with local network testing).
+  try {
+    const origin = window.location.origin;
+    return `${origin}/api`;
+  } catch (e) {
+    return `http://${hostname}:5001/api`;
+  }
 };
 
 export const API_BASE_URL = getApiBaseUrl();
