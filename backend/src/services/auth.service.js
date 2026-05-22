@@ -595,6 +595,13 @@ const login = async (email, password) => {
         };
         
     } catch (error) {
+        if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || /mysql\.railway\.internal/i.test(error.message || '')) {
+            const dbError = new Error('Database connection is unavailable. Check Railway DB host, credentials, and networking.');
+            dbError.statusCode = 503;
+            dbError.code = 'DB_CONNECTION_ERROR';
+            throw dbError;
+        }
+
         // Agar custom error hai (InvalidCredentialsError, etc.), toh directly throw karo
         // Custom errors already proper format mein hain
         if (error.name && error.statusCode) {

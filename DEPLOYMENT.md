@@ -68,6 +68,27 @@ Before deploying, ensure you have:
    vercel --prod
    ```
 
+#### Backend (Render)
+
+1. **Create a new Web Service on Render**
+   - Build command: `npm install`
+   - Start command: `npm start`
+   - Root directory: `backend`
+
+2. **Set environment variables on Render**
+   - `NODE_ENV=production`
+   - `PORT=10000` or keep Render default and let it inject `PORT`
+   - `DATABASE_URL` or `MYSQL_URL` from Railway MySQL public connection string
+   - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` if you prefer split vars
+   - `JWT_SECRET=your_secret`
+   - `CORS_ORIGIN=https://your-vercel-domain.vercel.app`
+
+3. **If you already have Railway DB tables/data**
+   - Keep the Railway MySQL public URL in `DATABASE_URL`/`MYSQL_URL`
+   - Do not use `mysql.railway.internal` on Render; that hostname is only reachable inside Railway
+
+4. **Deploy the Render service**
+
 #### Backend (Railway)
 
 1. **Install Railway CLI**
@@ -87,14 +108,22 @@ Before deploying, ensure you have:
 4. **Set environment variables in Railway:**
    - `NODE_ENV=production`
    - `PORT=5001`
-   - `DB_HOST` (from Railway MySQL)
-   - `DB_USER` (from Railway MySQL)
-   - `DB_PASSWORD` (from Railway MySQL)
-   - `DB_NAME` (from Railway MySQL)
+   - `DATABASE_URL` or `MYSQL_URL` (preferred)
+   - or `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
    - `JWT_SECRET=your_secret`
    - `CORS_ORIGIN=https://your-vercel-domain.vercel.app`
 
-5. **Deploy**
+5. **Load schema and seed data into the new Railway database**
+   ```bash
+   mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < ../database/schema.sql
+   mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < ../database/seed_courses.sql
+   mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < ../database/seed_faculty.sql
+   mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < ../database/seed_production.sql
+   ```
+
+   If you need the exact data from the old Railway account, import a `mysqldump` backup instead of the seed files.
+
+6. **Deploy**
    ```bash
    railway up
    ```

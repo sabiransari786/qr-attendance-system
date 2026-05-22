@@ -54,6 +54,30 @@
  * const port = config.PORT; // process.env.PORT nahi
  */
 
+const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL || process.env.JAWSDB_URL || '';
+
+const parseDatabaseUrl = (value) => {
+  if (!value) return {};
+
+  try {
+    const parsed = new URL(value);
+    const databaseName = parsed.pathname ? parsed.pathname.replace(/^\//, '') : '';
+
+    return {
+      DB_HOST: parsed.hostname || undefined,
+      DB_PORT: parsed.port ? parseInt(parsed.port, 10) : undefined,
+      DB_USER: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+      DB_PASSWORD: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+      DB_NAME: databaseName ? decodeURIComponent(databaseName) : undefined,
+    };
+  } catch (error) {
+    console.warn('⚠️ Invalid database URL ignored:', error.message);
+    return {};
+  }
+};
+
+const databaseUrlConfig = parseDatabaseUrl(databaseUrl);
+
 const config = {
   // ============================================================================
   // SERVER CONFIGURATION
@@ -78,27 +102,30 @@ const config = {
   // Database host address - MySQL server ka address
   // Development mein usually 'localhost', production mein actual IP ya domain
   // Default 'localhost' development ke liye safe hai
-  DB_HOST: process.env.DB_HOST || 'localhost',
+  DB_HOST: databaseUrlConfig.DB_HOST || process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
 
   // Database port number - MySQL default port 3306 hai
   // ParseInt() se string ko number mein convert kar rahe hain
   // Default 3306 MySQL standard port hai - usually change nahi karna padta
-  DB_PORT: parseInt(process.env.DB_PORT, 10) || 3306,
+  DB_PORT: databaseUrlConfig.DB_PORT || parseInt(process.env.DB_PORT || process.env.MYSQLPORT, 10) || 3306,
 
   // Database user name - MySQL user jo database access kar sakta hai
   // Required field hai - default nahi de sakte security ke liye
   // Production mein separate user banate hain limited permissions ke saath
-  DB_USER: process.env.DB_USER,
+  DB_USER: databaseUrlConfig.DB_USER || process.env.DB_USER || process.env.MYSQLUSER,
 
   // Database password - MySQL user ka password
   // Required field hai - default nahi de sakte security ke liye
   // .env file mein define karna zaroori hai - hardcode kabhi nahi karna
-  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_PASSWORD: databaseUrlConfig.DB_PASSWORD || process.env.DB_PASSWORD || process.env.MYSQLPASSWORD,
 
   // Database name - MySQL database ka naam jisme tables honge
   // Required field hai - application ka data isi database mein store hoga
   // Development aur production mein alag database names use karte hain
-  DB_NAME: process.env.DB_NAME,
+  DB_NAME: databaseUrlConfig.DB_NAME || process.env.DB_NAME || process.env.MYSQLDATABASE,
+
+  // Raw connection URL for platforms that only expose DATABASE_URL/MYSQL_URL.
+  DB_URL: databaseUrl || null,
 
   // Database connection pool limit - maximum kitne connections pool mein rakh sakte hain
   // Default 10 connections - small-medium applications ke liye sufficient
@@ -127,8 +154,8 @@ const requiredVariables = ['DB_USER', 'DB_PASSWORD', 'DB_NAME'];
 // Production environment mein validation strict honi chahiye
 if (config.NODE_ENV === 'production') {
   const missingVariables = requiredVariables.filter(variable => {
-    // process.env se direct check kar rahe hain - config object mein undefined ho sakta hai
-    return !process.env[variable];
+    // Config object se check kar rahe hain taaki DATABASE_URL / MYSQL_URL parse hokar bhi valid rahe
+    return !config[variable];
   });
 
   // Agar koi required variable missing hai to error throw karte hain

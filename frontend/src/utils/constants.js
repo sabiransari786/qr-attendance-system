@@ -14,12 +14,12 @@ const getApiBaseUrl = () => {
   
   // For localhost or 127.0.0.1, use localhost backend
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    const url = 'http://localhost:5000/api';
+    const url = 'http://localhost:5001/api';
     return url;
   }
   
   // For any other IP address (network access from phone/tablet), use same IP with backend port
-  const url = `http://${hostname}:5000/api`;
+  const url = `http://${hostname}:5001/api`;
   return url;
 };
 

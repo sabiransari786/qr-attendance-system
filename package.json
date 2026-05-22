@@ -13,6 +13,8 @@
     "build": "npm run build --prefix frontend",
     "build:prod": "cd frontend && npm run build",
     "preview": "npm run preview --prefix frontend",
+    "db:bootstrap": "node database/apply-schema.js",
+    "db:clone": "node database/clone-mysql.js",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
