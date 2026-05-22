@@ -428,7 +428,7 @@ class AttendanceRequestService {
 
     const now = new Date();
     if (new Date(request.expires_at) <= now) {
-      await AttendanceRequest.updateStatus(decoded.request_id, 'expired');
+      await AttendanceRequest.updateStatus(requestId, 'expired');
       return {
         valid: false,
         reason: 'QR code has expired',
@@ -491,7 +491,7 @@ class AttendanceRequestService {
 
     return {
       valid: true,
-      request_id: decoded.request_id,
+      request_id: requestId,
       attendance_value: request.attendance_value,
       session_id: request.session_id,
       faculty_id: request.faculty_id,
