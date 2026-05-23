@@ -184,7 +184,7 @@ function ScanQREnhanced() {
     const raw = String(rawValue || '').trim();
     if (!raw) return '';
 
-    if (raw.startsWith('q2.') || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)) {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)) {
       return raw;
     }
 
@@ -207,7 +207,7 @@ function ScanQREnhanced() {
         const segments = url.pathname.split('/').filter(Boolean);
         if (segments.length > 0) {
           const tail = segments[segments.length - 1];
-          if (tail.startsWith('q2.') || /^[0-9a-f-]{36}$/i.test(tail)) {
+          if (/^[0-9a-f-]{36}$/i.test(tail)) {
             return tail;
           }
         }

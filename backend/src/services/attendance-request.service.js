@@ -8,7 +8,6 @@ const crypto = require('crypto');
 const AttendanceRequest = require('../models/attendance-request.model');
 const { pool } = require('../config');
 
-const MAX_QR_SCAN_WINDOW_SECONDS = 60;
 const MAX_DISTANCE_METERS = 120;
 const MAX_ACCURACY_METERS = 50;
 const SECOND_CHECK_DELAY_SECONDS = 12;
@@ -55,7 +54,7 @@ class AttendanceRequestService {
   /**
    * Parse a QR token and return normalized info.
    * Frontend now sends the plain `request_id` encoded in the QR.
-   * Returns { requestId, tokenTimestamp, isLegacy, decoded }
+  * Returns { requestId, decoded }
    */
   static parseQrToken(token) {
     const normalizedToken = String(token || '').trim();
@@ -68,7 +67,7 @@ class AttendanceRequestService {
         const parsed = JSON.parse(normalizedToken);
         const candidate = parsed?.request_id || parsed?.requestId || parsed?.qr_token || parsed?.token;
         if (candidate && this.isUuidLike(String(candidate).trim())) {
-          return { requestId: String(candidate).trim(), tokenTimestamp: null, isLegacy: true, decoded: parsed };
+          return { requestId: String(candidate).trim(), decoded: parsed };
         }
       } catch {
         // ignore invalid JSON and fall through to plain validation
@@ -77,7 +76,7 @@ class AttendanceRequestService {
 
     // Plain UUID request_id (current frontend contract)
     if (this.isUuidLike(normalizedToken)) {
-      return { requestId: normalizedToken, tokenTimestamp: null, isLegacy: false, decoded: null };
+      return { requestId: normalizedToken, decoded: null };
     }
 
     throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
@@ -446,18 +445,7 @@ class AttendanceRequestService {
    */
   static async validateQRRequest({ qr_token, location_samples, student_id, device_id, scan_timestamp }) {
     const parsed = this.parseQrToken(qr_token);
-    const { requestId, tokenTimestamp, isLegacy } = parsed;
-
-    if (!isLegacy && (typeof tokenTimestamp !== 'number' || Number.isNaN(tokenTimestamp))) {
-      return { valid: false, reason: 'Invalid QR token timestamp', reason_code: 'INVALID_QR_TOKEN' };
-    }
-
-    if (!isLegacy) {
-      const ageMs = Date.now() - tokenTimestamp;
-      if (ageMs < 0 || ageMs > MAX_QR_SCAN_WINDOW_SECONDS * 1000) {
-        return { valid: false, reason: 'QR code has expired. Ask faculty to refresh.', reason_code: 'QR_EXPIRED' };
-      }
-    }
+    const { requestId } = parsed;
 
     const request = await this.ensureRequestActive(requestId);
 
