@@ -627,6 +627,7 @@ module.exports = {
     closeSession,
     cancelSession,
     getActiveSessions,
-    getSessionById
+    getSessionById,
+    openSessionNow
 };
 
