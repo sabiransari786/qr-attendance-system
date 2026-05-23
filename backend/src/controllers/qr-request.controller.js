@@ -122,30 +122,6 @@ const validateQRRequest = async (req, res, next) => {
 };
 
 /**
- * Refresh active QR request metadata
- *
- * POST /api/qr-request/:request_id/refresh
- */
-const refreshQRToken = async (req, res, next) => {
-  try {
-    const { request_id } = req.params;
-    const faculty_id = req.user.id;
-
-    if (!request_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'request_id is required'
-      });
-    }
-
-    const result = await AttendanceRequestService.refreshDynamicQrToken(request_id, faculty_id);
-    return res.json(Object.assign({ success: true }, result));
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
  * Get Attendance Count
  * 
  * GET /api/qr-request/:request_id/attendance-count
@@ -235,7 +211,6 @@ const recordAcceptance = async (req, res, next) => {
 module.exports = {
   generateQRRequest,
   validateQRRequest,
-  refreshQRToken,
   getAttendanceCount,
   getFacultyRequests,
   recordAcceptance

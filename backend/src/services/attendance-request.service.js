@@ -8,8 +8,6 @@ const crypto = require('crypto');
 const AttendanceRequest = require('../models/attendance-request.model');
 const { pool } = require('../config');
 
-const QR_TOKEN_VALIDITY_SECONDS = 45;
-const QR_REFRESH_INTERVAL_SECONDS = 12;
 const MAX_QR_SCAN_WINDOW_SECONDS = 60;
 const MAX_DISTANCE_METERS = 120;
 const MAX_ACCURACY_METERS = 50;
@@ -443,21 +441,6 @@ class AttendanceRequestService {
   /**
    * Refresh dynamic QR token for an active request.
    */
-  static async refreshDynamicQrToken(request_id, faculty_id) {
-    const request = await AttendanceRequest.getByRequestIdAndFaculty(request_id, faculty_id);
-    if (!request) {
-      throw new ValidationError('Active QR request not found', 404, 'QR_REQUEST_NOT_FOUND');
-    }
-
-    return {
-      success: true,
-      request_id,
-      expires_at: request.expires_at,
-      token_validity_seconds: QR_TOKEN_VALIDITY_SECONDS,
-      refresh_after_seconds: QR_REFRESH_INTERVAL_SECONDS
-    };
-  }
-
   /**
    * Validate QR request
    */
