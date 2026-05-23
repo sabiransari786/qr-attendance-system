@@ -26,6 +26,10 @@ class ValidationError extends Error {
 }
 
 class AttendanceRequestService {
+  static getSigningSecret() {
+    return process.env.ATTENDANCE_QR_SECRET || process.env.JWT_SECRET || 'qr-attendance-fallback-secret';
+  }
+
   static base64UrlEncode(input) {
     const b64 = Buffer.from(input).toString('base64');
     return b64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
