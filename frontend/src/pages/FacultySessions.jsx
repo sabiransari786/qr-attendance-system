@@ -45,6 +45,7 @@ function FacultySessions() {
   const [newSession, setNewSession] = useState({ subject: '', location: '', startTime: '', duration: 60, courseId: '' });
   const [courseSearch, setCourseSearch] = useState('');
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
+  const [activeSemesterFilter, setActiveSemesterFilter] = useState('all');
   const [editSession, setEditSession] = useState({ subject: '', location: '', startTime: '', duration: 60 });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -170,7 +171,7 @@ function FacultySessions() {
       : null;
     setNewSession({ subject: firstCourse ? `${firstCourse.name} (${firstCourse.code})` : '', location: '', startTime: localIso, duration: 60, courseId: firstCourse ? String(firstCourse.id) : '' });
     // Auto-open the dropdown so courses are visible immediately when modal opens
-    setCourseSearch(''); setShowCourseDropdown(true); setCreateError(null); setShowCreateModal(true);
+    setCourseSearch(''); setActiveSemesterFilter('all'); setShowCourseDropdown(true); setCreateError(null); setShowCreateModal(true);
   };
 
   const handleCreateSession = async (e) => {
@@ -309,11 +310,38 @@ function FacultySessions() {
                   <div tabIndex={-1} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-surface)', border: '1px solid rgba(49,156,181,0.25)', borderRadius: '10px', maxHeight: '220px', overflowY: 'auto', zIndex: 11, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', backdropFilter: 'blur(10px)' }}>
                     {(() => {
                       const q = courseSearch.toLowerCase();
-                      const filtered = courses.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.department_name || '').toLowerCase().includes(q) || (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false));
+                      const filtered = courses.filter(c => {
+                        const matchesSearch = c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.department_name || '').toLowerCase().includes(q) || (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false);
+                        const matchesSemester = activeSemesterFilter === 'all' || String(c.semester) === activeSemesterFilter;
+                        return matchesSearch && matchesSemester;
+                      });
                       if (filtered.length === 0) return <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontSize: '0.88rem' }}>No courses found</div>;
                       const bySem = filtered.reduce((acc, c) => { const key = c.semester ? `Semester ${c.semester}` : 'General'; if (!acc[key]) acc[key] = []; acc[key].push(c); return acc; }, {});
                       const semesterOrder = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'General'];
-                      return semesterOrder.filter(label => bySem[label]).map((semLabel) => (
+                      return (
+                        <div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 2, background: 'var(--color-surface)' }}>
+                            {['all', '1', '2', '3', '4', '5', '6'].map(sem => (
+                              <button
+                                key={sem}
+                                type="button"
+                                onClick={() => setActiveSemesterFilter(sem)}
+                                style={{
+                                  border: '1px solid rgba(49,156,181,0.25)',
+                                  background: activeSemesterFilter === sem ? 'rgba(49,156,181,0.16)' : 'transparent',
+                                  color: 'var(--color-text)',
+                                  borderRadius: '999px',
+                                  padding: '0.35rem 0.8rem',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {sem === 'all' ? 'All Semesters' : `Sem ${sem}`}
+                              </button>
+                            ))}
+                          </div>
+                          {semesterOrder.filter(label => bySem[label]).map((semLabel) => (
                         <div key={semLabel}>
                           <div style={{ padding: '0.45rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(49,156,181,0.12)', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'sticky', top: 0, zIndex: 1 }}>
                             <span><Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}</span>
@@ -326,7 +354,9 @@ function FacultySessions() {
                             </div>
                           ))}
                         </div>
-                      ));
+                      ))}
+                        </div>
+                      );
                     })()}
                   </div>
                 </>}
