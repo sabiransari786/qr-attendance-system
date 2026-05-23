@@ -198,6 +198,27 @@ class AttendanceRequestService {
     const start = new Date(session.start_time);
     const end = session.end_time ? new Date(session.end_time) : null;
 
+    // If a session was scheduled in the future, open it automatically when a
+    // student scans the QR so the flow works without waiting for the planned
+    // start time. This keeps the system usable in real classrooms where the
+    // teacher generates the QR at scan time.
+    if (now < start) {
+      const durationMs = end && end > start ? (end.getTime() - start.getTime()) : (60 * 60 * 1000);
+      const openedStart = new Date(now.getTime() - (60 * 1000));
+      const openedEnd = new Date(openedStart.getTime() + durationMs);
+
+      await pool.execute(
+        `UPDATE sessions
+         SET start_time = ?, end_time = ?, status = ?
+         WHERE id = ?`,
+        [openedStart, openedEnd, 'active', session_id]
+      );
+
+      session.start_time = openedStart;
+      session.end_time = openedEnd;
+      return session;
+    }
+
     // Allow a configurable pre-start grace window so students can scan shortly
     // before the official `start_time` (default 10 minutes). Useful when
     // faculty generate the QR a few minutes before class starts.

@@ -356,8 +356,31 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp, verificat
         // Session time window validation
         const nowTs = Number(timestamp || Date.now());
         const now = new Date(nowTs);
-        const sessionStart = new Date(session.start_time);
+        let sessionStart = new Date(session.start_time);
         const sessionEnd = session.end_time ? new Date(session.end_time) : null;
+
+        // If a session is still scheduled in the future, open it automatically
+        // at scan time so the QR flow works immediately instead of failing with
+        // a future-start error. This mirrors the faculty generate/open behavior.
+        if (now < sessionStart) {
+            const durationMs = sessionEnd && sessionEnd > sessionStart
+                ? (sessionEnd.getTime() - sessionStart.getTime())
+                : (60 * 60 * 1000);
+            const openedStart = new Date(now.getTime() - (60 * 1000));
+            const openedEnd = new Date(openedStart.getTime() + durationMs);
+
+            await connection.query(
+                `UPDATE sessions
+                 SET start_time = ?, end_time = ?, status = ?
+                 WHERE id = ?`,
+                [openedStart, openedEnd, SESSION_STATUS.ACTIVE, sessionId]
+            );
+
+            session.start_time = openedStart;
+            session.end_time = openedEnd;
+            sessionStart = openedStart;
+        }
+
         if (now < sessionStart) {
             const err = new Error('Attendance is not open yet for this session.');
             err.statusCode = 400;
