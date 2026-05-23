@@ -31,7 +31,7 @@ const {
  * 
  * Body: {
  *   session_id: int
- *   attendance_value: 1|2|3
+ *   attendance_value: 1-10
  *   latitude: number
  *   longitude: number
  *   radius_meters: 10|20|50
@@ -46,9 +46,10 @@ router.post('/generate', qrGenerateLimiter, authMiddleware, requireFaculty, gene
  * Requires authentication (student) to prevent anonymous abuse.
  *
  * Body: {
- *   request_id: UUID
- *   student_latitude: number
- *   student_longitude: number
+ *   qr_token: string
+ *   location_samples: Array<{ latitude, longitude, accuracy, timestamp }>
+ *   device_id?: string
+ *   scan_timestamp?: number
  * }
  */
 router.post('/validate', authMiddleware, requireStudent, validateQRRequest);

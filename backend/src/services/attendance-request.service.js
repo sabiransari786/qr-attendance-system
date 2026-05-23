@@ -437,8 +437,8 @@ class AttendanceRequestService {
       }
 
       // Validate attendance value
-      if (![1, 2, 3].includes(attendance_value)) {
-        throw new Error('Invalid attendance value. Must be 1, 2, or 3');
+      if (!Number.isInteger(attendance_value) || attendance_value < 1 || attendance_value > 10) {
+        throw new Error('Invalid attendance value. Must be between 1 and 10');
       }
 
       // Validate radius (geofence still includes accuracy + time checks later)

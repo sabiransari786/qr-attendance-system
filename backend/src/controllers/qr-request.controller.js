@@ -13,7 +13,7 @@ const AttendanceRequestService = require('../services/attendance-request.service
  * 
  * Body: {
  *   session_id: number
- *   attendance_value: 1|2|3
+ *   attendance_value: 1-10
  *   latitude: number
  *   longitude: number
  *   radius_meters: 10|20|50
@@ -40,17 +40,25 @@ const generateQRRequest = async (req, res, next) => {
     } = req.body;
 
     // Validation
-    if (!session_id || !attendance_value || latitude === undefined || longitude === undefined || !radius_meters || !duration_minutes) {
+    if (!session_id || attendance_value === undefined || latitude === undefined || longitude === undefined || !radius_meters || !duration_minutes) {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields: session_id, attendance_value, latitude, longitude, radius_meters, duration_minutes'
       });
     }
 
+    const attendancePoints = parseInt(attendance_value, 10);
+    if (!Number.isInteger(attendancePoints) || attendancePoints < 1 || attendancePoints > 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'attendance_value must be an integer between 1 and 10'
+      });
+    }
+
     const result = await AttendanceRequestService.generateQRRequest({
       faculty_id,
       session_id,
-      attendance_value: parseInt(attendance_value),
+      attendance_value: attendancePoints,
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       radius_meters: parseInt(radius_meters),
@@ -69,16 +77,19 @@ const generateQRRequest = async (req, res, next) => {
  * POST /api/qr-request/validate
  * 
  * Body: {
- *   request_id: UUID
- *   student_latitude: number
- *   student_longitude: number
+ *   qr_token: string
+ *   location_samples: Array<{ latitude, longitude, accuracy, timestamp }>
+ *   device_id?: string
+ *   scan_timestamp?: number
  * }
  * 
  * Returns: {
  *   valid: true|false
  *   reason: string (if invalid)
+ *   request_id: string (if valid)
+ *   session_id: number (if valid)
  *   attendance_value: number (if valid)
- *   distance: number (if valid)
+ *   precheck_token: string (if valid)
  * }
  */
 const validateQRRequest = async (req, res, next) => {
