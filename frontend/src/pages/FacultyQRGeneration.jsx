@@ -54,7 +54,6 @@ function FacultyQRGeneration() {
   const [showQRDisplay, setShowQRDisplay] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
   const refreshIntervalRef = useRef(null);
-  const [refreshAfterSeconds, setRefreshAfterSeconds] = useState(12);
 
   /* ── auth guard ────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -168,11 +167,10 @@ function FacultyQRGeneration() {
       if (!res.ok) throw new Error(data.message || 'Failed to generate QR');
 
       setRequestId(data.request_id);
-      setQrData(data.qr_token || data.request_id);
+      // Use stable request_id as the QR payload to avoid client-side rotations
+      // and frequent refreshes. Backend will still validate active requests.
+      setQrData(data.request_id);
       setExpiryTime(data.expires_at);
-      setRefreshAfterSeconds(
-        typeof data.refresh_after_seconds === 'number' ? data.refresh_after_seconds : 12
-      );
       setShowConfig(false);
       setShowQRDisplay(true);
       setAttendanceCount(0);
@@ -203,53 +201,9 @@ function FacultyQRGeneration() {
 
   useEffect(() => () => { if (pollingInterval.current) clearInterval(pollingInterval.current); }, []);
 
-  const refreshDynamicQr = async (activeRequestId) => {
-    if (!activeRequestId) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/qr-request/${activeRequestId}/refresh`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to refresh QR token');
-      }
-
-      if (data.qr_token) {
-        setQrData(data.qr_token);
-      }
-      if (data.expires_at) {
-        setExpiryTime(data.expires_at);
-      }
-    } catch (error) {
-      setGenerateError(error.message || 'Failed to refresh QR token');
-    }
-  };
-
-  useEffect(() => {
-    if (!showQRDisplay || !requestId) {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-        refreshIntervalRef.current = null;
-      }
-      return;
-    }
-
-    // Respect server-suggested refresh interval to avoid unnecessary
-    // token rotations from the client side.
-    const intervalMs = Math.max(1000, (refreshAfterSeconds || 12) * 1000);
-    refreshIntervalRef.current = setInterval(() => {
-      refreshDynamicQr(requestId);
-    }, intervalMs);
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-        refreshIntervalRef.current = null;
-      }
-    };
-  }, [showQRDisplay, requestId]);
+  // No automatic client-side refresh: we use the stable `request_id` as
+  // the QR payload and let the server-side `attendance_request.expires_at`
+  // control validity. This avoids confusing frequent rotations.
 
   /* ── regenerate ────────────────────────────────────────────────────── */
   const handleRegenerateQR = () => {
