@@ -57,7 +57,7 @@ const generateQRRequest = async (req, res, next) => {
       duration_minutes: parseInt(duration_minutes)
     });
 
-    res.json(result);
+    res.json(Object.assign({ success: true }, result));
   } catch (error) {
     next(error);
   }
@@ -100,7 +100,11 @@ const validateQRRequest = async (req, res, next) => {
       scan_timestamp
     });
 
-    res.json(result);
+    if (result && result.valid === false) {
+      return res.json(Object.assign({ success: false }, result));
+    }
+
+    return res.json(Object.assign({ success: true }, result));
   } catch (error) {
     next(error);
   }
@@ -124,7 +128,7 @@ const refreshQRToken = async (req, res, next) => {
     }
 
     const result = await AttendanceRequestService.refreshDynamicQrToken(request_id, faculty_id);
-    return res.json(result);
+    return res.json(Object.assign({ success: true }, result));
   } catch (error) {
     next(error);
   }
@@ -153,6 +157,7 @@ const getAttendanceCount = async (req, res, next) => {
     const count = await AttendanceRequestService.getAttendanceCount(request_id);
 
     res.json({
+      success: true,
       request_id,
       count
     });
@@ -207,6 +212,7 @@ const recordAcceptance = async (req, res, next) => {
     const count = await AttendanceRequestService.recordAcceptance(request_id);
 
     res.json({
+      success: true,
       request_id,
       count
     });
