@@ -292,8 +292,9 @@ function ScanQREnhanced() {
         type: 'success',
         text: `QR verified.${distMsg} Wait ${valData.second_check_after_seconds || 12}s, then click Accept.`
       });
-    } catch {
-      setMessage({ type: 'error', text: 'Failed to verify QR code.' });
+    } catch (error) {
+      const errorMessage = error?.message || 'Failed to verify QR code.';
+      setMessage({ type: 'error', text: errorMessage });
       setSessionInfo(null);
     } finally {
       setLoading(false);
