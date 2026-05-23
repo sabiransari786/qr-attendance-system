@@ -72,9 +72,13 @@ function FacultyQRGeneration() {
         });
         let data = [];
         try { data = await res.json(); } catch {}
-        const mine = (data.data || data || []).filter(
-          (s) => s.status === 'active' && s.facultyId === user?.id
-        );
+        const mine = (data.data || data || [])
+          .filter((s) => s.facultyId === user?.id)
+          .sort((a, b) => {
+            const timeA = new Date(b.startTime || 0).getTime();
+            const timeB = new Date(a.startTime || 0).getTime();
+            return timeA - timeB;
+          });
         setSessions(mine);
         if (mine.length > 0) setSelectedSessionId(mine[0].id);
       } catch (err) {
@@ -330,7 +334,7 @@ function FacultyQRGeneration() {
                       <option value="">-- Select a session --</option>
                       {sessions.map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.subject}{s.course?.name ? ` [${s.course.name}]` : ''} - {s.location} (ID: {s.id})
+                          {s.subject}{s.course?.name ? ` [${s.course.name}]` : ''} - {s.location} (ID: {s.id}) [{s.department?.name || 'No Branch'} | {s.status}]
                         </option>
                       ))}
                     </select>
@@ -342,6 +346,9 @@ function FacultyQRGeneration() {
                         )}
                         {selectedSession.department?.name && (
                           <span style={{ color: 'var(--color-text-secondary)' }}><Building size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />{selectedSession.department.name}</span>
+                        )}
+                        {selectedSession.status && (
+                          <span style={{ color: 'var(--color-text-secondary)' }}>Status: <strong>{selectedSession.status}</strong></span>
                         )}
                       </div>
                     )}

@@ -15,6 +15,27 @@ const ModalOverlay = ({ children, onClose }) => (
   </div>
 );
 
+const getDepartmentPriority = (departmentName = '') => {
+  const normalized = departmentName.toLowerCase();
+  if (normalized.includes('computer')) return 0;
+  if (normalized.includes('civil')) return 1;
+  if (normalized.includes('electrical')) return 2;
+  if (normalized.includes('electronics')) return 3;
+  if (normalized.includes('mechanical')) return 4;
+  return 9;
+};
+
+const sortCoursesForDisplay = (left, right) => {
+  const deptPriority = getDepartmentPriority(left.department_name) - getDepartmentPriority(right.department_name);
+  if (deptPriority !== 0) return deptPriority;
+
+  const semesterLeft = Number(left.semester || 0);
+  const semesterRight = Number(right.semester || 0);
+  if (semesterLeft !== semesterRight) return semesterLeft - semesterRight;
+
+  return (left.name || '').localeCompare(right.name || '');
+};
+
 function FacultySessions() {
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
@@ -72,7 +93,7 @@ function FacultySessions() {
         const response = await fetch(`${API_BASE_URL}/faculty/my-courses`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
           const data = await response.json();
-          let list = data.data || [];
+          let list = (data.data || []).slice().sort(sortCoursesForDisplay);
           // If logged-in user is a Computer Engineering faculty, restrict to Diploma subjects
             // Do not restrict: show all department courses so faculty can choose any semester
             setCourses(list);
@@ -166,8 +187,9 @@ function FacultySessions() {
     const now = new Date();
     const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     // Pre-fill the first non-1st-sem course when available so the modal doesn't look locked to semester 1.
-    const firstCourse = courses && courses.length > 0
-      ? courses.find(course => Number(course.semester) > 1) || courses[0]
+    const orderedCourses = (courses || []).slice().sort(sortCoursesForDisplay);
+    const firstCourse = orderedCourses.length > 0
+      ? orderedCourses.find(course => Number(course.semester) > 1) || orderedCourses[0]
       : null;
     setNewSession({ subject: firstCourse ? `${firstCourse.name} (${firstCourse.code})` : '', location: '', startTime: localIso, duration: 60, courseId: firstCourse ? String(firstCourse.id) : '' });
     // Auto-open the dropdown so courses are visible immediately when modal opens
@@ -315,9 +337,19 @@ function FacultySessions() {
                         const matchesSemester = activeSemesterFilter === 'all' || String(c.semester) === activeSemesterFilter;
                         return matchesSearch && matchesSemester;
                       });
-                      if (filtered.length === 0) return <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontSize: '0.88rem' }}>No courses found</div>;
-                      const bySem = filtered.reduce((acc, c) => { const key = c.semester ? `Semester ${c.semester}` : 'General'; if (!acc[key]) acc[key] = []; acc[key].push(c); return acc; }, {});
-                      const semesterOrder = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'General'];
+                      const ordered = filtered.slice().sort(sortCoursesForDisplay);
+                      if (ordered.length === 0) return <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontSize: '0.88rem' }}>No courses found</div>;
+                      const byBranch = ordered.reduce((acc, course) => {
+                        const branchKey = course.department_name || 'General';
+                        if (!acc[branchKey]) acc[branchKey] = [];
+                        acc[branchKey].push(course);
+                        return acc;
+                      }, {});
+                      const branchOrder = Object.keys(byBranch).sort((left, right) => {
+                        const priorityDiff = getDepartmentPriority(left) - getDepartmentPriority(right);
+                        if (priorityDiff !== 0) return priorityDiff;
+                        return left.localeCompare(right);
+                      });
                       return (
                         <div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '0.6rem 0.75rem', borderBottom: '1px solid var(--color-border)', position: 'sticky', top: 0, zIndex: 2, background: 'var(--color-surface)' }}>
@@ -341,20 +373,20 @@ function FacultySessions() {
                               </button>
                             ))}
                           </div>
-                          {semesterOrder.filter(label => bySem[label]).map((semLabel) => (
-                        <div key={semLabel}>
-                          <div style={{ padding: '0.45rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(49,156,181,0.12)', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'sticky', top: 0, zIndex: 1 }}>
-                            <span><Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}</span>
-                            <span style={{ opacity: 0.75 }}>{bySem[semLabel].length} subjects</span>
-                          </div>
-                          {bySem[semLabel].map(c => (
-                            <div key={c.id} onClick={() => { setNewSession(p => ({ ...p, courseId: String(c.id), subject: `${c.name} (${c.code})` })); setCourseSearch(''); setShowCourseDropdown(false); }} style={{ padding: '0.55rem 1rem', cursor: 'pointer', fontSize: '0.9rem', background: newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'var(--color-surface)', borderBottom: '1px solid var(--color-border)', transition: 'background 0.15s', color: 'var(--color-text)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(49,156,181,0.1)'} onMouseLeave={e => e.currentTarget.style.background = newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'var(--color-surface)'}>
-                              <span style={{ fontWeight: 600 }}>{c.name}</span> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>({c.code})</span>
-                              <span style={{ float: 'right', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{c.department_name}</span>
+                          {branchOrder.map((branchName) => (
+                            <div key={branchName}>
+                              <div style={{ padding: '0.45rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(49,156,181,0.12)', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'sticky', top: 0, zIndex: 1 }}>
+                                <span><Building size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{branchName}</span>
+                                <span style={{ opacity: 0.75 }}>{byBranch[branchName].length} subjects</span>
+                              </div>
+                              {byBranch[branchName].map(c => (
+                                <div key={c.id} onClick={() => { setNewSession(p => ({ ...p, courseId: String(c.id), subject: `${c.name} (${c.code})` })); setCourseSearch(''); setShowCourseDropdown(false); }} style={{ padding: '0.55rem 1rem', cursor: 'pointer', fontSize: '0.9rem', background: newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'var(--color-surface)', borderBottom: '1px solid var(--color-border)', transition: 'background 0.15s', color: 'var(--color-text)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(49,156,181,0.1)'} onMouseLeave={e => e.currentTarget.style.background = newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'var(--color-surface)'}>
+                                  <span style={{ fontWeight: 600 }}>{c.name}</span> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>({c.code})</span>
+                                  <span style={{ float: 'right', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Sem {c.semester}</span>
+                                </div>
+                              ))}
                             </div>
                           ))}
-                        </div>
-                      ))}
                         </div>
                       );
                     })()}
