@@ -66,7 +66,7 @@ function ScanQREnhanced() {
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const getSingleLocationReading = () => new Promise((resolve, reject) => {
+  const getSingleLocationReading = (timeoutMs = 1800) => new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported on this device'));
       return;
@@ -91,28 +91,27 @@ function ScanQREnhanced() {
       {
         enableHighAccuracy: true,
         maximumAge: 0,
-        timeout: 12000,
+          timeout: timeoutMs,
       }
     );
   });
 
-  const collectAccurateLocationSamples = async (targetCount = 5) => {
+  const collectAccurateLocationSamples = async (windowMs = 2000) => {
     const samples = [];
-    let attempts = 0;
-    const maxAccuracyMeters = 50;
+    const deadline = Date.now() + windowMs;
 
-    while (samples.length < targetCount && attempts < 20) {
-      attempts += 1;
-      const reading = await getSingleLocationReading();
+    while (Date.now() < deadline) {
+      const remaining = deadline - Date.now();
+      const reading = await getSingleLocationReading(Math.max(500, Math.min(1800, remaining)));
 
       samples.push(reading);
-      if (samples.length < targetCount) {
-        await wait(800);
+      if (Date.now() < deadline) {
+        await wait(120);
       }
     }
 
-    if (samples.length < targetCount) {
-      throw new Error('Could not collect enough location readings. Please stay in a stable area and retry.');
+    if (samples.length === 0) {
+      throw new Error('Could not collect any location readings. Please stay in a stable area and retry.');
     }
 
     return samples;
@@ -222,11 +221,11 @@ function ScanQREnhanced() {
 
     setLoading(true);
     setPrecheckToken('');
-    setMessage({ type: 'info', text: 'Collecting accurate location samples...' });
+    setMessage({ type: 'info', text: 'Collecting location samples for 2 seconds...' });
 
     try {
       const token = sessionStorage.getItem('authToken');
-      const samples = await collectAccurateLocationSamples(5);
+      const samples = await collectAccurateLocationSamples(2000);
       setLocationVerified(true);
       const device = verifyDevice();
 
@@ -299,7 +298,7 @@ function ScanQREnhanced() {
     if (!sessionInfo || !precheckToken) return;
 
     setLoading(true);
-    setMessage({ type: 'info', text: 'Running second location verification...' });
+    setMessage({ type: 'info', text: 'Running second 2-second location verification...' });
 
     try {
       const token = sessionStorage.getItem('authToken');
@@ -312,7 +311,7 @@ function ScanQREnhanced() {
         }
       }
 
-      const secondSamples = await collectAccurateLocationSamples(5);
+      const secondSamples = await collectAccurateLocationSamples(2000);
 
       const res = await fetch(`${API_BASE_URL}/attendance/mark`, {
         method: 'POST',

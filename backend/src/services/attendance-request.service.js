@@ -12,8 +12,8 @@ const MAX_DISTANCE_METERS = 120;
 const MAX_ACCURACY_METERS = 50;
 const SECOND_CHECK_DELAY_SECONDS = 12;
 const PRECHECK_TTL_SECONDS = 120;
-const LOCATION_SAMPLE_COUNT = 5;
 const MIN_PASSING_SAMPLES = 1;
+const LOCATION_SAMPLE_WINDOW_SECONDS = 2;
 const PRESTART_GRACE_MINUTES = Number(process.env.SESSION_PRESTART_GRACE_MINUTES) || 10;
 
 class ValidationError extends Error {
@@ -117,11 +117,11 @@ class AttendanceRequestService {
   }
 
   static normalizeLocationSamples(location_samples) {
-    if (!Array.isArray(location_samples) || location_samples.length < LOCATION_SAMPLE_COUNT) {
-      throw new ValidationError('Provide at least 5 location readings', 400, 'INSUFFICIENT_LOCATION_READINGS');
+    if (!Array.isArray(location_samples) || location_samples.length < 1) {
+      throw new ValidationError('Provide at least 1 location reading', 400, 'INSUFFICIENT_LOCATION_READINGS');
     }
 
-    return location_samples.slice(0, LOCATION_SAMPLE_COUNT).map((sample, index) => {
+    return location_samples.map((sample, index) => {
       const latitude = Number(sample?.latitude);
       const longitude = Number(sample?.longitude);
       const accuracy = Number(sample?.accuracy);
@@ -474,7 +474,7 @@ class AttendanceRequestService {
         radius_meters,
         attendance_value,
         security: {
-          location_sample_count: LOCATION_SAMPLE_COUNT,
+          location_sample_window_seconds: LOCATION_SAMPLE_WINDOW_SECONDS,
           max_accuracy_meters: MAX_ACCURACY_METERS,
           max_distance_meters: MAX_DISTANCE_METERS,
           second_check_delay_seconds: SECOND_CHECK_DELAY_SECONDS
