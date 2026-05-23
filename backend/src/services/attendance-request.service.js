@@ -69,6 +69,33 @@ class AttendanceRequestService {
       .slice(0, 22);
   }
 
+  /**
+   * Parse a QR token (compact or signed) and return normalized info.
+   * Returns { requestId, tokenTimestamp, isLegacy, decoded }
+   */
+  static parseQrToken(token) {
+    const normalizedToken = String(token || '').trim();
+    if (!normalizedToken) {
+      throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
+    }
+
+    // Compact / signed payloads
+    if (normalizedToken.includes('.')) {
+      const decoded = this.verifySignedPayload(normalizedToken);
+      if (decoded.type !== 'qr' || !decoded.request_id || !decoded.ts) {
+        throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
+      }
+      return { requestId: decoded.request_id, tokenTimestamp: Number(decoded.ts), isLegacy: false, decoded };
+    }
+
+    // UUID-like legacy token
+    if (this.isUuidLike(normalizedToken)) {
+      return { requestId: normalizedToken, tokenTimestamp: null, isLegacy: true, decoded: null };
+    }
+
+    throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
+  }
+
   static verifySignedPayload(token) {
     if (!token || typeof token !== 'string' || !token.includes('.')) {
       throw new ValidationError('Invalid QR token format', 400, 'INVALID_QR_TOKEN');
@@ -398,34 +425,17 @@ class AttendanceRequestService {
    * Validate QR request
    */
   static async validateQRRequest({ qr_token, location_samples, student_id, device_id, scan_timestamp }) {
-    const normalizedToken = String(qr_token || '').trim();
-    let requestId = null;
-    let tokenTimestamp = null;
-    let isLegacyQr = false;
+    const parsed = this.parseQrToken(qr_token);
+    const { requestId, tokenTimestamp, isLegacy } = parsed;
 
-    if (normalizedToken.includes('.')) {
-      const decoded = this.verifySignedPayload(normalizedToken);
-      if (decoded.type !== 'qr' || !decoded.request_id || !decoded.ts) {
-        throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
-      }
-      requestId = decoded.request_id;
-      tokenTimestamp = Number(decoded.ts);
-    } else if (this.isUuidLike(normalizedToken)) {
-      // Backward compatibility for previously generated static QR values.
-      requestId = normalizedToken;
-      isLegacyQr = true;
-    } else {
-      throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
+    if (!isLegacy && (typeof tokenTimestamp !== 'number' || Number.isNaN(tokenTimestamp))) {
+      return { valid: false, reason: 'Invalid QR token timestamp', reason_code: 'INVALID_QR_TOKEN' };
     }
 
-    if (!isLegacyQr) {
+    if (!isLegacy) {
       const ageMs = Date.now() - tokenTimestamp;
       if (ageMs < 0 || ageMs > MAX_QR_SCAN_WINDOW_SECONDS * 1000) {
-        return {
-          valid: false,
-          reason: 'QR code has expired. Ask faculty to refresh.',
-          reason_code: 'QR_EXPIRED'
-        };
+        return { valid: false, reason: 'QR code has expired. Ask faculty to refresh.', reason_code: 'QR_EXPIRED' };
       }
     }
 
