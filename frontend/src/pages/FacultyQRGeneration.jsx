@@ -54,6 +54,7 @@ function FacultyQRGeneration() {
   const [showQRDisplay, setShowQRDisplay] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
   const refreshIntervalRef = useRef(null);
+  const [refreshAfterSeconds, setRefreshAfterSeconds] = useState(12);
 
   /* ── auth guard ────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -169,6 +170,9 @@ function FacultyQRGeneration() {
       setRequestId(data.request_id);
       setQrData(data.qr_token || data.request_id);
       setExpiryTime(data.expires_at);
+      setRefreshAfterSeconds(
+        typeof data.refresh_after_seconds === 'number' ? data.refresh_after_seconds : 12
+      );
       setShowConfig(false);
       setShowQRDisplay(true);
       setAttendanceCount(0);
@@ -232,9 +236,12 @@ function FacultyQRGeneration() {
       return;
     }
 
+    // Respect server-suggested refresh interval to avoid unnecessary
+    // token rotations from the client side.
+    const intervalMs = Math.max(1000, (refreshAfterSeconds || 12) * 1000);
     refreshIntervalRef.current = setInterval(() => {
       refreshDynamicQr(requestId);
-    }, 12000);
+    }, intervalMs);
 
     return () => {
       if (refreshIntervalRef.current) {
