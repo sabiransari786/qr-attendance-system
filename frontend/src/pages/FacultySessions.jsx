@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, MapPin, Clock, Circle, Pencil, Trash2, Lock, XCircle, Search, X, CheckCircle, Calendar, Loader, Plus, ArrowLeft } from 'lucide-react';
+import { BookOpen, MapPin, Clock, Circle, Pencil, Trash2, Lock, XCircle, Search, X, CheckCircle, Calendar, Loader, Plus, ArrowLeft, Building } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { API_BASE_URL } from '../utils/constants';
 import { fadeInUp, staggerContainer } from '../animations/animationConfig';
