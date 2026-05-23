@@ -164,8 +164,10 @@ function FacultySessions() {
   const handleOpenCreate = () => {
     const now = new Date();
     const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    // Pre-fill first available course (if any) so the modal shows subjects immediately
-    const firstCourse = courses && courses.length > 0 ? courses[0] : null;
+    // Pre-fill the first non-1st-sem course when available so the modal doesn't look locked to semester 1.
+    const firstCourse = courses && courses.length > 0
+      ? courses.find(course => Number(course.semester) > 1) || courses[0]
+      : null;
     setNewSession({ subject: firstCourse ? `${firstCourse.name} (${firstCourse.code})` : '', location: '', startTime: localIso, duration: 60, courseId: firstCourse ? String(firstCourse.id) : '' });
     // Auto-open the dropdown so courses are visible immediately when modal opens
     setCourseSearch(''); setShowCourseDropdown(true); setCreateError(null); setShowCreateModal(true);
@@ -310,10 +312,14 @@ function FacultySessions() {
                       const filtered = courses.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.department_name || '').toLowerCase().includes(q) || (c.semester ? `sem ${c.semester}`.includes(q) || `semester ${c.semester}`.includes(q) : false));
                       if (filtered.length === 0) return <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)', fontSize: '0.88rem' }}>No courses found</div>;
                       const bySem = filtered.reduce((acc, c) => { const key = c.semester ? `Semester ${c.semester}` : 'General'; if (!acc[key]) acc[key] = []; acc[key].push(c); return acc; }, {});
-                      return Object.entries(bySem).map(([semLabel, items]) => (
+                      const semesterOrder = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'General'];
+                      return semesterOrder.filter(label => bySem[label]).map((semLabel) => (
                         <div key={semLabel}>
-                          <div style={{ padding: '0.4rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(49,156,181,0.12)', letterSpacing: '0.05em', textTransform: 'uppercase' }}><Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}</div>
-                          {items.map(c => (
+                          <div style={{ padding: '0.45rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-primary)', background: 'rgba(49,156,181,0.12)', letterSpacing: '0.05em', textTransform: 'uppercase', position: 'sticky', top: 0, zIndex: 1 }}>
+                            <span><Calendar size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />{semLabel}</span>
+                            <span style={{ opacity: 0.75 }}>{bySem[semLabel].length} subjects</span>
+                          </div>
+                          {bySem[semLabel].map(c => (
                             <div key={c.id} onClick={() => { setNewSession(p => ({ ...p, courseId: String(c.id), subject: `${c.name} (${c.code})` })); setCourseSearch(''); setShowCourseDropdown(false); }} style={{ padding: '0.55rem 1rem', cursor: 'pointer', fontSize: '0.9rem', background: newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'var(--color-surface)', borderBottom: '1px solid var(--color-border)', transition: 'background 0.15s', color: 'var(--color-text)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(49,156,181,0.1)'} onMouseLeave={e => e.currentTarget.style.background = newSession.courseId === String(c.id) ? 'rgba(49,156,181,0.15)' : 'var(--color-surface)'}>
                               <span style={{ fontWeight: 600 }}>{c.name}</span> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>({c.code})</span>
                               <span style={{ float: 'right', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{c.department_name}</span>
