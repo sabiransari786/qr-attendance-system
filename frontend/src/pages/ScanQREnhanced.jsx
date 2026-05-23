@@ -66,6 +66,36 @@ function ScanQREnhanced() {
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  const cacheLocationSample = (sample) => {
+    try {
+      localStorage.setItem('lastGoodLocationSample', JSON.stringify(sample));
+    } catch {
+      // best effort only
+    }
+  };
+
+  const readCachedLocationSample = () => {
+    try {
+      const raw = localStorage.getItem('lastGoodLocationSample');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed) return null;
+
+      const latitude = Number(parsed.latitude);
+      const longitude = Number(parsed.longitude);
+      const accuracy = Number(parsed.accuracy);
+      const timestamp = Number(parsed.timestamp);
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(accuracy) || !Number.isFinite(timestamp)) {
+        return null;
+      }
+
+      return { latitude, longitude, accuracy, timestamp };
+    } catch {
+      return null;
+    }
+  };
+
   const requestLocation = (options) => new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       const err = new Error('Geolocation is not supported on this device');
@@ -76,12 +106,14 @@ function ScanQREnhanced() {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        resolve({
+        const sample = {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
           timestamp: Date.now(),
-        });
+        };
+        cacheLocationSample(sample);
+        resolve(sample);
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
@@ -144,6 +176,11 @@ function ScanQREnhanced() {
     }
 
     if (samples.length === 0) {
+      const cachedSample = readCachedLocationSample();
+      if (cachedSample) {
+        return [cachedSample];
+      }
+
       const message = lastError?.message
         || 'Could not collect any location readings. Please enable GPS and try again.';
       throw new Error(message);
