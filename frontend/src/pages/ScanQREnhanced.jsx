@@ -96,20 +96,14 @@ function ScanQREnhanced() {
     );
   });
 
-  const collectAccurateLocationSamples = async (targetCount = 3) => {
+  const collectAccurateLocationSamples = async (targetCount = 5) => {
     const samples = [];
     let attempts = 0;
     const maxAccuracyMeters = 50;
 
-    while (samples.length < targetCount && attempts < 15) {
+    while (samples.length < targetCount && attempts < 20) {
       attempts += 1;
       const reading = await getSingleLocationReading();
-
-      if (reading.accuracy > maxAccuracyMeters) {
-        setMessage({ type: 'info', text: `Fetching accurate location (<= ${maxAccuracyMeters}m), please wait...` });
-        await wait(1200);
-        continue;
-      }
 
       samples.push(reading);
       if (samples.length < targetCount) {
@@ -118,7 +112,7 @@ function ScanQREnhanced() {
     }
 
     if (samples.length < targetCount) {
-      throw new Error(`Could not get accurate location (<= ${maxAccuracyMeters}m). Please stay in open area and retry.`);
+      throw new Error('Could not collect enough location readings. Please stay in a stable area and retry.');
     }
 
     return samples;
@@ -232,7 +226,7 @@ function ScanQREnhanced() {
 
     try {
       const token = sessionStorage.getItem('authToken');
-      const samples = await collectAccurateLocationSamples(3);
+      const samples = await collectAccurateLocationSamples(5);
       setLocationVerified(true);
       const device = verifyDevice();
 
@@ -318,7 +312,7 @@ function ScanQREnhanced() {
         }
       }
 
-      const secondSamples = await collectAccurateLocationSamples(3);
+      const secondSamples = await collectAccurateLocationSamples(5);
 
       const res = await fetch(`${API_BASE_URL}/attendance/mark`, {
         method: 'POST',

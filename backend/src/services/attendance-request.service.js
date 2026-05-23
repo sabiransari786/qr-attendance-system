@@ -12,8 +12,8 @@ const MAX_DISTANCE_METERS = 120;
 const MAX_ACCURACY_METERS = 50;
 const SECOND_CHECK_DELAY_SECONDS = 12;
 const PRECHECK_TTL_SECONDS = 120;
-const LOCATION_SAMPLE_COUNT = 3;
-const MIN_PASSING_SAMPLES = 2;
+const LOCATION_SAMPLE_COUNT = 5;
+const MIN_PASSING_SAMPLES = 1;
 const PRESTART_GRACE_MINUTES = Number(process.env.SESSION_PRESTART_GRACE_MINUTES) || 10;
 
 class ValidationError extends Error {
@@ -118,7 +118,7 @@ class AttendanceRequestService {
 
   static normalizeLocationSamples(location_samples) {
     if (!Array.isArray(location_samples) || location_samples.length < LOCATION_SAMPLE_COUNT) {
-      throw new ValidationError('Provide at least 3 location readings', 400, 'INSUFFICIENT_LOCATION_READINGS');
+      throw new ValidationError('Provide at least 5 location readings', 400, 'INSUFFICIENT_LOCATION_READINGS');
     }
 
     return location_samples.slice(0, LOCATION_SAMPLE_COUNT).map((sample, index) => {
@@ -137,6 +137,15 @@ class AttendanceRequestService {
     });
   }
 
+  static median(values) {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+      return (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+    return sorted[mid];
+  }
+
   static assessLocation(request, location_samples) {
     const samples = this.normalizeLocationSamples(location_samples);
 
@@ -144,10 +153,19 @@ class AttendanceRequestService {
       this.calculateDistance(request.latitude, request.longitude, sample.latitude, sample.longitude)
     );
     const accuracies = samples.map((sample) => sample.accuracy);
+    const latitudes = samples.map((sample) => sample.latitude);
+    const longitudes = samples.map((sample) => sample.longitude);
+    const timestamps = samples.map((sample) => sample.timestamp);
+
+    const medianLatitude = this.median(latitudes);
+    const medianLongitude = this.median(longitudes);
+    const medianAccuracy = this.median(accuracies);
+    const medianTimestamp = Math.round(this.median(timestamps));
 
     const avgDistance = distances.reduce((sum, value) => sum + value, 0) / distances.length;
     const avgAccuracy = accuracies.reduce((sum, value) => sum + value, 0) / accuracies.length;
     const maxAccuracy = Math.max(...accuracies);
+    const medianDistance = this.calculateDistance(request.latitude, request.longitude, medianLatitude, medianLongitude);
     // Per-sample pass checks
     const perSamplePass = samples.map((s, idx) => {
       const accOk = accuracies[idx] <= MAX_ACCURACY_METERS;
@@ -156,19 +174,24 @@ class AttendanceRequestService {
     });
 
     const passCount = perSamplePass.filter((p) => p.pass).length;
-    const passesDistance = avgDistance <= MAX_DISTANCE_METERS;
+    const passesDistance = medianDistance <= MAX_DISTANCE_METERS;
 
-    // Accept if at least MIN_PASSING_SAMPLES samples pass both accuracy and distance.
-    const passesAccuracy = passCount >= MIN_PASSING_SAMPLES;
+    // Use the median reading so one or two noisy GPS samples do not reject the scan.
+    const passesAccuracy = medianAccuracy <= MAX_ACCURACY_METERS || passCount >= MIN_PASSING_SAMPLES;
 
     return {
       samples,
       distances,
       accuracies,
+      median_latitude: Number(medianLatitude.toFixed(6)),
+      median_longitude: Number(medianLongitude.toFixed(6)),
+      median_timestamp: medianTimestamp,
       perSamplePass,
       pass_count: passCount,
       average_distance_meters: Number(avgDistance.toFixed(2)),
       average_accuracy_meters: Number(avgAccuracy.toFixed(2)),
+      median_distance_meters: Number(medianDistance.toFixed(2)),
+      median_accuracy_meters: Number(medianAccuracy.toFixed(2)),
       max_accuracy_meters: Number(maxAccuracy.toFixed(2)),
       passes_accuracy: passesAccuracy,
       passes_distance: passesDistance,
