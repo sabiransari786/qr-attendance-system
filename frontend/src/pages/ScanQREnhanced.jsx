@@ -66,9 +66,11 @@ function ScanQREnhanced() {
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const getSingleLocationReading = (timeoutMs = 1800) => new Promise((resolve, reject) => {
+  const requestLocation = (options) => new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      reject(new Error('Geolocation is not supported on this device'));
+      const err = new Error('Geolocation is not supported on this device');
+      err.code = 'UNSUPPORTED';
+      reject(err);
       return;
     }
 
@@ -83,35 +85,64 @@ function ScanQREnhanced() {
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
-          reject(new Error('Location permission denied. Please allow location access.'));
+          const permErr = new Error('Location permission denied. Please allow location access.');
+          permErr.code = 'PERMISSION_DENIED';
+          reject(permErr);
           return;
         }
-        reject(new Error('Unable to fetch location. Please try again.'));
+        const geoErr = new Error('Unable to fetch location. Please try again.');
+        geoErr.code = err.code === err.TIMEOUT ? 'TIMEOUT' : 'UNAVAILABLE';
+        reject(geoErr);
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-          timeout: timeoutMs,
-      }
+      options
     );
   });
+
+  const getSingleLocationReading = async (timeoutMs = 1800) => {
+    try {
+      return await requestLocation({
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: timeoutMs,
+      });
+    } catch (error) {
+      if (error?.code === 'PERMISSION_DENIED' || error?.code === 'UNSUPPORTED') {
+        throw error;
+      }
+
+      return requestLocation({
+        enableHighAccuracy: false,
+        maximumAge: 5000,
+        timeout: Math.max(800, Math.min(1500, timeoutMs)),
+      });
+    }
+  };
 
   const collectAccurateLocationSamples = async (windowMs = 2000) => {
     const samples = [];
     const deadline = Date.now() + windowMs;
+    let lastError = null;
 
     while (Date.now() < deadline) {
       const remaining = deadline - Date.now();
-      const reading = await getSingleLocationReading(Math.max(500, Math.min(1800, remaining)));
-
-      samples.push(reading);
+      try {
+        const reading = await getSingleLocationReading(Math.max(500, Math.min(1800, remaining)));
+        samples.push(reading);
+      } catch (error) {
+        lastError = error;
+        if (error?.code === 'PERMISSION_DENIED') {
+          throw error;
+        }
+      }
       if (Date.now() < deadline) {
         await wait(120);
       }
     }
 
     if (samples.length === 0) {
-      throw new Error('Could not collect any location readings. Please stay in a stable area and retry.');
+      const message = lastError?.message
+        || 'Could not collect any location readings. Please enable GPS and try again.';
+      throw new Error(message);
     }
 
     return samples;
@@ -221,7 +252,7 @@ function ScanQREnhanced() {
 
     setLoading(true);
     setPrecheckToken('');
-    setMessage({ type: 'info', text: 'Collecting location samples for 2 seconds...' });
+    setMessage({ type: 'info', text: 'Validating QR code...' });
 
     try {
       const token = sessionStorage.getItem('authToken');
@@ -298,7 +329,7 @@ function ScanQREnhanced() {
     if (!sessionInfo || !precheckToken) return;
 
     setLoading(true);
-    setMessage({ type: 'info', text: 'Running second 2-second location verification...' });
+    setMessage({ type: 'info', text: 'Validating attendance...' });
 
     try {
       const token = sessionStorage.getItem('authToken');
@@ -343,8 +374,9 @@ function ScanQREnhanced() {
       setSessionInfo(null);
       setPrecheckToken('');
       setTimeout(() => navigate('/student-dashboard'), 2000);
-    } catch {
-      setMessage({ type: 'error', text: 'Failed to submit attendance.' });
+    } catch (error) {
+      const errorMessage = error?.message || 'Failed to submit attendance.';
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
     }

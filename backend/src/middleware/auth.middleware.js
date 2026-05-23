@@ -15,6 +15,91 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { pool } = require('../config');
+
+const enrichAuthenticatedUser = async (decoded) => {
+  if (!decoded) {
+    return decoded;
+  }
+
+  const resolvedId = decoded.id ?? decoded.userId ?? decoded.user_id ?? decoded.approvedUserId ?? decoded.approved_user_id;
+  if (resolvedId === undefined || resolvedId === null) {
+    const fallbackEmail = decoded.email ? String(decoded.email).trim().toLowerCase() : '';
+    if (!fallbackEmail) {
+      return decoded;
+    }
+
+    const [emailUsers] = await pool.query(
+      `SELECT id, name, email, role, is_active, department, semester, section, student_id, teacher_id
+       FROM users
+       WHERE LOWER(email) = ?
+       LIMIT 1`,
+      [fallbackEmail]
+    );
+
+    if (emailUsers && emailUsers.length > 0) {
+      return { ...decoded, ...emailUsers[0], id: emailUsers[0].id };
+    }
+
+    return decoded;
+  }
+
+  const userId = Number(resolvedId);
+  const isNumericUserId = Number.isFinite(userId);
+
+  if (isNumericUserId) {
+    const [users] = await pool.query(
+      `SELECT id, name, email, role, is_active, department, semester, section, student_id, teacher_id
+       FROM users
+       WHERE id = ?
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (users && users.length > 0) {
+      return { ...decoded, ...users[0], id: users[0].id };
+    }
+
+    const [approvedRows] = await pool.query(
+      `SELECT id, registered_user_id
+       FROM approved_users
+       WHERE id = ? OR registered_user_id = ?
+       LIMIT 1`,
+      [userId, userId]
+    );
+
+    if (approvedRows && approvedRows.length > 0 && approvedRows[0].registered_user_id) {
+      const [linkedUsers] = await pool.query(
+        `SELECT id, name, email, role, is_active, department, semester, section, student_id, teacher_id
+         FROM users
+         WHERE id = ?
+         LIMIT 1`,
+        [approvedRows[0].registered_user_id]
+      );
+
+      if (linkedUsers && linkedUsers.length > 0) {
+        return { ...decoded, ...linkedUsers[0], id: linkedUsers[0].id };
+      }
+    }
+  }
+
+  const fallbackEmail = decoded.email ? String(decoded.email).trim().toLowerCase() : '';
+  if (fallbackEmail) {
+    const [emailUsers] = await pool.query(
+      `SELECT id, name, email, role, is_active, department, semester, section, student_id, teacher_id
+       FROM users
+       WHERE LOWER(email) = ?
+       LIMIT 1`,
+      [fallbackEmail]
+    );
+
+    if (emailUsers && emailUsers.length > 0) {
+      return { ...decoded, ...emailUsers[0], id: emailUsers[0].id };
+    }
+  }
+
+  return decoded;
+};
 
 /**
  * Express Middleware: JWT Authentication
@@ -28,7 +113,7 @@ const jwt = require('jsonwebtoken');
  * sync mode mein use kar rahe hain. Agar aap chaho to isse promisify karke
  * async/await bhi use kar sakte ho, lekin yahan simple aur reliable implementation rakha hai.
  */
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   try {
     // =========================================================================
     // 1. Authorization Header Validate Karna
@@ -188,7 +273,7 @@ const authMiddleware = (req, res, next) => {
     //  - Yahan hum assume kar rahe hain ki token ka payload safe hai kyunki signature verify ho chuka hai.
     //  - Phir bhi sensitive data (password, etc.) token mein store nahi karna chahiye.
     //
-    req.user = decoded;
+    req.user = await enrichAuthenticatedUser(decoded);
 
     // =========================================================================
     // 6. Next Middleware / Controller Ko Call Karna
