@@ -98,27 +98,31 @@ function ScanQREnhanced() {
     );
   });
 
-  const getSingleLocationReading = async (timeoutMs = 1800) => {
-    try {
-      return await requestLocation({
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: timeoutMs,
-      });
-    } catch (error) {
-      if (error?.code === 'PERMISSION_DENIED' || error?.code === 'UNSUPPORTED') {
-        throw error;
-      }
+  const getSingleLocationReading = async (timeoutMs = 2400) => {
+    const attempts = [
+      { enableHighAccuracy: true, maximumAge: 0, timeout: timeoutMs },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: Math.max(2000, Math.floor(timeoutMs * 1.2)) },
+      { enableHighAccuracy: false, maximumAge: 10000, timeout: Math.max(1800, Math.floor(timeoutMs * 0.85)) },
+    ];
 
-      return requestLocation({
-        enableHighAccuracy: false,
-        maximumAge: 5000,
-        timeout: Math.max(800, Math.min(1500, timeoutMs)),
-      });
+    let lastError = null;
+
+    for (const options of attempts) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        return await requestLocation(options);
+      } catch (error) {
+        lastError = error;
+        if (error?.code === 'PERMISSION_DENIED' || error?.code === 'UNSUPPORTED') {
+          throw error;
+        }
+      }
     }
+
+    throw lastError || new Error('Unable to fetch location. Please try again.');
   };
 
-  const collectAccurateLocationSamples = async (windowMs = 2000) => {
+  const collectAccurateLocationSamples = async (windowMs = 2800) => {
     const samples = [];
     const deadline = Date.now() + windowMs;
     let lastError = null;
@@ -126,7 +130,7 @@ function ScanQREnhanced() {
     while (Date.now() < deadline) {
       const remaining = deadline - Date.now();
       try {
-        const reading = await getSingleLocationReading(Math.max(500, Math.min(1800, remaining)));
+        const reading = await getSingleLocationReading(Math.max(1200, Math.min(2600, remaining)));
         samples.push(reading);
       } catch (error) {
         lastError = error;
@@ -135,7 +139,7 @@ function ScanQREnhanced() {
         }
       }
       if (Date.now() < deadline) {
-        await wait(120);
+        await wait(80);
       }
     }
 
@@ -308,13 +312,9 @@ function ScanQREnhanced() {
       setLocationVerified(true);
       setDeviceVerified(true);
 
-      const distMsg = valData.metrics?.average_distance_meters
-        ? ` Avg distance: ${valData.metrics.average_distance_meters}m.`
-        : '';
-
       setMessage({
         type: 'success',
-        text: `QR verified.${distMsg} Tap Accept to mark attendance.`
+        text: 'QR verified. Tap Accept to mark attendance.'
       });
     } catch (error) {
       const errorMessage = error?.message || 'Failed to verify QR code.';
