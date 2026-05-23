@@ -212,11 +212,23 @@ class AttendanceRequestService {
     const end = session.end_time ? new Date(session.end_time) : null;
 
     if (now < start) {
-      throw new ValidationError('Attendance is not open yet for this session', 400, 'SESSION_NOT_STARTED');
+      const serverTime = now.toISOString();
+      const sessionStart = start.toISOString();
+      throw new ValidationError(
+        `Attendance is not open yet for this session (server_time=${serverTime}, session_start=${sessionStart})`,
+        400,
+        'SESSION_NOT_STARTED'
+      );
     }
 
     if (end && now > end) {
-      throw new ValidationError('Session time is over. Attendance is closed.', 400, 'SESSION_ENDED');
+      const serverTime = now.toISOString();
+      const sessionEnd = end.toISOString();
+      throw new ValidationError(
+        `Session time is over. Attendance is closed. (server_time=${serverTime}, session_end=${sessionEnd})`,
+        400,
+        'SESSION_ENDED'
+      );
     }
 
     return session;
