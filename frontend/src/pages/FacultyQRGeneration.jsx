@@ -53,6 +53,8 @@ function FacultyQRGeneration() {
   const [showConfig, setShowConfig] = useState(true);
   const [showQRDisplay, setShowQRDisplay] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
+  const [openNowLoading, setOpenNowLoading] = useState(false);
+  const [openNowMessage, setOpenNowMessage] = useState(null);
   const refreshIntervalRef = useRef(null);
 
   /* ── auth guard ────────────────────────────────────────────────────── */
@@ -213,6 +215,32 @@ function FacultyQRGeneration() {
     setShowConfig(true);
     setShowQRDisplay(false);
     setTimeRemaining(null);
+  };
+
+  /* ── open session now (faculty) ───────────────────────────────────── */
+  const handleOpenNow = async () => {
+    if (!selectedSessionId) return;
+    setOpenNowMessage(null);
+    setOpenNowLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/session/${selectedSessionId}/open`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      let data = {};
+      try { data = await res.json(); } catch {}
+      if (!res.ok) throw new Error(data.message || 'Failed to open session');
+      setOpenNowMessage('Session opened — students can scan now');
+      // refresh sessions list and selected session info
+      const sres = await fetch(`${API_BASE_URL}/session`, { headers: { Authorization: `Bearer ${token}` } });
+      try { const sdata = await sres.json(); if (sres.ok) setSessions((sdata.data || sdata || []).filter((s) => s.status === 'active' && s.facultyId === user?.id)); } catch {}
+      setTimeout(() => setOpenNowMessage(null), 4000);
+    } catch (err) {
+      setOpenNowMessage(err.message || 'Failed to open session');
+      setTimeout(() => setOpenNowMessage(null), 5000);
+    } finally {
+      setOpenNowLoading(false);
+    }
   };
 
   /* ── helpers ────────────────────────────────────────────────────────── */
@@ -562,13 +590,30 @@ function FacultyQRGeneration() {
             )}
 
             {/* Regenerate */}
-            <button
-              className="ap__btn ap__btn--outline"
-              onClick={handleRegenerateQR}
-              style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', gap: 8 }}
-            >
-              <RefreshCw size={18} /> Regenerate QR Code
-            </button>
+            <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
+              <button
+                className="ap__btn ap__btn--outline"
+                onClick={handleOpenNow}
+                disabled={openNowLoading || !selectedSessionId}
+                style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', gap: 8 }}
+              >
+                {openNowLoading ? 'Opening…' : 'Open Now'}
+              </button>
+
+              {openNowMessage && (
+                <div style={{ padding: '0.6rem 0.9rem', color: '#065f46', background: 'rgba(16,185,129,0.08)', borderRadius: 8, border: '1px solid rgba(16,185,129,0.12)', fontSize: '0.92rem' }}>
+                  {openNowMessage}
+                </div>
+              )}
+
+              <button
+                className="ap__btn ap__btn--outline"
+                onClick={handleRegenerateQR}
+                style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', gap: 8 }}
+              >
+                <RefreshCw size={18} /> Regenerate QR Code
+              </button>
+            </div>
           </motion.div>
         )}
       </div>
