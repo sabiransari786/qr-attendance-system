@@ -99,13 +99,14 @@ function ScanQREnhanced() {
   const collectAccurateLocationSamples = async (targetCount = 3) => {
     const samples = [];
     let attempts = 0;
+    const maxAccuracyMeters = 50;
 
     while (samples.length < targetCount && attempts < 15) {
       attempts += 1;
       const reading = await getSingleLocationReading();
 
-      if (reading.accuracy > 30) {
-        setMessage({ type: 'info', text: 'Fetching accurate location, please wait...' });
+      if (reading.accuracy > maxAccuracyMeters) {
+        setMessage({ type: 'info', text: `Fetching accurate location (<= ${maxAccuracyMeters}m), please wait...` });
         await wait(1200);
         continue;
       }
@@ -117,7 +118,7 @@ function ScanQREnhanced() {
     }
 
     if (samples.length < targetCount) {
-      throw new Error('Could not get accurate location (<= 30m). Please stay in open area and retry.');
+      throw new Error(`Could not get accurate location (<= ${maxAccuracyMeters}m). Please stay in open area and retry.`);
     }
 
     return samples;
