@@ -110,11 +110,28 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
        ORDER BY c.semester, d.name, c.name`;
       params = [facultyId];
     }
-    const [courses] = await pool.query(coursesQuery, params);
+    let [courses] = await pool.query(coursesQuery, params);
+
+    if (!courses || courses.length === 0) {
+      [courses] = await pool.query(
+        `SELECT 
+            c.id,
+            c.name,
+            c.code,
+            c.semester,
+            c.department_id,
+            d.name AS department_name,
+            d.code AS department_code
+         FROM courses c
+         LEFT JOIN departments d ON c.department_id = d.id
+         ORDER BY d.name, c.semester, c.name`
+      );
+    }
+
     return res.status(200).json({
       success: true,
       data: courses,
-      message: `${courses.length} courses found for you.`
+      message: `${courses.length} courses found.`
     });
   } catch (error) {
     console.error('Error fetching faculty courses:', error);
