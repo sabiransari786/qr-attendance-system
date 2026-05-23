@@ -22,7 +22,7 @@ const AttendanceRequestService = require('../services/attendance-request.service
  * 
  * Returns: {
  *   success: true
- *   request_id: UUID (encode in QR)
+ *   request_id: UUID (encode this plain value in the QR)
  *   expires_at: timestamp
  *   duration_minutes: number
  * }
@@ -122,7 +122,7 @@ const validateQRRequest = async (req, res, next) => {
 };
 
 /**
- * Refresh dynamic QR token for active request
+ * Refresh active QR request metadata
  *
  * POST /api/qr-request/:request_id/refresh
  */
@@ -200,7 +200,7 @@ const getFacultyRequests = async (req, res, next) => {
 };
 
 /**
- * Record Acceptance
+ * Record Acceptance for live count
  * 
  * POST /api/qr-request/:request_id/accept
  * 

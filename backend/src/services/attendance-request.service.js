@@ -29,10 +29,6 @@ class ValidationError extends Error {
 }
 
 class AttendanceRequestService {
-  static getSigningSecret() {
-    return process.env.ATTENDANCE_QR_SECRET || process.env.JWT_SECRET || 'qr-attendance-fallback-secret';
-  }
-
   static base64UrlEncode(input) {
     const b64 = Buffer.from(input).toString('base64');
     return b64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -58,21 +54,9 @@ class AttendanceRequestService {
     return `${encodedPayload}.${signature}`;
   }
 
-  static signCompactQrParts(request_id, ts, nonce) {
-    const payload = `${request_id}|${ts}|${nonce}`;
-    // Short signature for compact QR while still HMAC-protected.
-    return crypto
-      .createHmac('sha256', this.getSigningSecret())
-      .update(payload)
-      .digest('base64')
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .slice(0, 22);
-  }
-
   /**
-   * Parse a QR token (compact or signed) and return normalized info.
+   * Parse a QR token and return normalized info.
+   * Frontend now sends the plain `request_id` encoded in the QR.
    * Returns { requestId, tokenTimestamp, isLegacy, decoded }
    */
   static parseQrToken(token) {
@@ -81,18 +65,21 @@ class AttendanceRequestService {
       throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
     }
 
-    // Compact / signed payloads
-    if (normalizedToken.includes('.')) {
-      const decoded = this.verifySignedPayload(normalizedToken);
-      if (decoded.type !== 'qr' || !decoded.request_id || !decoded.ts) {
-        throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
+    if ((normalizedToken.startsWith('{') && normalizedToken.endsWith('}')) || (normalizedToken.startsWith('"') && normalizedToken.endsWith('"'))) {
+      try {
+        const parsed = JSON.parse(normalizedToken);
+        const candidate = parsed?.request_id || parsed?.requestId || parsed?.qr_token || parsed?.token;
+        if (candidate && this.isUuidLike(String(candidate).trim())) {
+          return { requestId: String(candidate).trim(), tokenTimestamp: null, isLegacy: true, decoded: parsed };
+        }
+      } catch {
+        // ignore invalid JSON and fall through to plain validation
       }
-      return { requestId: decoded.request_id, tokenTimestamp: Number(decoded.ts), isLegacy: false, decoded };
     }
 
-    // UUID-like legacy token
+    // Plain UUID request_id (current frontend contract)
     if (this.isUuidLike(normalizedToken)) {
-      return { requestId: normalizedToken, tokenTimestamp: null, isLegacy: true, decoded: null };
+      return { requestId: normalizedToken, tokenTimestamp: null, isLegacy: false, decoded: null };
     }
 
     throw new ValidationError('Invalid QR token', 400, 'INVALID_QR_TOKEN');
@@ -101,32 +88,6 @@ class AttendanceRequestService {
   static verifySignedPayload(token) {
     if (!token || typeof token !== 'string' || !token.includes('.')) {
       throw new ValidationError('Invalid QR token format', 400, 'INVALID_QR_TOKEN');
-    }
-
-    // Compact QR format: q2.<request_id>.<ts>.<nonce>.<sig>
-    if (token.startsWith('q2.')) {
-      const parts = token.split('.');
-      if (parts.length !== 5) {
-        throw new ValidationError('Invalid compact QR token', 400, 'INVALID_QR_TOKEN');
-      }
-
-      const [, request_id, ts, nonce, sig] = parts;
-      if (!this.isUuidLike(request_id) || !/^\d{10,}$/.test(ts) || !/^[a-f0-9]{4}$/i.test(nonce)) {
-        throw new ValidationError('Invalid compact QR payload', 400, 'INVALID_QR_PAYLOAD');
-      }
-
-      const expectedSig = this.signCompactQrParts(request_id, ts, nonce);
-      if (sig !== expectedSig) {
-        throw new ValidationError('Invalid QR signature', 400, 'INVALID_QR_SIGNATURE');
-      }
-
-      return {
-        v: 2,
-        type: 'qr',
-        request_id,
-        ts: Number(ts),
-        nonce
-      };
     }
 
     const [encodedPayload, signature] = token.split('.');
@@ -152,21 +113,6 @@ class AttendanceRequestService {
   static isUuidLike(value) {
     if (!value || typeof value !== 'string') return false;
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-  }
-
-  static issueDynamicQrToken(request_id) {
-    const issuedAt = Date.now();
-    const nonce = crypto.randomBytes(2).toString('hex');
-    const signature = this.signCompactQrParts(request_id, issuedAt, nonce);
-    const compactToken = `q2.${request_id}.${issuedAt}.${nonce}.${signature}`;
-
-    return {
-      qr_token: compactToken,
-      token_issued_at: new Date(issuedAt).toISOString(),
-      token_expires_at: new Date(issuedAt + QR_TOKEN_VALIDITY_SECONDS * 1000).toISOString(),
-      refresh_after_seconds: QR_REFRESH_INTERVAL_SECONDS,
-      token_validity_seconds: QR_TOKEN_VALIDITY_SECONDS
-    };
   }
 
   static normalizeLocationSamples(location_samples) {
@@ -475,8 +421,6 @@ class AttendanceRequestService {
 
       const result = await AttendanceRequest.create(requestData);
 
-      const tokenBundle = this.issueDynamicQrToken(result.request_id);
-
       return {
         success: true,
         request_id: result.request_id,
@@ -484,7 +428,6 @@ class AttendanceRequestService {
         duration_minutes,
         radius_meters,
         attendance_value,
-        ...tokenBundle,
         security: {
           location_sample_count: LOCATION_SAMPLE_COUNT,
           max_accuracy_meters: MAX_ACCURACY_METERS,
@@ -510,7 +453,8 @@ class AttendanceRequestService {
       success: true,
       request_id,
       expires_at: request.expires_at,
-      ...this.issueDynamicQrToken(request_id)
+      token_validity_seconds: QR_TOKEN_VALIDITY_SECONDS,
+      refresh_after_seconds: QR_REFRESH_INTERVAL_SECONDS
     };
   }
 
