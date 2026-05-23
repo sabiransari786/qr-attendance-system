@@ -262,6 +262,56 @@ class AttendanceRequestService {
   }
 
   /**
+   * Ensure request exists and is active (not expired), returns request record.
+   */
+  static async ensureRequestActive(request_id) {
+    const request = await AttendanceRequest.getByRequestId(request_id);
+    if (!request) {
+      throw new ValidationError('QR code not found or expired', 404, 'QR_REQUEST_NOT_FOUND');
+    }
+
+    const now = new Date();
+    if (new Date(request.expires_at) <= now) {
+      await AttendanceRequest.updateStatus(request_id, 'expired');
+      throw new ValidationError('QR code has expired', 400, 'QR_REQUEST_EXPIRED');
+    }
+
+    return request;
+  }
+
+  static async ensureNotAlreadyMarked(student_id, session_id) {
+    const [existing] = await pool.execute(
+      `SELECT id FROM attendance
+       WHERE student_id = ? AND session_id = ? AND DATE(marked_at) = CURDATE()
+       LIMIT 1`,
+      [student_id, session_id]
+    );
+
+    if (existing.length > 0) {
+      throw new ValidationError('Attendance already marked for this session', 400, 'ALREADY_MARKED');
+    }
+  }
+
+  static createPrecheckToken(request, assessment, student_id, device_id, scan_timestamp) {
+    const challengePayload = {
+      v: 1,
+      type: 'precheck',
+      request_id: request.request_id,
+      session_id: request.session_id,
+      student_id,
+      device_id: device_id || null,
+      issued_at: Date.now(),
+      scan_timestamp: scan_timestamp || Date.now(),
+      first_check: {
+        average_distance_meters: assessment.average_distance_meters,
+        average_accuracy_meters: assessment.average_accuracy_meters
+      }
+    };
+
+    return this.signPayload(challengePayload);
+  }
+
+  /**
    * Generate QR request with location validation
    */
   static async generateQRRequest(data) {
@@ -439,41 +489,12 @@ class AttendanceRequestService {
       }
     }
 
-    const request = await AttendanceRequest.getByRequestId(requestId);
-    if (!request) {
-      return {
-        valid: false,
-        reason: 'QR code not found or expired',
-        reason_code: 'QR_REQUEST_NOT_FOUND'
-      };
-    }
-
-    const now = new Date();
-    if (new Date(request.expires_at) <= now) {
-      await AttendanceRequest.updateStatus(requestId, 'expired');
-      return {
-        valid: false,
-        reason: 'QR code has expired',
-        reason_code: 'QR_REQUEST_EXPIRED'
-      };
-    }
+    const request = await this.ensureRequestActive(requestId);
 
     await this.ensureSessionTimeWindow(request.session_id);
 
-    const [existing] = await pool.execute(
-      `SELECT id FROM attendance
-       WHERE student_id = ? AND session_id = ? AND DATE(marked_at) = CURDATE()
-       LIMIT 1`,
-      [student_id, request.session_id]
-    );
-
-    if (existing.length > 0) {
-      return {
-        valid: false,
-        reason: 'Attendance already marked for this session',
-        reason_code: 'ALREADY_MARKED'
-      };
-    }
+    // Throw on already marked — simplified path will surface a consistent error
+    await this.ensureNotAlreadyMarked(student_id, request.session_id);
 
     const assessment = this.assessLocation(request, location_samples);
 
@@ -496,20 +517,7 @@ class AttendanceRequestService {
       };
     }
 
-    const challengePayload = {
-      v: 1,
-      type: 'precheck',
-      request_id: requestId,
-      session_id: request.session_id,
-      student_id,
-      device_id: device_id || null,
-      issued_at: Date.now(),
-      scan_timestamp: scan_timestamp || Date.now(),
-      first_check: {
-        average_distance_meters: assessment.average_distance_meters,
-        average_accuracy_meters: assessment.average_accuracy_meters
-      }
-    };
+    const precheck_token = this.createPrecheckToken(request, assessment, student_id, device_id, scan_timestamp);
 
     return {
       valid: true,
@@ -517,7 +525,7 @@ class AttendanceRequestService {
       attendance_value: request.attendance_value,
       session_id: request.session_id,
       faculty_id: request.faculty_id,
-      precheck_token: this.signPayload(challengePayload),
+      precheck_token,
       second_check_after_seconds: SECOND_CHECK_DELAY_SECONDS,
       metrics: assessment
     };
@@ -564,11 +572,8 @@ class AttendanceRequestService {
       throw new ValidationError('Second location check attempted too early', 400, 'SECOND_CHECK_TOO_EARLY');
     }
 
-    const request = await AttendanceRequest.getByRequestId(decoded.request_id);
-    if (!request) {
-      throw new ValidationError('QR request is no longer active', 400, 'QR_REQUEST_INACTIVE');
-    }
-
+    // Reuse helpers for consistent checks
+    const request = await this.ensureRequestActive(decoded.request_id);
     await this.ensureSessionTimeWindow(request.session_id);
 
     const secondAssessment = this.assessLocation(request, location_samples);
