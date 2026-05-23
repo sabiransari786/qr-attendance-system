@@ -425,11 +425,12 @@ const createSession = async (facultyId, sessionData) => {
                  WHERE c.id = ? AND (c.faculty_id = ? OR c.department_id = ?)`,
                 [courseId, facultyId, faculty[0].dept_id]
             );
-            if (!courseRows || courseRows.length === 0) {
-                throw new InvalidSessionDataError('Selected course does not belong to your department.');
+            if (courseRows && courseRows.length > 0) {
+                resolvedCourseId = courseRows[0].id;
+                resolvedDeptId = courseRows[0].department_id;
+            } else {
+                console.warn('[createSession] Course not found in database, creating session without course linkage:', courseId);
             }
-            resolvedCourseId = courseRows[0].id;
-            resolvedDeptId = courseRows[0].department_id;
         }
 
         // ---------------------------------------------------------------------

@@ -3,6 +3,65 @@ const router = express.Router();
 const authMiddleware = require('../../middleware/auth.middleware');
 const { moduleFaultBoundary } = require('../../middleware/fault-isolation.middleware');
 const { pool } = require('../../config');
+const fs = require('fs');
+const path = require('path');
+
+const seedCoursesPath = path.join(__dirname, '../../../../database/seed_courses.sql');
+
+const FALLBACK_DEPARTMENTS = {
+  1: { department_name: 'Computer Engineering', department_code: 'CE' },
+  4: { department_name: 'Civil Engineering', department_code: 'CV' }
+};
+
+let fallbackCourseCatalog = null;
+
+const loadFallbackCourseCatalog = () => {
+  if (fallbackCourseCatalog) return fallbackCourseCatalog;
+
+  if (!fs.existsSync(seedCoursesPath)) {
+    fallbackCourseCatalog = [];
+    return fallbackCourseCatalog;
+  }
+
+  const sql = fs.readFileSync(seedCoursesPath, 'utf8');
+  const catalog = [];
+  const insertBlocks = sql.match(/INSERT\s+(?:IGNORE\s+)?INTO\s+courses[\s\S]*?;/gi) || [];
+
+  insertBlocks.forEach((block) => {
+    const valuesMatch = block.match(/VALUES\s*([\s\S]*?);/i);
+    if (!valuesMatch) return;
+
+    const tuples = valuesMatch[1].match(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g) || [];
+
+    tuples.forEach((tuple, index) => {
+      const parts = tuple.match(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+      if (!parts) return;
+
+      const name = parts[1];
+      const code = parts[2];
+      const semester = Number(parts[3]);
+      const departmentId = Number(parts[4]);
+      const departmentMeta = FALLBACK_DEPARTMENTS[departmentId] || {
+        department_name: `Department ${departmentId}`,
+        department_code: `D${departmentId}`
+      };
+
+      catalog.push({
+        id: -(catalog.length + 1),
+        name,
+        code,
+        semester,
+        department_id: departmentId,
+        department_name: departmentMeta.department_name,
+        department_code: departmentMeta.department_code,
+        is_fallback: true
+      });
+    });
+  });
+
+  fallbackCourseCatalog = catalog;
+  return fallbackCourseCatalog;
+};
 
 /**
  * GET /api/faculty/my-courses
@@ -112,20 +171,27 @@ router.get('/my-courses', authMiddleware, async (req, res) => {
     }
     let [courses] = await pool.query(coursesQuery, params);
 
-    if (!courses || courses.length === 0) {
-      [courses] = await pool.query(
-        `SELECT 
-            c.id,
-            c.name,
-            c.code,
-            c.semester,
-            c.department_id,
-            d.name AS department_name,
-            d.code AS department_code
-         FROM courses c
-         LEFT JOIN departments d ON c.department_id = d.id
-         ORDER BY d.name, c.semester, c.name`
-      );
+    const fallbackCatalog = loadFallbackCourseCatalog();
+    if (fallbackCatalog.length > 0) {
+      const courseMap = new Map();
+      for (const course of courses || []) {
+        courseMap.set(String(course.code).toUpperCase(), course);
+      }
+
+      for (const fallbackCourse of fallbackCatalog) {
+        if (!courseMap.has(String(fallbackCourse.code).toUpperCase())) {
+          courseMap.set(String(fallbackCourse.code).toUpperCase(), fallbackCourse);
+        }
+      }
+
+      courses = Array.from(courseMap.values()).sort((a, b) => {
+        const semesterA = a.semester || 0;
+        const semesterB = b.semester || 0;
+        if (semesterA !== semesterB) return semesterA - semesterB;
+        const departmentA = (a.department_name || '').localeCompare(b.department_name || '');
+        if (departmentA !== 0) return departmentA;
+        return (a.name || '').localeCompare(b.name || '');
+      });
     }
 
     return res.status(200).json({
