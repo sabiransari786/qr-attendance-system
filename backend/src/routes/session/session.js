@@ -40,6 +40,8 @@ const {
   getSessionById
 } = require('../../controllers/session.controller');
 
+const { openSessionNow } = require('../../controllers/session.controller');
+
 const authMiddleware = require('../../middleware/auth.middleware');
 
 // ============================================================================
@@ -216,6 +218,11 @@ router.get('/', authMiddleware, getActiveSessions);
  * Response: { success: true, data: { session: { id, status: "closed", endTime: "..." } } }
  */
 router.put('/:sessionId/close', authMiddleware, closeSession);
+
+/**
+ * PUT /:sessionId/open - Open Session Now (faculty only)
+ */
+router.put('/:sessionId/open', authMiddleware, openSessionNow);
 
 /**
  * PUT /:sessionId/cancel - Cancel Session Route (HFR23)

@@ -694,6 +694,62 @@ const closeSession = async (sessionId) => {
 };
 
 /**
+ * OPEN SESSION NOW
+ *
+ * Force a session to start immediately (or a minute earlier) and set status to ACTIVE.
+ * Only the session owner (faculty) or admin may perform this action.
+ * This is intended as a convenience for faculty who want to open attendance immediately.
+ */
+const openSessionNow = async (sessionId, facultyId) => {
+    try {
+        if (!sessionId) throw new InvalidSessionDataError('Session ID is required.');
+
+        const [sessions] = await pool.query(
+            `SELECT id, faculty_id, start_time, end_time, status FROM sessions WHERE id = ?`,
+            [sessionId]
+        );
+
+        if (!sessions || sessions.length === 0) {
+            throw new SessionNotFoundError();
+        }
+
+        const session = sessions[0];
+
+        // Authorization: faculty owner or admin (facultyId may be null if caller is admin)
+        if (facultyId && Number(session.faculty_id) !== Number(facultyId)) {
+            throw new UnauthorizedFacultyError('You are not the owner of this session.');
+        }
+
+        // Calculate duration from existing times if available
+        const oldStart = session.start_time ? new Date(session.start_time) : null;
+        const oldEnd = session.end_time ? new Date(session.end_time) : null;
+        let durationMs = (oldStart && oldEnd) ? (oldEnd.getTime() - oldStart.getTime()) : (60 * 60 * 1000);
+
+        // New start = now - 1 minute so that immediate scans within grace are allowed
+        const now = new Date();
+        const newStart = new Date(now.getTime() - (60 * 1000));
+        const newEnd = new Date(newStart.getTime() + durationMs);
+
+        const newQrExpiry = new Date(newStart.getTime() + QR_EXPIRY_TIME);
+
+        await pool.query(
+            `UPDATE sessions SET start_time = ?, end_time = ?, status = ?, qr_expiry_time = ? WHERE id = ?`,
+            [newStart, newEnd, SESSION_STATUS.ACTIVE, newQrExpiry, sessionId]
+        );
+
+        const [updatedRows] = await pool.query(
+            `SELECT id, faculty_id, subject, location, status, start_time, end_time, qr_expiry_time FROM sessions WHERE id = ?`,
+            [sessionId]
+        );
+
+        return updatedRows[0];
+    } catch (error) {
+        if (error.name && error.statusCode) throw error;
+        throw new Error(`Failed to open session now: ${error.message}`);
+    }
+};
+
+/**
  * -----------------------------------------------------------------------------
  * CANCEL SESSION — HFR23: Auto-Attendance Adjustment for Cancellations
  * -----------------------------------------------------------------------------

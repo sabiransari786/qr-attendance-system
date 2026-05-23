@@ -455,6 +455,28 @@ const getActiveSessions = async (req, res, next) => {
 };
 
 /**
+ * OPEN SESSION NOW CONTROLLER
+ *
+ * Route: PUT /api/session/:sessionId/open
+ */
+const openSessionNow = async (req, res, next) => {
+    try {
+        const { sessionId } = req.params;
+        const facultyId = req.user?.id;
+
+        if (!sessionId) {
+            return res.status(400).json({ success: false, message: 'Session ID is required.' });
+        }
+
+        const updated = await sessionService.openSessionNow(sessionId, facultyId);
+
+        return res.status(200).json({ success: true, message: 'Session opened for attendance now.', data: updated });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * -----------------------------------------------------------------------------
  * GET SESSION BY ID CONTROLLER
  * -----------------------------------------------------------------------------
