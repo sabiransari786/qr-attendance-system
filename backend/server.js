@@ -55,6 +55,12 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
   await seedDemoUsers();
 
   // ============================================================================
+  // SEED REFERENCE DATA — Departments + full course catalog
+  // ============================================================================
+  const seedReferenceData = require('./src/seed-reference-data');
+  await seedReferenceData();
+
+  // ============================================================================
   // AUTO SESSION CLOSE — Orphan Sessions Fix
   // ============================================================================
   // Jo sessions bahut purani ho gayi hain (end_time nikal gaya) unhe auto-close karo
