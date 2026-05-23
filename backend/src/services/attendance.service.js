@@ -436,7 +436,12 @@ const markAttendance = async (studentId, sessionId, qrData, timestamp, verificat
             const isDeptIdMatch = !!studentDeptId && Number(studentDeptId) === Number(session.department_id);
             const studentDeptKey = normalizeDepartmentKey(student.department);
             const sessionDeptKey = normalizeDepartmentKey(session.session_department_name);
-            const isDeptNameMatch = !!studentDeptKey && !!sessionDeptKey && studentDeptKey === sessionDeptKey;
+            // Allow exact match or substring matches to account for naming variants
+            const isDeptNameMatch = !!studentDeptKey && !!sessionDeptKey && (
+                studentDeptKey === sessionDeptKey ||
+                studentDeptKey.includes(sessionDeptKey) ||
+                sessionDeptKey.includes(studentDeptKey)
+            );
 
             if (!isDeptIdMatch && !isDeptNameMatch) {
                 const err = new Error(
