@@ -273,7 +273,7 @@ function ScanQREnhanced() {
       setSessionInfo({ ...session, requestId: valData.request_id });
       setPrecheckToken(valData.precheck_token || '');
       setFirstCheckAt(Date.now());
-      setSecondCheckDelaySeconds(valData.second_check_after_seconds || 12);
+      setSecondCheckDelaySeconds(valData.second_check_after_seconds || 2);
       setLocationVerified(true);
       setDeviceVerified(true);
 
@@ -283,7 +283,7 @@ function ScanQREnhanced() {
 
       setMessage({
         type: 'success',
-        text: `QR verified.${distMsg} Wait ${valData.second_check_after_seconds || 12}s, then click Accept.`
+        text: `QR verified.${distMsg} Tap Accept to mark attendance.`
       });
     } catch (error) {
       const errorMessage = error?.message || 'Failed to verify QR code.';
@@ -302,14 +302,6 @@ function ScanQREnhanced() {
 
     try {
       const token = sessionStorage.getItem('authToken');
-
-      if (firstCheckAt) {
-        const elapsed = Date.now() - firstCheckAt;
-        const minDelay = secondCheckDelaySeconds * 1000;
-        if (elapsed < minDelay) {
-          await wait(minDelay - elapsed);
-        }
-      }
 
       const secondSamples = await collectAccurateLocationSamples(2000);
 
