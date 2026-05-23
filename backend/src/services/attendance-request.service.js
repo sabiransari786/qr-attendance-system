@@ -365,6 +365,31 @@ class AttendanceRequestService {
         throw new Error('You can only generate QR for your own sessions');
       }
 
+      // If the session is scheduled in the future, open it now so the QR can
+      // actually be used immediately. This keeps the generate → scan flow
+      // working without requiring a separate manual "open" step.
+      const sessionStart = session.start_time ? new Date(session.start_time) : null;
+      const sessionEnd = session.end_time ? new Date(session.end_time) : null;
+      const now = new Date();
+      if (sessionStart && sessionStart > now) {
+        const durationMs = sessionEnd && sessionEnd > sessionStart
+          ? (sessionEnd.getTime() - sessionStart.getTime())
+          : (60 * 60 * 1000);
+        const openedStart = new Date(now.getTime() - (60 * 1000));
+        const openedEnd = new Date(openedStart.getTime() + durationMs);
+        const openedQrExpiry = new Date(openedStart.getTime() + QR_EXPIRY_TIME);
+
+        await pool.execute(
+          `UPDATE sessions
+           SET start_time = ?, end_time = ?, qr_expiry_time = ?, status = ?
+           WHERE id = ?`,
+          [openedStart, openedEnd, openedQrExpiry, 'active', session_id]
+        );
+
+        session.start_time = openedStart;
+        session.end_time = openedEnd;
+      }
+
       // -----------------------------------------------------------------------
       // DEPARTMENT VALIDATION
       // Faculty sirf apne department ke courses/sessions ka QR generate kar sakta hai
@@ -435,7 +460,6 @@ class AttendanceRequestService {
       await AttendanceRequest.invalidateSessionRequests(session_id, faculty_id);
 
       // Calculate request expiry time (session-wide scan window)
-      const now = new Date();
       const expiryTime = new Date(now.getTime() + duration_minutes * 60000);
 
       // Create new request
