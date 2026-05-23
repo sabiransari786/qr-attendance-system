@@ -16,6 +16,7 @@ const MAX_ACCURACY_METERS = 50;
 const SECOND_CHECK_DELAY_SECONDS = 12;
 const PRECHECK_TTL_SECONDS = 120;
 const LOCATION_SAMPLE_COUNT = 3;
+const PRESTART_GRACE_MINUTES = Number(process.env.SESSION_PRESTART_GRACE_MINUTES) || 10;
 
 class ValidationError extends Error {
   constructor(message, statusCode = 400, code = 'VALIDATION_ERROR') {
@@ -238,11 +239,17 @@ class AttendanceRequestService {
     const start = new Date(session.start_time);
     const end = session.end_time ? new Date(session.end_time) : null;
 
-    if (now < start) {
+    // Allow a configurable pre-start grace window so students can scan shortly
+    // before the official `start_time` (default 10 minutes). Useful when
+    // faculty generate the QR a few minutes before class starts.
+    const graceMs = PRESTART_GRACE_MINUTES * 60 * 1000;
+    const earliestAllowed = new Date(start.getTime() - graceMs);
+    if (now < earliestAllowed) {
       const serverTime = now.toISOString();
       const sessionStart = start.toISOString();
+      const allowedFrom = earliestAllowed.toISOString();
       throw new ValidationError(
-        `Attendance is not open yet for this session (server_time=${serverTime}, session_start=${sessionStart})`,
+        `Attendance is not open yet for this session (server_time=${serverTime}, session_start=${sessionStart}, allowed_from=${allowedFrom})`,
         400,
         'SESSION_NOT_STARTED'
       );
