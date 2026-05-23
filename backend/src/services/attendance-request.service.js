@@ -16,6 +16,7 @@ const MAX_ACCURACY_METERS = 50;
 const SECOND_CHECK_DELAY_SECONDS = 12;
 const PRECHECK_TTL_SECONDS = 120;
 const LOCATION_SAMPLE_COUNT = 3;
+const MIN_PASSING_SAMPLES = 2;
 const PRESTART_GRACE_MINUTES = Number(process.env.SESSION_PRESTART_GRACE_MINUTES) || 10;
 
 class ValidationError extends Error {
@@ -200,14 +201,25 @@ class AttendanceRequestService {
     const avgDistance = distances.reduce((sum, value) => sum + value, 0) / distances.length;
     const avgAccuracy = accuracies.reduce((sum, value) => sum + value, 0) / accuracies.length;
     const maxAccuracy = Math.max(...accuracies);
+    // Per-sample pass checks
+    const perSamplePass = samples.map((s, idx) => {
+      const accOk = accuracies[idx] <= MAX_ACCURACY_METERS;
+      const distOk = distances[idx] <= MAX_DISTANCE_METERS;
+      return { accuracy: accuracies[idx], distance: distances[idx], accOk, distOk, pass: accOk && distOk };
+    });
 
-    const passesAccuracy = avgAccuracy <= MAX_ACCURACY_METERS && maxAccuracy <= MAX_ACCURACY_METERS;
+    const passCount = perSamplePass.filter((p) => p.pass).length;
     const passesDistance = avgDistance <= MAX_DISTANCE_METERS;
+
+    // Accept if at least MIN_PASSING_SAMPLES samples pass both accuracy and distance.
+    const passesAccuracy = passCount >= MIN_PASSING_SAMPLES;
 
     return {
       samples,
       distances,
       accuracies,
+      perSamplePass,
+      pass_count: passCount,
       average_distance_meters: Number(avgDistance.toFixed(2)),
       average_accuracy_meters: Number(avgAccuracy.toFixed(2)),
       max_accuracy_meters: Number(maxAccuracy.toFixed(2)),
@@ -508,10 +520,13 @@ class AttendanceRequestService {
     if (!assessment.passes_accuracy) {
       return {
         valid: false,
-        reason: 'Fetching accurate location, please wait...',
+        reason: 'Location accuracy is low — try moving outdoors or wait a few seconds and retry. Provide more stable GPS samples.',
         reason_code: 'LOW_ACCURACY',
         retryable: true,
-        metrics: assessment
+        metrics: assessment,
+        help: {
+          suggestion: 'Move to an open area, enable device location high-accuracy, and retry scan. At least 2 of 3 location samples should be within the allowed accuracy.'
+        }
       };
     }
 
