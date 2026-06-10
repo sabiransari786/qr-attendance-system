@@ -73,7 +73,11 @@ const pool = mysql.createPool({
 
   // keepAliveInitialDelay: Keep-alive packet bhejne mein initial delay (milliseconds)
   // 0 means immediately start keep-alive
-  keepAliveInitialDelay: 0
+    keepAliveInitialDelay: 0,
+
+    // autocommit: true - har INSERT/UPDATE/DELETE query automatically commit ho jayegi
+    // Default MySQL behavior - transactions ke liye beginTransaction() use kare
+    autocommit: true
 });
 
 // ============================================================================
