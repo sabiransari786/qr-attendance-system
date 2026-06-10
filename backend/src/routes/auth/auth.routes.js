@@ -229,22 +229,54 @@ router.post('/signup-request', async (req, res) => {
  * Headers: { Authorization: "Bearer <admin_token>" }
  * 
  * Response: { success: true, data: [...students] }
+ * 
+ * Returns registered students from users table PLUS approved but not-yet-registered students
  */
 router.get('/students', async (req, res) => {
   try {
     const { pool } = require('../../config/database');
     
-    const [students] = await pool.query(
-      `SELECT id, name, email, student_id, department, semester, is_active, created_at 
+    // Get registered students from users table
+    const [registeredStudents] = await pool.query(
+      `SELECT id, name, email, student_id, department, semester, is_active, created_at, 'registered' as status
        FROM users 
        WHERE role = 'student' 
        ORDER BY department ASC, semester ASC, name ASC`
     );
     
+    // Get approved but not-yet-registered students from approved_users table
+    let approvedPendingStudents = [];
+    try {
+      const [approved] = await pool.query(
+        `SELECT 
+          id, 
+          name, 
+          email, 
+          student_id, 
+          department, 
+          semester, 
+          1 as is_active, 
+          created_at,
+          'approved_pending' as status
+         FROM approved_users 
+         WHERE role = 'student' 
+         AND is_registered = FALSE 
+         AND approval_status = 'approved'
+         ORDER BY department ASC, semester ASC, name ASC`
+      );
+      approvedPendingStudents = approved || [];
+    } catch (approvedError) {
+      // approved_users table might not exist - that's ok, just log and continue
+      console.warn('approved_users table not available:', approvedError.message);
+    }
+    
+    // Combine both lists
+    const allStudents = [...(registeredStudents || []), ...approvedPendingStudents];
+    
     return res.status(200).json({
       success: true,
-      message: 'Students retrieved successfully',
-      data: students || []
+      message: `Students retrieved successfully (${registeredStudents?.length || 0} registered, ${approvedPendingStudents.length} approved)`,
+      data: allStudents || []
     });
   } catch (error) {
     console.error('Error fetching students:', error);
@@ -345,6 +377,7 @@ router.patch('/admin/students/:id/promote', authMiddleware, requireAdmin, async 
 /**
  * GET /admin/users - Admin user management list
  * Query params: search, role, status (active/inactive)
+ * Returns registered users from users table PLUS approved-but-pending users from approved_users
  */
 router.get('/admin/users', authMiddleware, requireAdmin, async (req, res) => {
   try {
@@ -371,17 +404,64 @@ router.get('/admin/users', authMiddleware, requireAdmin, async (req, res) => {
       params.push(like, like, like);
     }
 
-    const [users] = await pool.query(
-      `SELECT id, name, email, role, is_active, department
+    const [registeredUsers] = await pool.query(
+      `SELECT id, name, email, role, is_active, department, 'registered' as status
        FROM users
        ${where}
        ORDER BY created_at DESC`,
       params
     );
 
+    // Get approved but not-yet-registered users from approved_users table
+    let approvedPendingUsers = [];
+    try {
+      // Build dynamic query for approved_users based on filters
+      let approvedWhere = 'WHERE approval_status = "approved" AND is_registered = FALSE';
+      const approvedParams = [];
+
+      if (role && role !== 'all') {
+        approvedWhere += ' AND role = ?';
+        approvedParams.push(role);
+      }
+
+      if (status === 'active') {
+        approvedWhere += ' AND 1=1'; // They're always considered active for approved
+      } else if (status === 'inactive') {
+        approvedWhere += ' AND 0=1'; // Skip if looking for inactive
+      }
+
+      if (search && search.trim()) {
+        const like = `%${search.trim()}%`;
+        approvedWhere += ' AND (name LIKE ? OR email LIKE ? OR department LIKE ?)';
+        approvedParams.push(like, like, like);
+      }
+
+      const [approved] = await pool.query(
+        `SELECT 
+          id, 
+          name, 
+          email, 
+          role, 
+          1 as is_active, 
+          department,
+          'approved_pending' as status
+         FROM approved_users 
+         ${approvedWhere}
+         ORDER BY created_at DESC`,
+        approvedParams
+      );
+      approvedPendingUsers = approved || [];
+    } catch (approvedError) {
+      // approved_users table might not exist - that's ok, just log and continue
+      console.warn('approved_users table not available:', approvedError.message);
+    }
+
+    // Combine both lists
+    const allUsers = [...(registeredUsers || []), ...approvedPendingUsers];
+
     return res.status(200).json({
       success: true,
-      data: users
+      data: allUsers
     });
   } catch (error) {
     console.error('Error fetching users:', error);
